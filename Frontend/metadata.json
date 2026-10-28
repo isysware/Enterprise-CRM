@@ -1,0 +1,7 @@
+{
+  "name": "Enterprise Lead CRM",
+  "description": "Multi-portal Enterprise Lead Management CRM with Role-Based Access Control (RBAC), Follow-Up Tracker, Monthly Calendar, Converted Clients, Performance Analytics in PKR, and System Administration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
