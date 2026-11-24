@@ -414,7 +414,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           <a
                             href={waUrl}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-700"
                           >
                             <MessageCircle className="w-3 h-3" />
@@ -536,7 +536,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                               <a
                                 href={waUrl}
                                 target="_blank"
-                                rel="noreferrer"
+                                rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:underline"
                               >
                                 <MessageCircle className="w-3 h-3" /> WhatsApp

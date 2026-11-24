@@ -28,9 +28,9 @@ export const AIAssistantLauncher: React.FC<AIAssistantLauncherProps> = ({
           <Sparkles className="w-4 h-4 transition-transform group-hover:rotate-12" />
         </div>
         <span className="text-xs font-bold tracking-tight hidden sm:inline">
-          {isOpen ? 'Close AI' : 'Ask AI'}
+          {isOpen ? 'Close Copilot' : 'CRM Copilot'}
         </span>
-        <span className="w-2 h-2 rounded-full bg-blue-300 animate-pulse" />
+        <span className="w-2 h-2 rounded-full bg-blue-200 animate-pulse" />
       </button>
     </div>
   );

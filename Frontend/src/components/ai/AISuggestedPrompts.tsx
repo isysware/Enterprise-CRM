@@ -29,35 +29,80 @@ export const AISuggestedPrompts: React.FC<AISuggestedPromptsProps> = ({
   const suggestedPrompts = useMemo<SuggestedPrompt[]>(() => {
     const list: SuggestedPrompt[] = [];
 
+    // Role-specific base definitions
+    const isManagerOrTL = ['Manager', 'Team Lead'].includes(role);
+
     switch (currentPage) {
       case 'dashboard':
-        list.push({
-          id: 'dash-1',
-          label: 'Summarize my pipeline',
-          prompt: isEmployee
-            ? 'Summarize my current assigned leads and active deal pipeline.'
-            : 'Summarize our overall sales pipeline, stage distribution, and active value.',
-          category: 'summary'
-        });
-        list.push({
-          id: 'dash-2',
-          label: 'What needs attention?',
-          prompt: 'Identify the most critical leads or overdue activities needing attention today.',
-          category: 'action'
-        });
-        list.push({
-          id: 'dash-3',
-          label: 'Show missed follow-ups',
-          prompt: 'List all overdue follow-ups within my scope and recommend next steps.',
-          category: 'action'
-        });
-
-        if (isSupervisorOrAdmin && !isEmployee) {
+        if (isEmployee) {
           list.push({
-            id: 'dash-4',
-            label: 'Explain team performance',
-            prompt: 'Explain current conversion metrics, team velocity, and pipeline bottlenecks.',
+            id: 'dash-emp-1',
+            label: 'Summarize my visible pipeline',
+            prompt: 'Summarize my visible pipeline and personal deal stages.',
+            category: 'summary'
+          });
+          list.push({
+            id: 'dash-emp-2',
+            label: 'Which leads need attention?',
+            prompt: 'Which of my assigned leads require attention today?',
+            category: 'action'
+          });
+          list.push({
+            id: 'dash-emp-3',
+            label: 'My pending follow-ups',
+            prompt: 'List my scheduled and overdue follow-up tasks.',
+            category: 'action'
+          });
+        } else if (isManagerOrTL) {
+          list.push({
+            id: 'dash-mgr-1',
+            label: 'Pipeline summary',
+            prompt: 'Provide a pipeline summary for my authorized hierarchy.',
+            category: 'summary'
+          });
+          list.push({
+            id: 'dash-mgr-2',
+            label: 'Team workload',
+            prompt: 'Analyze active lead allocations and workload balance across our team members.',
             category: 'analysis'
+          });
+          list.push({
+            id: 'dash-mgr-3',
+            label: 'Rep performance',
+            prompt: 'Compare sales velocity, responsiveness, and conversion rates across representatives.',
+            category: 'analysis'
+          });
+          list.push({
+            id: 'dash-mgr-4',
+            label: 'Missed follow-ups',
+            prompt: 'Review missed follow-ups across the team and identify stalled opportunities.',
+            category: 'action'
+          });
+        } else {
+          // Super Admin / Admin
+          list.push({
+            id: 'dash-adm-1',
+            label: 'Pipeline summary',
+            prompt: 'Provide an organization-level sales pipeline summary with stage distribution.',
+            category: 'summary'
+          });
+          list.push({
+            id: 'dash-adm-2',
+            label: 'Team workload',
+            prompt: 'Review organization-wide workload distribution and capacity across teams.',
+            category: 'analysis'
+          });
+          list.push({
+            id: 'dash-adm-3',
+            label: 'Rep performance',
+            prompt: 'Analyze conversion rates and performance metrics across departments.',
+            category: 'analysis'
+          });
+          list.push({
+            id: 'dash-adm-4',
+            label: 'Missed follow-ups',
+            prompt: 'Identify all overdue customer touchpoints and compliance bottlenecks.',
+            category: 'action'
           });
         }
         break;
@@ -65,27 +110,29 @@ export const AISuggestedPrompts: React.FC<AISuggestedPromptsProps> = ({
       case 'leads':
         list.push({
           id: 'leads-1',
-          label: 'Summarize visible leads',
-          prompt: 'Provide a breakdown of my visible leads by status, deal value, and priority.',
+          label: 'Summarize my visible pipeline',
+          prompt: isEmployee
+            ? 'Summarize my assigned leads and current pipeline value.'
+            : 'Summarize my visible pipeline with stage-wise deal volume.',
           category: 'summary'
         });
         list.push({
           id: 'leads-2',
-          label: 'Which leads require attention?',
-          prompt: 'Highlight urgent leads or leads in early stages that have not been contacted recently.',
+          label: 'Which leads need attention?',
+          prompt: 'Which leads need attention based on urgency, age, and last activity?',
           category: 'action'
         });
         list.push({
           id: 'leads-3',
-          label: 'Draft a follow-up message',
-          prompt: 'Draft a professional WhatsApp and email follow-up message for high-priority leads.',
-          category: 'draft'
+          label: 'Show urgent/high-priority leads',
+          prompt: 'Filter and list all urgent or high-priority leads needing prompt follow-up.',
+          category: 'action'
         });
         list.push({
           id: 'leads-4',
-          label: 'Explain this pipeline',
-          prompt: 'Analyze conversion rates across New, Contacted, and Qualified stages.',
-          category: 'analysis'
+          label: 'Draft a follow-up message',
+          prompt: 'Draft a professional follow-up message for hot prospects.',
+          category: 'draft'
         });
         break;
 
@@ -93,42 +140,44 @@ export const AISuggestedPrompts: React.FC<AISuggestedPromptsProps> = ({
       case 'calendar':
         list.push({
           id: 'fu-1',
-          label: 'Summarize overdue follow-ups',
-          prompt: 'Summarize all overdue calls and meetings, sorted by urgency and deal impact.',
-          category: 'summary'
+          label: 'What is due today?',
+          prompt: 'What follow-ups and client meetings are scheduled for today?',
+          category: 'action'
         });
         list.push({
           id: 'fu-2',
-          label: 'What should I prioritize today?',
-          prompt: 'Give me a recommended schedule and priority order for today\'s scheduled follow-ups.',
+          label: 'Which follow-ups are overdue?',
+          prompt: 'Which follow-ups are overdue, and what are their priority levels?',
           category: 'action'
         });
         list.push({
           id: 'fu-3',
-          label: 'Draft follow-up greeting',
-          prompt: 'Draft an effective follow-up script addressing a client who missed a scheduled call.',
-          category: 'draft'
+          label: 'Summarize my pending activity',
+          prompt: isEmployee
+            ? 'Summarize my pending activity and upcoming follow-ups.'
+            : 'Summarize pending activity across my authorized team scope.',
+          category: 'summary'
         });
         break;
 
       case 'clients':
         list.push({
           id: 'cli-1',
-          label: 'Summarize my clients',
-          prompt: 'Summarize active converted accounts, total contract value, and recurring services.',
+          label: 'Summarize active clients',
+          prompt: 'Summarize active clients, contract value, and subscribed services.',
           category: 'summary'
         });
         list.push({
           id: 'cli-2',
-          label: 'Draft client check-in message',
-          prompt: 'Draft a professional quarterly relationship review email for active clients.',
-          category: 'draft'
+          label: 'Show recent conversions',
+          prompt: 'Show recently converted leads and closing attribution details.',
+          category: 'summary'
         });
         if (capabilities.canGenerateProposals) {
           list.push({
             id: 'cli-3',
             label: 'Upsell proposal ideas',
-            prompt: 'Suggest potential software upgrades or add-on modules for existing client profiles.',
+            prompt: 'Identify potential renewal or software add-on opportunities for active accounts.',
             category: 'analysis'
           });
         }
@@ -142,114 +191,41 @@ export const AISuggestedPrompts: React.FC<AISuggestedPromptsProps> = ({
       case 'reports-source-service':
       case 'reports-commercial-revenue':
         if (capabilities.canViewReports) {
-          if (currentPage === 'reports-team-staff') {
-            list.push({
-              id: 'rep-team-1',
-              label: 'Explain team performance',
-              prompt: 'Analyze conversion rates, response times, and workload balance across our sales staff.',
-              category: 'analysis'
-            });
-            list.push({
-              id: 'rep-team-2',
-              label: 'Identify top performers',
-              prompt: 'Who are our highest converting representatives and what deal volume have they closed?',
-              category: 'summary'
-            });
-            list.push({
-              id: 'rep-team-3',
-              label: 'Analyze workload distribution',
-              prompt: 'Review active lead allocations and pinpoint reps who may be over or under capacity.',
-              category: 'analysis'
-            });
-          } else if (currentPage === 'reports-followups-activity') {
-            list.push({
-              id: 'rep-fu-1',
-              label: 'Summarize follow-up compliance',
-              prompt: 'Explain our follow-up completion rate and highlight recurring overdue patterns.',
-              category: 'analysis'
-            });
-            list.push({
-              id: 'rep-fu-2',
-              label: 'Analyze activity velocity',
-              prompt: 'Review scheduled touches, completion cadence, and responsiveness on high-priority leads.',
-              category: 'summary'
-            });
-          } else if (currentPage === 'reports-clients-conversions') {
-            list.push({
-              id: 'rep-cli-1',
-              label: 'Analyze client acquisition',
-              prompt: 'Summarize converted client numbers, conversion cycle times, and retention rates.',
-              category: 'summary'
-            });
-            list.push({
-              id: 'rep-cli-2',
-              label: 'Average client value',
-              prompt: 'What is our average client deal size and which segments generate highest lifetime value?',
-              category: 'analysis'
-            });
-          } else if (currentPage === 'reports-source-service') {
-            list.push({
-              id: 'rep-src-1',
-              label: 'Evaluate lead source ROI',
-              prompt: 'Which lead acquisition channels (Meta Ads, WhatsApp, Website) deliver highest conversion yields?',
-              category: 'analysis'
-            });
-            list.push({
-              id: 'rep-src-2',
-              label: 'Demand across services',
-              prompt: 'Break down customer demand by software service offering and identify top growth drivers.',
-              category: 'summary'
-            });
-          } else if (currentPage === 'reports-commercial-revenue') {
-            list.push({
-              id: 'rep-rev-1',
-              label: 'Explain commercial revenue',
-              prompt: 'Summarize realized revenue, pending receivables, and average deal sizes in PKR.',
-              category: 'summary'
-            });
-            list.push({
-              id: 'rep-rev-2',
-              label: 'Pricing model performance',
-              prompt: 'Analyze revenue distribution across dynamic pricing models, one-time versus recurring fees.',
-              category: 'analysis'
-            });
-          } else {
-            list.push({
-              id: 'rep-1',
-              label: 'Explain this report',
-              prompt: 'Explain the key insights and trends from this sales analytics report.',
-              category: 'analysis'
-            });
-            list.push({
-              id: 'rep-2',
-              label: 'Summarize pipeline velocity',
-              prompt: 'Summarize win/loss ratios, average deal size, and sales velocity.',
-              category: 'summary'
-            });
+          list.push({
+            id: 'rep-1',
+            label: 'Explain this report',
+            prompt: 'Explain this report, key metric benchmarks, and highlights within authorized scope.',
+            category: 'analysis'
+          });
+          list.push({
+            id: 'rep-2',
+            label: 'Summarize conversion performance',
+            prompt: 'Summarize conversion performance and stage conversion ratios.',
+            category: 'summary'
+          });
+          if (isSupervisorOrAdmin && !isEmployee) {
             list.push({
               id: 'rep-3',
-              label: 'Highlight conversion bottlenecks',
-              prompt: 'Pinpoint which lead stages experience the highest drop-off rate and why.',
+              label: 'Compare authorized teams/users',
+              prompt: 'Compare authorized teams/users in terms of deal generation and closing efficiency.',
               category: 'analysis'
             });
           }
         }
         break;
 
-      case 'users':
-      case 'teams':
-      case 'roles':
-        if (isAdminOrSuper) {
+      case 'incoming-leads':
+        if (!isEmployee) {
           list.push({
-            id: 'adm-1',
-            label: 'Explain team coverage',
-            prompt: 'Summarize team assignments, supervisory leadership, and staff distribution.',
-            category: 'analysis'
+            id: 'inc-1',
+            label: 'Analyze incoming leads',
+            prompt: 'Review unassigned incoming leads and identify highest-value opportunities.',
+            category: 'action'
           });
           list.push({
-            id: 'adm-2',
-            label: 'Role governance summary',
-            prompt: 'Explain the access scope and security capabilities assigned across roles.',
+            id: 'inc-2',
+            label: 'Channel source attribution',
+            prompt: 'Break down incoming lead volume by Meta Ads, WhatsApp, and Web channels.',
             category: 'summary'
           });
         }
@@ -258,16 +234,16 @@ export const AISuggestedPrompts: React.FC<AISuggestedPromptsProps> = ({
       default:
         list.push({
           id: 'gen-1',
-          label: isEmployee ? 'Summarize my leads' : 'Summarize pipeline',
+          label: isEmployee ? 'Summarize my visible pipeline' : 'Pipeline summary',
           prompt: isEmployee
-            ? 'Summarize my currently assigned leads and immediate priorities.'
-            : 'Summarize current sales pipeline and top priorities.',
+            ? 'Summarize my assigned leads and immediate priorities.'
+            : 'Summarize our visible sales pipeline and current progress.',
           category: 'summary'
         });
         list.push({
           id: 'gen-2',
-          label: isEmployee ? 'My missed follow-ups' : 'Show overdue follow-ups',
-          prompt: 'Review overdue follow-ups and recommend recovery actions.',
+          label: 'Which leads need attention?',
+          prompt: 'Which leads or overdue activities need immediate intervention?',
           category: 'action'
         });
         break;

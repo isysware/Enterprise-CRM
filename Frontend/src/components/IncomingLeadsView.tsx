@@ -415,7 +415,7 @@ export const IncomingLeadsView: React.FC = () => {
                           <a
                             href={waUrl}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="noopener noreferrer"
                             title="Chat on WhatsApp"
                             className="p-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
                           >

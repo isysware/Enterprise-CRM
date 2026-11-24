@@ -36,6 +36,7 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
 
   // Validation
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setErrors({});
@@ -84,6 +85,7 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     const newErrors: Record<string, string> = {};
     if (!clientBusiness.trim()) newErrors.clientBusiness = 'Business name is required';
@@ -122,7 +124,9 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
       });
     }
 
+    setIsSubmitting(true);
     onClose();
+    setIsSubmitting(false);
   };
 
   const modalFooter = (
@@ -140,9 +144,10 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
         variant="primary"
         size="md"
         onClick={handleSubmit}
+        disabled={isSubmitting}
         leftIcon={<Check className="w-4 h-4" />}
       >
-        {followUpToReschedule ? 'Update Follow-Up' : 'Schedule Appointment'}
+        {isSubmitting ? 'Scheduling...' : followUpToReschedule ? 'Update Follow-Up' : 'Schedule Appointment'}
       </Button>
     </div>
   );

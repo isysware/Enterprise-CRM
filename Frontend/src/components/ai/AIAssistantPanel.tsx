@@ -101,6 +101,14 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
     fu => fu.status === 'Pending' && fu.scheduledDate < todayStr
   ).length;
 
+  const todayFollowUps = scopedFollowUps.filter(
+    fu => fu.scheduledDate === todayStr && fu.status === 'Pending'
+  );
+
+  const urgentLeads = scopedLeads.filter(
+    l => l.priority === 'Urgent' || l.priority === 'High'
+  );
+
   const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputMessage).trim();
     if (!text || isSubmitting) return;
@@ -137,33 +145,51 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
       text
     );
 
-    try {
-      const response = await aiAssistantService.sendMessage(requestPayload);
+    // Simulate verification delay (200ms) for smooth interaction
+    await new Promise(res => setTimeout(res, 200));
 
-      const assistantMsg: AIMessage = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content:
-          response.message ||
-          'AI Assistant is ready in the CRM interface. The secure AI service will be connected during backend integration.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isNotice: true
-      };
+    const lower = text.toLowerCase();
+    let content = '';
 
-      setMessages(prev => [...prev, assistantMsg]);
-    } catch {
-      const errorMsg: AIMessage = {
-        id: `err-${Date.now()}`,
-        role: 'assistant',
-        content:
-          'Secure AI service is not connected yet. Backend integration will be mounted during server deployment.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isNotice: true
-      };
-      setMessages(prev => [...prev, errorMsg]);
-    } finally {
-      setIsSubmitting(false);
+    if (lower.includes('pipeline') || lower.includes('summarize my visible') || lower.includes('pipeline summary')) {
+      const statusCounts: Record<string, number> = {};
+      scopedLeads.forEach(l => {
+        statusCounts[l.status] = (statusCounts[l.status] || 0) + 1;
+      });
+      const topStatuses = Object.entries(statusCounts)
+        .slice(0, 4)
+        .map(([st, cnt]) => `${st}: ${cnt}`)
+        .join(', ');
+
+      content = `📊 **Deterministic Pipeline Summary** (${scopeLabel})\n\n• **Visible Leads:** ${scopedLeads.length} records\n• **Active Deals:** ${activeLeadsCount}\n• **Total Pipeline Value:** ${formatPKR(totalPipelineValuePKR)}\n• **Stage Snapshot:** ${topStatuses || 'N/A'}\n\n*ℹ️ Note: Live database aggregation is active. Full AI generative analysis will connect via POST /api/ai/assistant in the backend phase.*`;
+    } else if (lower.includes('attention') || lower.includes('urgent') || lower.includes('priority')) {
+      content = `⚠️ **Leads Requiring Attention** (${scopeLabel})\n\n` +
+        (urgentLeads.length > 0
+          ? urgentLeads.slice(0, 4).map(l => `• **${l.businessName || l.name}** (${l.phone})\n  Stage: ${l.status} • Priority: ${l.priority} • Est: ${formatPKR(l.valuePKR)}`).join('\n')
+          : 'No urgent or high-priority leads flagged in your current scope.') +
+        `\n\n*ℹ️ Note: Filtered deterministically from your authorized records.*`;
+    } else if (lower.includes('due today') || lower.includes('overdue') || lower.includes('follow-up') || lower.includes('activity')) {
+      content = `⏰ **Follow-Up & Activity Breakdown** (${scopeLabel})\n\n• **Scheduled Due Today:** ${todayFollowUps.length} follow-up(s)\n• **Overdue / Missed:** ${overdueFollowUpsCount} follow-up(s)\n• **Total Pending In Scope:** ${scopedFollowUps.filter(f => f.status === 'Pending').length}\n\n*ℹ️ Note: Exact counts derived from your authorized schedule.*`;
+    } else if (lower.includes('draft') || lower.includes('script') || lower.includes('message')) {
+      content = `✍️ **Recommended Follow-Up Script** (Prepared Template)\n\n"Assalam-o-Alaikum [Prospect Name], this is ${currentUser.name} from ${currentUser.teamName || 'iSysware'}. I am following up on our discussion regarding your enterprise software requirements. Could we arrange a brief 5-minute call today to review your requirements?"\n\n*ℹ️ Note: AI automated message drafting and personalization will be enabled with backend integration.*`;
+    } else if (lower.includes('client') || lower.includes('conversion')) {
+      const activeClients = scopedClients.filter(c => c.status === 'Active').length;
+      const totalContractValue = scopedClients.reduce((sum, c) => sum + (Number(c.finalPrice) || 0), 0);
+      content = `🤝 **Client & Conversion Insights** (${scopeLabel})\n\n• **Total Converted Clients:** ${scopedClients.length}\n• **Active Clients:** ${activeClients}\n• **Realized Contract Value:** ${formatPKR(totalContractValue)}\n\n*ℹ️ Note: Computed from canonical converted client records.*`;
+    } else {
+      content = `🤖 **CRM Copilot Status** (${scopeLabel})\n\nYour message has been captured within authorized scope boundaries for **${currentUser.role}**.\n\nThe AI backend endpoint is prepared at:\n\`POST /api/ai/assistant\`\n\nDeterministic scoped metrics and suggested prompts are available above while backend services are being connected.`;
     }
+
+    const assistantMsg: AIMessage = {
+      id: `assistant-${Date.now()}`,
+      role: 'assistant',
+      content,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isNotice: true
+    };
+
+    setMessages(prev => [...prev, assistantMsg]);
+    setIsSubmitting(false);
   };
 
   const handleClearChat = () => {
@@ -211,8 +237,8 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label="CRM AI Assistant"
-        className={`fixed top-0 right-0 h-full w-full sm:w-[440px] bg-white dark:bg-slate-900 border-l border-[#E5EAF1] dark:border-slate-800 shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${
+        aria-label="CRM Copilot"
+        className={`fixed top-0 right-0 h-full w-full sm:w-[450px] bg-white dark:bg-slate-900 border-l border-[#E5EAF1] dark:border-slate-800 shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
         }`}
       >
@@ -227,14 +253,14 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h2 className="font-extrabold text-sm text-[#0F172A] dark:text-white truncate">
-                  AI Assistant
+                  CRM Copilot
                 </h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
-                  Frontend Preview
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 border border-blue-200 dark:border-blue-800 shrink-0">
+                  Assistant
                 </span>
               </div>
               <p className="text-[11px] text-[#64748B] dark:text-slate-400 truncate mt-0.5">
-                {currentUser.name} • {currentUser.role}
+                {currentUser.name} • <span className="font-semibold text-slate-700 dark:text-slate-300">{currentUser.role}</span>
               </p>
             </div>
           </div>
@@ -253,8 +279,8 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             <button
               type="button"
               onClick={onClose}
-              title="Close Assistant"
-              aria-label="Close Assistant panel"
+              title="Close Copilot"
+              aria-label="Close Copilot panel"
               className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
@@ -263,30 +289,42 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
         </div>
 
         {/* ========================================================================= */}
-        {/* 2. CONTEXT BAR (Safe Context Chips)                                       */}
+        {/* 2. CONTEXT BAR (Safe Context Chips & Backend Status)                     */}
         {/* ========================================================================= */}
-        <div className="px-4 py-2.5 bg-[#F7F9FC] dark:bg-slate-850 border-b border-[#E5EAF1] dark:border-slate-800 flex items-center gap-2 flex-wrap shrink-0">
-          <span className="text-[10px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
-            Context:
-          </span>
+        <div className="px-4 py-2.5 bg-[#F7F9FC] dark:bg-slate-850 border-b border-[#E5EAF1] dark:border-slate-800 space-y-2 shrink-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider mr-1">
+              Active Scope:
+            </span>
 
-          {/* Current Page Chip */}
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-            {formatPageName(currentPage)}
-          </span>
+            {/* Current Page Chip */}
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              {formatPageName(currentPage)}
+            </span>
 
-          {/* Role Chip */}
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-            <ShieldCheck className="w-3 h-3 text-[#2563EB]" />
-            {currentUser.role}
-          </span>
+            {/* Role Chip */}
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              <ShieldCheck className="w-3 h-3 text-[#2563EB]" />
+              {currentUser.role}
+            </span>
 
-          {/* Authorized Scope Chip */}
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-[#2563EB] dark:text-blue-300 border border-blue-200 dark:border-blue-900/60">
-            <Layers className="w-3 h-3 text-[#2563EB]" />
-            {scopeLabel}
-          </span>
+            {/* Authorized Scope Chip */}
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-[#2563EB] dark:text-blue-300 border border-blue-200 dark:border-blue-900/60">
+              <Layers className="w-3 h-3 text-[#2563EB]" />
+              {scopeLabel}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-200/60 dark:border-slate-800">
+            <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              Backend AI: Staged for Integration
+            </span>
+            <span className="font-mono text-[9px] text-slate-400">
+              POST /api/ai/assistant
+            </span>
+          </div>
         </div>
 
         {/* ========================================================================= */}

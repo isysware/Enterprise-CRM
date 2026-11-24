@@ -287,6 +287,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
   // Feedback State
   const [isCopied, setIsCopied] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Print ref
   const printAreaRef = useRef<HTMLDivElement>(null);
@@ -400,7 +401,8 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
 
   // Save Proposal
   const handleSaveProposal = () => {
-    if (!lead) return;
+    if (isSaving || !lead) return;
+    setIsSaving(true);
     const proposalPayload: Omit<Proposal, 'id' | 'createdAt'> = {
       leadId: lead.id,
       refNumber,
@@ -454,6 +456,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
     if (onSaved) onSaved(savedItem);
     setTimeout(() => {
       setSaveSuccess(false);
+      setIsSaving(false);
       onClose();
     }, 1200);
   };
@@ -1346,7 +1349,8 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
             <button
               type="button"
               onClick={handleSaveProposal}
-              className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs shadow-md active:scale-98 transition-all cursor-pointer"
+              disabled={isSaving}
+              className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs shadow-md active:scale-98 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saveSuccess ? (
                 <>

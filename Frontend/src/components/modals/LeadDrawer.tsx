@@ -335,7 +335,7 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
           <a
             href={waUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold text-xs hover:bg-emerald-100 transition-colors shadow-2xs"
           >
             <MessageCircle className="w-4 h-4 text-emerald-600" />

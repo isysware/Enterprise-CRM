@@ -741,7 +741,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                             <a
                               href={waUrl}
                               target="_blank"
-                              rel="noreferrer"
+                              rel="noopener noreferrer"
                               title="Chat on WhatsApp"
                               className="p-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400 transition-colors"
                             >
@@ -1038,7 +1038,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                                 <a
                                   href={waUrl}
                                   target="_blank"
-                                  rel="noreferrer"
+                                  rel="noopener noreferrer"
                                   title="WhatsApp"
                                   className="p-1 rounded text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors"
                                 >

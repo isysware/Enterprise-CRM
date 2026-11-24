@@ -62,6 +62,7 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
   const [monthlySubscriptionFee, setMonthlySubscriptionFee] = useState<number>(6000);
   const [oneTimeSetupFee, setOneTimeSetupFee] = useState<number>(15000);
   const [monthlySupportFee, setMonthlySupportFee] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Ownership Fields (fallback)
   const [ownershipPrice, setOwnershipPrice] = useState<number>(250000);
@@ -186,7 +187,7 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lead) return;
+    if (isSubmitting || !lead) return;
 
     if (!assignedToId) {
       setErrorMsg('Please select an assigned representative.');
@@ -236,9 +237,11 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
       }
     };
 
+    setIsSubmitting(true);
     convertLeadToClient(lead.id, clientPayload);
     if (onSuccess) onSuccess();
     onClose();
+    setIsSubmitting(false);
   };
 
   const modalFooter = (
@@ -262,9 +265,10 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
           variant="success"
           size="md"
           onClick={handleSubmit}
+          disabled={isSubmitting}
           leftIcon={<CheckCircle2 className="w-4 h-4" />}
         >
-          Convert to Client
+          {isSubmitting ? 'Converting...' : 'Convert to Client'}
         </Button>
       </div>
     </div>

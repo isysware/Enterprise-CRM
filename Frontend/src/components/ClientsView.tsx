@@ -421,7 +421,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                               <a
                                 href={waUrl}
                                 target="_blank"
-                                rel="noreferrer"
+                                rel="noopener noreferrer"
                                 title="Chat on WhatsApp"
                                 className="text-emerald-600 hover:text-emerald-700 inline-flex items-center ml-1"
                               >

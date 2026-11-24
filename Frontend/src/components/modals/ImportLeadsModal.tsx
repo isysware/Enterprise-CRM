@@ -35,6 +35,7 @@ export const ImportLeadsModal: React.FC<ImportLeadsModalProps> = ({ isOpen, onCl
   );
   const [fileName, setFileName] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   // Download simple CSV template
   const handleDownloadTemplate = () => {
@@ -63,6 +64,11 @@ export const ImportLeadsModal: React.FC<ImportLeadsModalProps> = ({ isOpen, onCl
       return;
     }
 
+    if (file.size > 5 * 1024 * 1024) {
+      setFeedback({ type: 'error', message: 'CSV file size exceeds 5MB limit.' });
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = event => {
       const text = event.target?.result as string;
@@ -80,6 +86,7 @@ export const ImportLeadsModal: React.FC<ImportLeadsModalProps> = ({ isOpen, onCl
 
   const handleImport = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isImporting) return;
     setFeedback(null);
 
     if (!canBulkImportExport || !currentUser) {
@@ -249,6 +256,8 @@ export const ImportLeadsModal: React.FC<ImportLeadsModalProps> = ({ isOpen, onCl
         type: 'error',
         message: `Import failed: ${err.message || 'Check CSV formatting.'}`
       });
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -272,10 +281,10 @@ export const ImportLeadsModal: React.FC<ImportLeadsModalProps> = ({ isOpen, onCl
           variant="primary"
           size="md"
           onClick={handleImport}
-          disabled={!canBulkImportExport}
+          disabled={!canBulkImportExport || isImporting}
           leftIcon={<Upload className="w-4 h-4" />}
         >
-          Import Leads
+          {isImporting ? 'Importing...' : 'Import Leads'}
         </Button>
       </div>
     </div>

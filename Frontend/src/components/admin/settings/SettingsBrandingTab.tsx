@@ -99,8 +99,13 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
 
   // Handle URL Link
   const handleApplyLogoUrl = () => {
-    if (!customLogoUrl.trim()) return;
-    setCompanyLogo(customLogoUrl.trim());
+    const trimmed = customLogoUrl.trim();
+    if (!trimmed) return;
+    if (!/^https?:\/\//i.test(trimmed) && !trimmed.startsWith('data:image/')) {
+      setLogoError('Only secure http:// or https:// image URLs are permitted.');
+      return;
+    }
+    setCompanyLogo(trimmed);
     setCustomLogoUrl('');
     setLogoError(null);
   };

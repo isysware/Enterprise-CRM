@@ -102,6 +102,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
   // Validation state
   const [nameError, setNameError] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Find matching pricing model item based on current budgetType
   const activePricingModel = useMemo(() => {
@@ -335,6 +336,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     let hasError = false;
     if (!name.trim()) {
@@ -446,7 +448,9 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
       });
     }
 
+    setIsSubmitting(true);
     onClose();
+    setIsSubmitting(false);
   };
 
   const modalFooter = (
@@ -470,9 +474,10 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
           variant="primary"
           size="md"
           onClick={handleSubmit}
+          disabled={isSubmitting}
           leftIcon={<Check className="w-4 h-4" />}
         >
-          {leadToEdit ? 'Save Changes' : 'Create Lead'}
+          {isSubmitting ? 'Saving...' : leadToEdit ? 'Save Changes' : 'Create Lead'}
         </Button>
       </div>
     </div>
