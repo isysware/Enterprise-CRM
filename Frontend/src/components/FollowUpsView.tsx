@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useCRM } from '../context/CRMContext';
 import { FollowUp, FollowUpType } from '../types';
 import {
@@ -18,7 +18,7 @@ import {
   X
 } from 'lucide-react';
 import { formatDate, getWhatsAppUrl, getLocalDateString, classifyFollowUp } from '../utils/formatters';
-import { PageHeader, Card, CardHeader, CardTitle, CardContent, StatCard, Badge, Button, Input, Select, EmptyState, DataTableScrollFrame } from './ui';
+import { PageHeader, Card, CardHeader, CardTitle, CardContent, Badge, Button, Input, Select, EmptyState, DataTableScrollFrame } from './ui';
 
 interface FollowUpsViewProps {
   initialTab?: 'today' | 'missed' | 'upcoming' | 'done';
@@ -41,44 +41,70 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('All');
   const [selectedTeam, setSelectedTeam] = useState<string>('All');
+  const [selectedEmployee, setSelectedEmployee] = useState<string>('All');
 
   const todayStr = getLocalDateString();
 
-  // Tab Filtering logic
-  const todayList = scopedFollowUps.filter(f => classifyFollowUp(f, todayStr) === 'today');
-  const missedList = scopedFollowUps.filter(f => classifyFollowUp(f, todayStr) === 'missed');
-  const upcomingList = scopedFollowUps.filter(f => classifyFollowUp(f, todayStr) === 'upcoming');
-  const doneList = scopedFollowUps.filter(f => classifyFollowUp(f, todayStr) === 'completed');
+  // Scoped employees based on selected team
+  const availableEmployees = useMemo(() => {
+    if (selectedTeam === 'All') return scopedUsers;
+    return scopedUsers.filter(u => u.teamId === selectedTeam);
+  }, [scopedUsers, selectedTeam]);
 
-  let currentTabList: FollowUp[] = [];
-  if (activeTab === 'today') currentTabList = todayList;
-  else if (activeTab === 'missed') currentTabList = missedList;
-  else if (activeTab === 'upcoming') currentTabList = upcomingList;
-  else if (activeTab === 'done') currentTabList = doneList;
+  // Base follow-ups strictly filtered by Team and Employee
+  const baseFollowUps = useMemo(() => {
+    return scopedFollowUps.filter(fu => {
+      if (selectedTeam !== 'All') {
+        const assignedUser = users.find(u => u.id === fu.assignedToId);
+        const leadObj = leads.find(l => l.id === fu.leadId);
+        const fuTeamId = assignedUser?.teamId || leadObj?.teamId;
+        if (fuTeamId !== selectedTeam) {
+          return false;
+        }
+      }
+      if (selectedEmployee !== 'All') {
+        const matchId = fu.assignedToId === selectedEmployee;
+        const emp = users.find(u => u.id === selectedEmployee);
+        const matchName = emp && (fu.assignedToName === emp.name || fu.assignedToName === emp.email);
+        if (!matchId && !matchName) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [scopedFollowUps, selectedTeam, selectedEmployee, users, leads]);
 
-  // Search, Type & Team filters
-  const filteredList = currentTabList.filter(fu => {
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const matchClient = fu.clientName.toLowerCase().includes(q);
-      const matchBiz = fu.clientBusiness.toLowerCase().includes(q);
-      const matchPhone = fu.phone.toLowerCase().includes(q);
-      const matchNotes = fu.notes.toLowerCase().includes(q);
-      if (!matchClient && !matchBiz && !matchPhone && !matchNotes) return false;
-    }
-    if (selectedType !== 'All' && fu.type !== selectedType) {
-      return false;
-    }
-    if (selectedTeam !== 'All') {
-      const assignedUser = users.find(u => u.id === fu.assignedToId);
-      const leadObj = leads.find(l => l.id === fu.leadId);
-      const fuTeamId = assignedUser?.teamId || leadObj?.teamId;
-      if (fuTeamId !== selectedTeam) {
+  // Tab Filtering logic based on team/employee filtered baseFollowUps
+  const todayList = useMemo(() => baseFollowUps.filter(f => classifyFollowUp(f, todayStr) === 'today'), [baseFollowUps, todayStr]);
+  const missedList = useMemo(() => baseFollowUps.filter(f => classifyFollowUp(f, todayStr) === 'missed'), [baseFollowUps, todayStr]);
+  const upcomingList = useMemo(() => baseFollowUps.filter(f => classifyFollowUp(f, todayStr) === 'upcoming'), [baseFollowUps, todayStr]);
+  const doneList = useMemo(() => baseFollowUps.filter(f => classifyFollowUp(f, todayStr) === 'completed'), [baseFollowUps, todayStr]);
+
+  const currentTabList = useMemo(() => {
+    if (activeTab === 'today') return todayList;
+    if (activeTab === 'missed') return missedList;
+    if (activeTab === 'upcoming') return upcomingList;
+    if (activeTab === 'done') return doneList;
+    return [];
+  }, [activeTab, todayList, missedList, upcomingList, doneList]);
+
+  // Search & Type filters applied on current active tab list
+  const filteredList = useMemo(() => {
+    return currentTabList.filter(fu => {
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchClient = fu.clientName.toLowerCase().includes(q);
+        const matchBiz = fu.clientBusiness.toLowerCase().includes(q);
+        const matchPhone = fu.phone.toLowerCase().includes(q);
+        const matchNotes = fu.notes.toLowerCase().includes(q);
+        if (!matchClient && !matchBiz && !matchPhone && !matchNotes) return false;
+      }
+      if (selectedType !== 'All' && fu.type !== selectedType) {
         return false;
       }
-    }
-    return true;
-  });
+      return true;
+    });
+  }, [currentTabList, searchQuery, selectedType]);
 
   const tabDefs = [
     { id: 'today', label: 'Due Today', count: todayList.length, icon: Calendar, variant: 'warning' as const },
@@ -110,46 +136,6 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
         }
       />
 
-      {/* B. SUMMARY KPI STRIP (4 Compact Cards, Clickable to Switch Tabs) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Due Today"
-          value={todayList.length}
-          subtitle="Calls & touchpoints scheduled for today"
-          variant="warning"
-          icon={<Calendar className="w-5 h-5" />}
-          onClick={() => setActiveTab('today')}
-          className={activeTab === 'today' ? 'ring-2 ring-[#2563EB]/40 border-[#2563EB]' : ''}
-        />
-        <StatCard
-          title="Missed Follow-Ups"
-          value={missedList.length}
-          subtitle="Overdue touchpoints requiring immediate action"
-          variant="danger"
-          icon={<AlertTriangle className="w-5 h-5" />}
-          onClick={() => setActiveTab('missed')}
-          className={activeTab === 'missed' ? 'ring-2 ring-rose-500/40 border-rose-300' : ''}
-        />
-        <StatCard
-          title="Upcoming Activity"
-          value={upcomingList.length}
-          subtitle="Scheduled upcoming future interactions"
-          variant="primary"
-          icon={<Clock className="w-5 h-5 text-[#2563EB]" />}
-          onClick={() => setActiveTab('upcoming')}
-          className={activeTab === 'upcoming' ? 'ring-2 ring-[#2563EB]/40 border-[#2563EB]' : ''}
-        />
-        <StatCard
-          title="Completed"
-          value={doneList.length}
-          subtitle="Successfully executed follow-ups"
-          variant="success"
-          icon={<CheckCircle2 className="w-5 h-5" />}
-          onClick={() => setActiveTab('done')}
-          className={activeTab === 'done' ? 'ring-2 ring-emerald-500/40 border-emerald-300' : ''}
-        />
-      </div>
-
       {/* C. PRIMARY SEGMENTED FILTERS / TABS & SEARCH ROW */}
       <Card>
         <div className="p-3.5 space-y-3">
@@ -174,7 +160,7 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
                     <Icon className="w-3.5 h-3.5" />
                     <span>{tab.label}</span>
                     <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-medium ${
                         isActive
                           ? 'bg-[#EFF6FF] text-[#2563EB] dark:bg-blue-950/60'
                           : 'bg-white/80 dark:bg-slate-700 text-[#64748B] dark:text-slate-300'
@@ -187,7 +173,7 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
               })}
             </div>
 
-            {/* Quick Filters: Search, Team & Type */}
+            {/* Quick Filters: Search, Team, Employee & Type */}
             <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
               <div className="w-full sm:w-56">
                 <Input
@@ -208,11 +194,26 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
               <div className="w-36">
                 <Select
                   value={selectedTeam}
-                  onChange={e => setSelectedTeam(e.target.value)}
+                  onChange={e => {
+                    setSelectedTeam(e.target.value);
+                    setSelectedEmployee('All');
+                  }}
                 >
                   <option value="All">{currentUser?.role === 'Employee' ? 'My Team' : 'All Teams'}</option>
                   {baseTeams.map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="w-40">
+                <Select
+                  value={selectedEmployee}
+                  onChange={e => setSelectedEmployee(e.target.value)}
+                >
+                  <option value="All">{currentUser?.role === 'Employee' ? 'My Follow-Ups' : 'All Employees'}</option>
+                  {availableEmployees.map(u => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
                   ))}
                 </Select>
               </div>

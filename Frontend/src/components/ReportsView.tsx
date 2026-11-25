@@ -229,12 +229,18 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           description: 'Comprehensive analysis of pipeline velocity, stage progression, conversion yields, and deal valuations.',
           recordCount: filteredLeads.length
         };
-      case 'team-staff':
+      case 'team-staff': {
+        const filteredCount = scopedUsers.filter(u => {
+          if (filterState.teamId !== 'All' && u.teamId !== filterState.teamId) return false;
+          if (filterState.userId !== 'All' && u.id !== filterState.userId) return false;
+          return true;
+        }).length;
         return {
           title: 'Team & Staff Performance',
           description: 'Sales representative accountability, conversion ratios, pipeline load, and follow-up discipline.',
-          recordCount: scopedUsers.length
+          recordCount: filteredCount
         };
+      }
       case 'followups-activity':
         return {
           title: 'Follow-Ups & Interaction Activity',
@@ -297,7 +303,12 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
       }
       case 'team-staff': {
         const headers = ['Representative', 'Email', 'Role', 'Team', 'Assigned Leads', 'Converted', 'Conversion Rate %', 'Pipeline Value PKR'];
-        const rows = scopedUsers.map(u => {
+        const usersForExport = scopedUsers.filter(u => {
+          if (filterState.teamId !== 'All' && u.teamId !== filterState.teamId) return false;
+          if (filterState.userId !== 'All' && u.id !== filterState.userId) return false;
+          return true;
+        });
+        const rows = usersForExport.map(u => {
           const uLeads = filteredLeads.filter(l => l.assignedToId === u.id);
           const uWon = uLeads.filter(l => ['Converted', 'Won'].includes(l.status)).length;
           const uVal = uLeads.reduce((s, l) => s + parseAmount(l.value), 0);
@@ -452,6 +463,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               scopedTeams={scopedTeams}
               scopedLeads={filteredLeads}
               scopedFollowUps={filteredFollowUps}
+              selectedTeamId={filterState.teamId}
+              selectedUserId={filterState.userId}
             />
           )}
 

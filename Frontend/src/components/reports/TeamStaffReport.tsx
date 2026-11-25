@@ -19,6 +19,8 @@ interface TeamStaffReportProps {
   scopedTeams: Team[];
   scopedLeads: Lead[];
   scopedFollowUps: FollowUp[];
+  selectedTeamId?: string;
+  selectedUserId?: string;
 }
 
 export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
@@ -26,7 +28,9 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
   scopedUsers,
   scopedTeams,
   scopedLeads,
-  scopedFollowUps
+  scopedFollowUps,
+  selectedTeamId = 'All',
+  selectedUserId = 'All'
 }) => {
   const isEmployee = currentUser?.role === 'Employee';
 
@@ -38,10 +42,18 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
 
   // 1. REP PERFORMANCE METRICS
   const repMetrics = useMemo(() => {
-    // If employee, strictly only current user
-    const usersToCompute = isEmployee
-      ? scopedUsers.filter(u => u.id === currentUser?.id)
-      : scopedUsers;
+    let usersToCompute = scopedUsers;
+
+    if (isEmployee) {
+      usersToCompute = scopedUsers.filter(u => u.id === currentUser?.id);
+    } else {
+      if (selectedTeamId && selectedTeamId !== 'All') {
+        usersToCompute = usersToCompute.filter(u => u.teamId === selectedTeamId);
+      }
+      if (selectedUserId && selectedUserId !== 'All') {
+        usersToCompute = usersToCompute.filter(u => u.id === selectedUserId);
+      }
+    }
 
     return usersToCompute.map(user => {
       const userLeads = scopedLeads.filter(l => l.assignedToId === user.id);
@@ -67,13 +79,26 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
         missedFollowUps: missedFUs
       };
     });
-  }, [scopedUsers, scopedLeads, scopedFollowUps, isEmployee, currentUser, todayStr]);
+  }, [scopedUsers, scopedLeads, scopedFollowUps, isEmployee, currentUser, selectedTeamId, selectedUserId, todayStr]);
 
   // 2. TEAM PERFORMANCE METRICS
   const teamMetrics = useMemo(() => {
     if (isEmployee) return [];
 
-    return scopedTeams.map(team => {
+    let teamsToCompute = scopedTeams;
+    if (selectedTeamId && selectedTeamId !== 'All') {
+      teamsToCompute = teamsToCompute.filter(t => t.id === selectedTeamId);
+    }
+    if (selectedUserId && selectedUserId !== 'All') {
+      const userObj = scopedUsers.find(u => u.id === selectedUserId);
+      if (userObj?.teamId) {
+        teamsToCompute = teamsToCompute.filter(t => t.id === userObj.teamId);
+      } else {
+        teamsToCompute = teamsToCompute.filter(t => t.memberIds?.includes(selectedUserId));
+      }
+    }
+
+    return teamsToCompute.map(team => {
       const teamLeads = scopedLeads.filter(l => l.teamId === team.id);
       const converted = teamLeads.filter(l => ['Converted', 'Won'].includes(l.status)).length;
       const pipelineVal = teamLeads.reduce((sum, l) => sum + parseAmount(l.value), 0);
@@ -99,13 +124,19 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
         missedFollowUps: missedFUs
       };
     });
-  }, [scopedTeams, scopedLeads, scopedFollowUps, isEmployee, todayStr]);
+  }, [scopedTeams, scopedUsers, scopedLeads, scopedFollowUps, isEmployee, selectedTeamId, selectedUserId, todayStr]);
 
   // 3. MANAGERS / LEADS METRICS
   const managerMetrics = useMemo(() => {
     if (isEmployee) return [];
 
-    const leaders = scopedUsers.filter(u => u.role === 'Manager' || u.role === 'Team Lead');
+    let leaders = scopedUsers.filter(u => u.role === 'Manager' || u.role === 'Team Lead');
+    if (selectedTeamId && selectedTeamId !== 'All') {
+      leaders = leaders.filter(l => l.teamId === selectedTeamId);
+    }
+    if (selectedUserId && selectedUserId !== 'All') {
+      leaders = leaders.filter(l => l.id === selectedUserId);
+    }
 
     return leaders.map(leader => {
       // Leads where assigned or reporting
@@ -128,7 +159,7 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
         pipelineValue: pipelineVal
       };
     });
-  }, [scopedUsers, scopedLeads, isEmployee]);
+  }, [scopedUsers, scopedLeads, isEmployee, selectedTeamId, selectedUserId]);
 
   // If Employee role: show single-user "My Performance" card and personal metrics
   if (isEmployee) {
@@ -164,27 +195,27 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assigned Leads</p>
-            <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">{myStats.assignedCount}</p>
+            <p className="text-2xl font-medium text-slate-900 dark:text-white mt-1">{myStats.assignedCount}</p>
           </div>
           <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Converted</p>
-            <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">{myStats.convertedCount}</p>
+            <p className="text-2xl font-medium text-emerald-600 dark:text-emerald-400 mt-1">{myStats.convertedCount}</p>
           </div>
           <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Conversion Rate</p>
-            <p className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">{myStats.conversionRate}%</p>
+            <p className="text-2xl font-medium text-blue-600 dark:text-blue-400 mt-1">{myStats.conversionRate}%</p>
           </div>
           <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pipeline Value</p>
-            <p className="text-base font-extrabold text-slate-900 dark:text-white mt-1 truncate">{formatPKR(myStats.pipelineValue)}</p>
+            <p className="text-base font-medium text-slate-900 dark:text-white mt-1 truncate">{formatPKR(myStats.pipelineValue)}</p>
           </div>
           <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending Follow-Ups</p>
-            <p className="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-1">{myStats.pendingFollowUps}</p>
+            <p className="text-2xl font-medium text-amber-600 dark:text-amber-400 mt-1">{myStats.pendingFollowUps}</p>
           </div>
           <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Missed Follow-Ups</p>
-            <p className="text-2xl font-extrabold text-rose-600 dark:text-rose-400 mt-1">{myStats.missedFollowUps}</p>
+            <p className="text-2xl font-medium text-rose-600 dark:text-rose-400 mt-1">{myStats.missedFollowUps}</p>
           </div>
         </div>
       </div>
@@ -258,40 +289,48 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {repMetrics.map(r => (
-                  <tr key={r.userId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3.5">
-                      <p className="font-bold text-slate-900 dark:text-white">{r.name}</p>
-                      <p className="text-[11px] text-slate-400 font-mono">{r.email}</p>
-                    </td>
-                    <td className="p-3.5">
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        {r.role}
-                      </span>
-                    </td>
-                    <td className="p-3.5 text-slate-600 dark:text-slate-300 font-medium">
-                      {r.teamName}
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
-                      {r.assignedCount}
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {r.convertedCount}
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-blue-600 dark:text-blue-400">
-                      {r.conversionRate}%
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
-                      {formatPKR(r.pipelineValue)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-amber-600 dark:text-amber-400 font-semibold">
-                      {r.pendingFollowUps}
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-rose-600 dark:text-rose-400 font-semibold">
-                      {r.missedFollowUps}
+                {repMetrics.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="p-8 text-center text-slate-400 font-medium">
+                      No sales representatives match the selected filters.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  repMetrics.map(r => (
+                    <tr key={r.userId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="p-3.5">
+                        <p className="font-bold text-slate-900 dark:text-white">{r.name}</p>
+                        <p className="text-[11px] text-slate-400 font-mono">{r.email}</p>
+                      </td>
+                      <td className="p-3.5">
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          {r.role}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-slate-600 dark:text-slate-300 font-medium">
+                        {r.teamName}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
+                        {r.assignedCount}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                        {r.convertedCount}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-blue-600 dark:text-blue-400">
+                        {r.conversionRate}%
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
+                        {formatPKR(r.pipelineValue)}
+                      </td>
+                      <td className="p-3.5 text-right font-mono text-amber-600 dark:text-amber-400 font-semibold">
+                        {r.pendingFollowUps}
+                      </td>
+                      <td className="p-3.5 text-right font-mono text-rose-600 dark:text-rose-400 font-semibold">
+                        {r.missedFollowUps}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </DataTableScrollFrame>
@@ -326,38 +365,46 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {teamMetrics.map(t => (
-                  <tr key={t.teamId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3.5">
-                      <p className="font-bold text-slate-900 dark:text-white">{t.name}</p>
-                      {t.code && <p className="text-[10px] text-slate-400 font-mono">Code: {t.code}</p>}
-                    </td>
-                    <td className="p-3.5 text-slate-700 dark:text-slate-300 font-medium">
-                      {t.managerName}
-                    </td>
-                    <td className="p-3.5 text-slate-700 dark:text-slate-300 font-medium">
-                      {t.leaderName}
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
-                      {t.memberCount}
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
-                      {t.assignedCount}
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {t.convertedCount}
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-blue-600 dark:text-blue-400">
-                      {t.conversionRate}%
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
-                      {formatPKR(t.pipelineValue)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-amber-600 dark:text-amber-400 font-semibold">
-                      {t.pendingFollowUps}
+                {teamMetrics.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="p-8 text-center text-slate-400 font-medium">
+                      No teams match the selected filters.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  teamMetrics.map(t => (
+                    <tr key={t.teamId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="p-3.5">
+                        <p className="font-bold text-slate-900 dark:text-white">{t.name}</p>
+                        {t.code && <p className="text-[10px] text-slate-400 font-mono">Code: {t.code}</p>}
+                      </td>
+                      <td className="p-3.5 text-slate-700 dark:text-slate-300 font-medium">
+                        {t.managerName}
+                      </td>
+                      <td className="p-3.5 text-slate-700 dark:text-slate-300 font-medium">
+                        {t.leaderName}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
+                        {t.memberCount}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
+                        {t.assignedCount}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                        {t.convertedCount}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-blue-600 dark:text-blue-400">
+                        {t.conversionRate}%
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
+                        {formatPKR(t.pipelineValue)}
+                      </td>
+                      <td className="p-3.5 text-right font-mono text-amber-600 dark:text-amber-400 font-semibold">
+                        {t.pendingFollowUps}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </DataTableScrollFrame>
@@ -390,33 +437,41 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {managerMetrics.map(m => (
-                  <tr key={m.userId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3.5 font-bold text-slate-900 dark:text-white">
-                      {m.name}
-                    </td>
-                    <td className="p-3.5">
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        {m.role}
-                      </span>
-                    </td>
-                    <td className="p-3.5 text-slate-600 dark:text-slate-300 font-medium">
-                      {m.teamName}
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
-                      {m.totalLeads}
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {m.convertedCount}
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-blue-600 dark:text-blue-400">
-                      {m.conversionRate}%
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
-                      {formatPKR(m.pipelineValue)}
+                {managerMetrics.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-slate-400 font-medium">
+                      No managers or team leads match the selected filters.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  managerMetrics.map(m => (
+                    <tr key={m.userId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="p-3.5 font-bold text-slate-900 dark:text-white">
+                        {m.name}
+                      </td>
+                      <td className="p-3.5">
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          {m.role}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-slate-600 dark:text-slate-300 font-medium">
+                        {m.teamName}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
+                        {m.totalLeads}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                        {m.convertedCount}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-blue-600 dark:text-blue-400">
+                        {m.conversionRate}%
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
+                        {formatPKR(m.pipelineValue)}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </DataTableScrollFrame>
