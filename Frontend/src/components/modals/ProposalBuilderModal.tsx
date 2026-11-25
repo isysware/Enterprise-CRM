@@ -1234,11 +1234,14 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                               </td>
                             </tr>
                           )}
-                          <tr className="bg-slate-900 text-white font-medium text-sm">
-                            <td colSpan={4} className="py-2.5 px-3 text-right uppercase tracking-wider">
+                          <tr
+                            className="bg-sky-500 text-white font-medium text-sm"
+                            style={{ backgroundColor: '#0ea5e9', color: '#ffffff' }}
+                          >
+                            <td colSpan={4} className="py-2.5 px-3 text-right uppercase tracking-wider text-white">
                               Grand Total Payable ({settings.currency || 'PKR'}):
                             </td>
-                            <td colSpan={2} className="py-2.5 px-3 text-right font-mono text-base text-emerald-400">
+                            <td colSpan={2} className="py-2.5 px-3 text-right font-mono text-base font-bold text-white">
                               {settings.currencySymbol || 'Rs.'} {(grandTotal || 0).toLocaleString()}
                             </td>
                           </tr>

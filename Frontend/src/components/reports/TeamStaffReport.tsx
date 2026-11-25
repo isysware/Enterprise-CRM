@@ -67,12 +67,21 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
       const pendingFUs = userFUs.filter(f => f.status === 'Pending').length;
       const missedFUs = userFUs.filter(f => f.status === 'Missed' || (f.status === 'Pending' && f.scheduledDate < todayStr)).length;
 
+      // Total leads: for Super Admin/Admin it includes all scoped leads, for team members it includes team/assigned pool
+      const totalLeadsCount = (user.role === 'Super Admin' || user.role === 'Admin')
+        ? scopedLeads.length
+        : scopedLeads.filter(l =>
+            l.assignedToId === user.id ||
+            (user.teamId && (l.teamId === user.teamId || l.teamName === user.teamName))
+          ).length;
+
       return {
         userId: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
         teamName: user.teamName || 'Direct',
+        totalLeads: totalLeadsCount,
         assignedCount: userLeads.length,
         convertedCount: converted,
         conversionRate: convRate,
@@ -354,6 +363,7 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
                   <th className="p-3.5 min-w-[180px]">Sales Rep</th>
                   <th className="p-3.5 min-w-[120px]">Role</th>
                   <th className="p-3.5 min-w-[150px]">Team</th>
+                  <th className="p-3.5 min-w-[120px] text-right">Total Leads</th>
                   <th className="p-3.5 min-w-[120px] text-right">Assigned Leads</th>
                   <th className="p-3.5 min-w-[120px] text-right">Converted</th>
                   <th className="p-3.5 min-w-[120px] text-right">Conversion Rate</th>
@@ -365,7 +375,7 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {repMetrics.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center text-slate-400 font-medium">
+                    <td colSpan={10} className="p-8 text-center text-slate-400 font-medium">
                       No sales representatives match the selected filters.
                     </td>
                   </tr>
@@ -383,6 +393,9 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
                       </td>
                       <td className="p-3.5 text-slate-600 dark:text-slate-300 font-medium">
                         {r.teamName}
+                      </td>
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
+                        {r.totalLeads}
                       </td>
                       <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
                         {r.assignedCount}

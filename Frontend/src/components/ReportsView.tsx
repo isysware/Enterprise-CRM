@@ -302,7 +302,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         return { headers, rows, baseName: 'iSysware_Sales_Pipeline' };
       }
       case 'team-staff': {
-        const headers = ['Representative', 'Email', 'Role', 'Team', 'Assigned Leads', 'Converted', 'Conversion Rate %', 'Pipeline Value PKR'];
+        const headers = ['Representative', 'Email', 'Role', 'Team', 'Total Leads', 'Assigned Leads', 'Converted', 'Conversion Rate %', 'Pipeline Value PKR'];
         const usersForExport = scopedUsers.filter(u => {
           if (filterState.teamId !== 'All' && u.teamId !== filterState.teamId) return false;
           if (filterState.userId !== 'All' && u.id !== filterState.userId) return false;
@@ -310,10 +310,16 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         });
         const rows = usersForExport.map(u => {
           const uLeads = filteredLeads.filter(l => l.assignedToId === u.id);
+          const totalLeadsCount = (u.role === 'Super Admin' || u.role === 'Admin')
+            ? filteredLeads.length
+            : filteredLeads.filter(l =>
+                l.assignedToId === u.id ||
+                (u.teamId && (l.teamId === u.teamId || l.teamName === u.teamName))
+              ).length;
           const uWon = uLeads.filter(l => ['Converted', 'Won'].includes(l.status)).length;
           const uVal = uLeads.reduce((s, l) => s + parseAmount(l.value), 0);
           const rate = uLeads.length > 0 ? Math.round((uWon / uLeads.length) * 100) : 0;
-          return [u.name, u.email, u.role, u.teamName || '', uLeads.length, uWon, rate, uVal];
+          return [u.name, u.email, u.role, u.teamName || '', totalLeadsCount, uLeads.length, uWon, rate, uVal];
         });
         return { headers, rows, baseName: 'iSysware_Team_Performance' };
       }
