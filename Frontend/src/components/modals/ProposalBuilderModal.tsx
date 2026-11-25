@@ -1237,8 +1237,8 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                             </tr>
                           )}
                           <tr
-                            className="bg-sky-500 text-white font-medium text-sm"
-                            style={{ backgroundColor: '#0ea5e9', color: '#ffffff' }}
+                            className="bg-[#2563EB] text-white font-medium text-sm"
+                            style={{ backgroundColor: '#2563EB', color: '#ffffff' }}
                           >
                             <td colSpan={4} className="py-2.5 px-3 text-right uppercase tracking-wider text-white">
                               Grand Total Payable ({settings.currency || 'PKR'}):

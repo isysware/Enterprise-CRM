@@ -1,123 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useCRM } from '../context/CRMContext';
 import { UserRole } from '../types';
 import {
-  ShieldCheck,
-  Lock,
   Mail,
-  ArrowRight,
-  AlertCircle,
+  Lock,
   Eye,
   EyeOff,
-  Building2,
-  Check,
-  KeyRound,
+  AlertCircle,
   X,
-  Sparkles,
-  Users,
-  Briefcase,
-  Layers,
+  KeyRound,
+  ShieldCheck,
   Crown,
-  TrendingUp,
-  ChevronLeft,
-  ChevronRight,
-  Activity,
-  CheckCircle2,
-  DollarSign,
-  BarChart3,
-  CalendarCheck,
-  Target
+  Briefcase,
+  Users,
+  Layers,
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
-import { getRoleBadgeStyle } from '../utils/formatters';
 
 const ROLE_PRESETS: {
   role: UserRole;
   email: string;
   pass: string;
   title: string;
-  description: string;
   icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  badgeBg: string;
 }[] = [
   {
     role: 'Super Admin',
     email: 'superadmin@crm.com',
     pass: 'Admin@123',
     title: 'Super Admin',
-    description: 'Master system & user access',
-    icon: Crown,
-    color: 'from-amber-500 to-orange-600',
-    badgeBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+    icon: Crown
   },
   {
     role: 'Admin',
     email: 'admin@crm.com',
     pass: 'Admin@123',
     title: 'Admin',
-    description: 'Full CRM & team management',
-    icon: ShieldCheck,
-    color: 'from-blue-600 to-indigo-600',
-    badgeBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+    icon: ShieldCheck
   },
   {
     role: 'Manager',
     email: 'manager@crm.com',
     pass: 'Manager@123',
     title: 'Manager',
-    description: 'Team leads & reports',
-    icon: Briefcase,
-    color: 'from-purple-600 to-pink-600',
-    badgeBg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
+    icon: Briefcase
   },
   {
     role: 'Team Lead',
     email: 'teamlead@crm.com',
     pass: 'Lead@123',
     title: 'Team Lead',
-    description: 'Team oversight & pipeline',
-    icon: Users,
-    color: 'from-teal-600 to-emerald-600',
-    badgeBg: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20'
+    icon: Users
   },
   {
     role: 'Employee',
     email: 'employee@crm.com',
     pass: 'Emp@123',
     title: 'Employee',
-    description: 'Assigned leads & follow-ups',
-    icon: Layers,
-    color: 'from-slate-600 to-slate-700',
-    badgeBg: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20'
-  }
-];
-
-const SHOWCASE_SLIDES = [
-  {
-    tag: 'ENTERPRISE CRM PLATFORM',
-    title: 'Unified Sales Pipelines & Role-Based Governance',
-    desc: 'Accelerate deal velocity, manage inquiries seamlessly, and empower every team member with role-tailored workspaces.',
-    stat1: { label: 'Active Pipeline Yield', val: '79.4%' },
-    stat2: { label: 'Avg Deal Velocity', val: '14 Days' }
-  },
-  {
-    tag: 'FOLLOW-UP AUTOMATION',
-    title: 'Intelligent Interaction & Multi-Touch Scheduling',
-    desc: 'Never let a prospective client slip away. Track WhatsApp touchpoints, direct calls, proposals, and automated alerts in real-time.',
-    stat1: { label: 'Follow-Up Quota', val: '98.2%' },
-    stat2: { label: 'Response Time', val: '< 15 Mins' }
-  },
-  {
-    tag: 'FINANCIAL INTELLIGENCE',
-    title: 'Multi-Model Commercial & Revenue Analytics',
-    desc: 'Deep financial visibility across SaaS monthly subscriptions, one-time project contracts, and enterprise software ownership.',
-    stat1: { label: 'Monthly Revenue', val: 'Rs. 4.8M+' },
-    stat2: { label: 'Retention Rate', val: '96.5%' }
+    icon: Layers
   }
 ];
 
 export const LoginPage: React.FC = () => {
-  const { login, users, settings } = useCRM();
+  const { login, settings } = useCRM();
 
   const [selectedRole, setSelectedRole] = useState<UserRole>('Super Admin');
   const [email, setEmail] = useState('superadmin@crm.com');
@@ -127,26 +73,7 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [activeSlide, setActiveSlide] = useState(0);
-
-  // Auto rotate showcase slides
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveSlide(prev => (prev + 1) % SHOWCASE_SLIDES.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Handle switching role tab
-  const handleSelectRole = (role: UserRole) => {
-    setSelectedRole(role);
-    setError(null);
-    const preset = ROLE_PRESETS.find(p => p.role === role);
-    if (preset) {
-      setEmail(preset.email);
-      setPassword(preset.pass);
-    }
-  };
+  const [showDemoRoles, setShowDemoRoles] = useState(false);
 
   // Quick Auto-Fill Handler
   const handleQuickFill = (role: UserRole, customEmail?: string, customPass?: string) => {
@@ -171,299 +98,94 @@ export const LoginPage: React.FC = () => {
     }, 180);
   };
 
-  const matchedUser = users.find(u => u.email.toLowerCase().trim() === email.toLowerCase().trim());
-  const activePreset = ROLE_PRESETS.find(p => p.role === selectedRole);
-  const currentSlide = SHOWCASE_SLIDES[activeSlide];
-
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white font-sans">
-      {/* ========================================================================= */}
-      {/* LEFT SIDE: BRAND & DASHBOARD 3D SHOWCASE (DEEP INDIGO/PURPLE CANVAS)      */}
-      {/* ========================================================================= */}
-      <div className="lg:w-1/2 xl:w-[52%] relative bg-gradient-to-br from-[#3730a3] via-[#4338ca] to-[#1e1b4b] p-6 sm:p-10 lg:p-12 xl:p-16 flex flex-col justify-between overflow-hidden text-white min-h-[500px] lg:min-h-screen">
-        {/* Soft Glowing Geometric Abstract Ambient Shapes */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-24 -left-24 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute top-1/3 -right-24 w-96 h-96 bg-indigo-400/25 rounded-full blur-3xl" />
-          <div className="absolute -bottom-24 left-1/4 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl" />
-          {/* Subtle geometric dot grid overlay */}
-          <div
-            className="absolute inset-0 opacity-[0.07]"
-            style={{
-              backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-              backgroundSize: '24px 24px'
-            }}
-          />
-        </div>
-
-        {/* Top Brand Tagline */}
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {settings.companyLogo ? (
-              <div className="w-10 h-10 flex items-center justify-center">
+    <div className="min-h-screen w-full bg-[#F8FAFC] dark:bg-slate-950 p-3 sm:p-5 lg:p-8 flex items-center justify-center font-sans antialiased">
+      {/* Outer Card Container */}
+      <div className="w-full max-w-[1400px] min-h-[780px] bg-white dark:bg-slate-900 rounded-3xl lg:rounded-[36px] shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row overflow-hidden">
+        
+        {/* ========================================================================= */}
+        {/* LEFT COLUMN: BRAND LOGO + LOGIN FORM + SOCIALS + FOOTER                  */}
+        {/* ========================================================================= */}
+        <div className="w-full lg:w-1/2 p-6 sm:p-10 lg:p-14 xl:p-16 flex flex-col justify-between">
+          {/* Top Brand Logo */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              {settings.companyLogo ? (
                 <img
                   src={settings.companyLogo}
                   alt={settings.companyName || 'Logo'}
-                  className="w-full h-full object-contain"
+                  className="h-8 w-auto object-contain"
                   referrerPolicy="no-referrer"
                 />
-              </div>
-            ) : (
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-400 to-purple-300 p-0.5 shadow-lg shadow-indigo-900/40">
-                <div className="w-full h-full bg-[#312e81] rounded-[10px] flex items-center justify-center font-medium text-base text-white">
-                  {settings.companyName ? settings.companyName.charAt(0) : 'i'}
+              ) : (
+                <div className="w-8 h-8 rounded-xl bg-[#2563EB] flex items-center justify-center text-white font-bold text-sm shadow-md shadow-blue-500/20">
+                  <Sparkles className="w-4 h-4 text-white" />
                 </div>
-              </div>
-            )}
-            <div>
-              <h2 className="text-lg font-medium tracking-tight text-white flex items-center gap-2">
-                <span>{settings.companyName || 'iSysware'}</span>
-                <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20">
-                  CRM System
-                </span>
-              </h2>
-            </div>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs text-indigo-100">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-            <span className="font-semibold">v3.4 Enterprise</span>
-          </div>
-        </div>
-
-        {/* Center: Modern Floating 3D-Angled CRM Dashboard Showcase Card */}
-        <div className="relative z-10 my-8 lg:my-auto flex flex-col items-center justify-center">
-          <div className="w-full max-w-lg relative group">
-            {/* Ambient Backlight Behind Showcase Card */}
-            <div className="absolute -inset-1.5 bg-gradient-to-r from-pink-500/30 via-indigo-400/40 to-purple-600/30 rounded-3xl blur-xl opacity-75 group-hover:opacity-100 transition duration-500" />
-
-            {/* The Main 3D Angled Glass Dashboard Container */}
-            <div className="relative rounded-2xl sm:rounded-3xl bg-slate-950/80 backdrop-blur-xl border border-white/20 p-5 sm:p-6 shadow-2xl space-y-4 transform transition-all duration-300 hover:scale-[1.01]">
-              {/* Showcase Card Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-3 h-3 rounded-full bg-rose-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                  <span className="text-[11px] font-mono font-medium text-slate-400 ml-2">live-crm-pipeline.isysware</span>
-                </div>
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  Active Session
-                </span>
-              </div>
-
-              {/* Showcase Top Stats Row */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {/* Metric 1: Visitors / Leads */}
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Leads</p>
-                  <p className="text-xl font-medium text-white mt-0.5">20.3K</p>
-                  <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-0.5 mt-0.5">
-                    <TrendingUp className="w-3 h-3" /> +14.8% this week
-                  </span>
-                </div>
-
-                {/* Metric 2: Conversion Rate */}
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Yield Rate</p>
-                  <p className="text-xl font-medium text-indigo-300 mt-0.5">79.4%</p>
-                  <span className="text-[10px] font-bold text-indigo-400 flex items-center gap-0.5 mt-0.5">
-                    <CheckCircle2 className="w-3 h-3" /> Industry Leading
-                  </span>
-                </div>
-
-                {/* Metric 3: Active Revenue */}
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 col-span-2 sm:col-span-1">
-                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Pipeline Value</p>
-                  <p className="text-xl font-medium text-emerald-400 font-mono mt-0.5">Rs. 8.4M</p>
-                  <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">SaaS + Projects</span>
-                </div>
-              </div>
-
-              {/* Mini SVG Revenue Trend Line Chart */}
-              <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
-                    <Activity className="w-3.5 h-3.5 text-indigo-400" />
-                    Revenue &amp; Deal Flow Velocity
-                  </span>
-                  <span className="text-[11px] font-mono text-emerald-400 font-bold">+28.5% Growth</span>
-                </div>
-
-                <div className="h-20 w-full relative pt-1">
-                  <svg className="w-full h-full overflow-visible" viewBox="0 0 300 70" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#818cf8" stopOpacity="0.45" />
-                        <stop offset="100%" stopColor="#818cf8" stopOpacity="0.0" />
-                      </linearGradient>
-                    </defs>
-                    {/* Area fill */}
-                    <path
-                      d="M 0 50 Q 50 45, 90 30 T 170 35 T 230 15 T 300 8 L 300 70 L 0 70 Z"
-                      fill="url(#chartGrad)"
-                    />
-                    {/* Glowing Stroke */}
-                    <path
-                      d="M 0 50 Q 50 45, 90 30 T 170 35 T 230 15 T 300 8"
-                      fill="none"
-                      stroke="#a5b4fc"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                    {/* Highlight Pulsing Node at end */}
-                    <circle cx="300" cy="8" r="4.5" fill="#38bdf8" />
-                    <circle cx="300" cy="8" r="8" fill="#38bdf8" opacity="0.3" className="animate-ping" />
-                  </svg>
-                </div>
-
-                <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono pt-1">
-                  <span>Week 1</span>
-                  <span>Week 2</span>
-                  <span>Week 3</span>
-                  <span className="text-white font-bold">Week 4 (Peak)</span>
-                </div>
-              </div>
-
-              {/* Deal Pipeline Status Chips */}
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                  <Check className="w-3 h-3" /> Closed Won (PKR 350k)
-                </span>
-                <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> Live Demo Completed
-                </span>
-                <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-                  <CalendarCheck className="w-3 h-3" /> 18 Follow-Ups Today
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Feature Carousel / Testimonials */}
-        <div className="relative z-10 pt-6 border-t border-white/15 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-medium uppercase tracking-widest text-indigo-300 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-              {currentSlide.tag}
-            </span>
-
-            {/* Navigation Dots & Arrows */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 mr-2">
-                {SHOWCASE_SLIDES.map((_, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setActiveSlide(idx)}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                      activeSlide === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
-                    }`}
-                    aria-label={`Slide ${idx + 1}`}
-                  />
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setActiveSlide(prev => (prev === 0 ? SHOWCASE_SLIDES.length - 1 : prev - 1))}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
-                title="Previous slide"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveSlide(prev => (prev + 1) % SHOWCASE_SLIDES.length)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
-                title="Next slide"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-1 animate-fadeIn">
-            <h3 className="text-base sm:text-lg font-medium text-white leading-snug">
-              {currentSlide.title}
-            </h3>
-            <p className="text-xs sm:text-sm text-indigo-100/80 leading-relaxed max-w-xl">
-              {currentSlide.desc}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* RIGHT SIDE: CLEAN, MINIMALIST AUTHENTICATION FORM (CRISP SURFACE)         */}
-      {/* ========================================================================= */}
-      <div className="lg:w-1/2 xl:w-[48%] bg-white dark:bg-slate-950 text-slate-900 dark:text-white flex items-center justify-center p-6 sm:p-10 lg:p-12 xl:p-16 relative overflow-y-auto">
-        <div className="w-full max-w-md space-y-6 my-auto">
-          {/* Header Section */}
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/80 text-indigo-600 dark:text-indigo-400 text-xs font-bold">
-              <Building2 className="w-3.5 h-3.5" />
-              <span>{settings.companyName || 'iSysware'} CRM</span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-medium text-slate-900 dark:text-white tracking-tight">
-              Welcome back!
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-              Please enter your credentials or choose your assigned role to access your personalized CRM workspace.
-            </p>
-          </div>
-
-          {/* Role Selection Tabs / Segmented Buttons */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">
-                  1
-                </span>
-                <span>Select Portal Role</span>
-              </label>
-
-              <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
-                {selectedRole}
+              )}
+              <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                {settings.companyName || 'iSysware'}
               </span>
             </div>
 
-            {/* Clean Segmented Role Pills Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
-              {ROLE_PRESETS.map(preset => {
-                const isSelected = selectedRole === preset.role;
-                const IconComponent = preset.icon;
-
-                return (
-                  <button
-                    key={preset.role}
-                    type="button"
-                    onClick={() => handleSelectRole(preset.role)}
-                    className={`py-2 px-2 rounded-xl text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 border ${
-                      isSelected
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-bold'
-                        : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-white font-medium'
-                    }`}
-                  >
-                    <IconComponent className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
-                    <span className="text-[10px] leading-tight truncate w-full">{preset.title}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowDemoRoles(!showDemoRoles)}
+              className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300 border border-blue-100 dark:border-blue-800 hover:bg-blue-100 transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>{showDemoRoles ? 'Hide Demo Logins' : 'Quick Demo Logins'}</span>
+            </button>
           </div>
 
-          {/* Authentication Form */}
-          <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-            {/* Inline Red Error Alert Box */}
+          {/* Quick Demo Roles Bar (Expandable) */}
+          {showDemoRoles && (
+            <div className="my-4 p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 animate-fadeIn">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                  Select 1-Click Role Login:
+                </span>
+                <span className="text-[10px] text-slate-400">Auto-fills credentials</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                {ROLE_PRESETS.map(p => {
+                  const isSelected = selectedRole === p.role;
+                  const Icon = p.icon;
+                  return (
+                    <button
+                      key={p.role}
+                      type="button"
+                      onClick={() => handleQuickFill(p.role, p.email, p.pass)}
+                      className={`p-2 rounded-xl text-center text-xs font-semibold flex flex-col items-center gap-1 transition-all cursor-pointer border ${
+                        isSelected
+                          ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-xs'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-blue-300'
+                      }`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-[#2563EB]'}`} />
+                      <span className="text-[10px] truncate w-full">{p.title}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Center Form Section */}
+          <div className="max-w-md w-full mx-auto my-8 space-y-6">
+            <div className="space-y-1.5 text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                Welcome Back
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                Enter your email and password to access your account.
+              </p>
+            </div>
+
+            {/* Error Message Alert */}
             {error && (
               <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5 animate-fadeIn">
                 <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-semibold">{error}</p>
-                </div>
+                <div className="flex-1 font-semibold">{error}</div>
                 <button
                   type="button"
                   onClick={() => setError(null)}
@@ -474,142 +196,292 @@ export const LoginPage: React.FC = () => {
               </div>
             )}
 
-            {/* Email Address Input */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Mail className="w-4 h-4" />
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email Input */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Email
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="name@company.com"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563EB] transition-all"
+                  />
                 </div>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="e.g. superadmin@crm.com"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                />
               </div>
-            </div>
 
-            {/* Password Input with Show/Hide Toggle */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Lock className="w-4 h-4" />
+              {/* Password Input */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-11 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563EB] transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                    tabIndex={-1}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-11 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                />
+              </div>
+
+              {/* Remember Me & Forgot Password Row */}
+              <div className="flex items-center justify-between text-xs pt-0.5">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={e => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-[#2563EB] focus:ring-blue-500 cursor-pointer"
+                  />
+                  <span className="text-slate-600 dark:text-slate-400 font-medium">Remember Me</span>
+                </label>
+
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                  tabIndex={-1}
-                  title={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowForgotModal(true)}
+                  className="font-medium text-[#2563EB] dark:text-blue-400 hover:underline transition-colors cursor-pointer"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  Forgot Your Password?
                 </button>
               </div>
-            </div>
 
-            {/* Options Row: Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between text-xs pt-0.5">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={e => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-900 cursor-pointer"
-                />
-                <span className="text-slate-600 dark:text-slate-400 font-medium">Remember me</span>
-              </label>
-
-              <button
-                type="button"
-                onClick={() => setShowForgotModal(true)}
-                className="font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors cursor-pointer"
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            {/* Primary Action Button: Gradient Purple Login */}
-            <div className="pt-2">
+              {/* Primary Log In Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-purple-500 text-white font-bold text-sm py-3 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 active:scale-[0.99] transition-all disabled:opacity-70 cursor-pointer"
+                className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-sm py-3 px-6 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 active:scale-[0.99] transition-all disabled:opacity-70 cursor-pointer"
               >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <>
-                    <span>Sign In to CRM</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
+                  <span>Log In</span>
                 )}
               </button>
-            </div>
-          </form>
 
-          {/* Quick 1-Click Demo Testing Toolbar */}
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                Quick 1-Click Demo Portals:
-              </span>
-              <span className="text-[10px] text-slate-400">Auto-fills credentials</span>
-            </div>
+              {/* Or Login With Divider */}
+              <div className="relative flex items-center justify-center py-2">
+                <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
+                <span className="bg-white dark:bg-slate-900 px-3 text-[11px] text-slate-400 font-medium whitespace-nowrap">
+                  Or Login With
+                </span>
+                <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
+              </div>
 
-            <div className="flex flex-wrap gap-1.5">
-              {ROLE_PRESETS.map(p => (
+              {/* Social Login Buttons: Google & Apple */}
+              <div className="grid grid-cols-2 gap-3">
                 <button
-                  key={p.role}
                   type="button"
-                  onClick={() => handleQuickFill(p.role, p.email, p.pass)}
-                  className="text-xs bg-slate-100 dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-800 px-2.5 py-1.5 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+                  onClick={() => handleQuickFill('Super Admin')}
+                  className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
                 >
-                  <p.icon className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>{p.title}</span>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                  </svg>
+                  <span>Google</span>
                 </button>
-              ))}
-            </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickFill('Admin')}
+                  className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.89c.66-.82 1.11-1.96.99-3.1-.96.04-2.11.64-2.8 1.45-.6.7-.1.14-1.84 1.05-3.04 1.07-.02 2.1.88 2.86 1.69z" />
+                  </svg>
+                  <span>Apple</span>
+                </button>
+              </div>
+
+              {/* Register Callout */}
+              <p className="text-center text-xs text-slate-500 dark:text-slate-400 pt-2">
+                Don't Have An Account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(true)}
+                  className="font-semibold text-[#2563EB] hover:underline cursor-pointer"
+                >
+                  Register Now.
+                </button>
+              </p>
+            </form>
           </div>
 
-          {/* Footer Security Notice */}
-          <div className="text-center text-[11px] text-slate-400 flex items-center justify-center gap-1.5 pt-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Role-Based Access Control &amp; Session Persistence Active</span>
+          {/* Bottom Copyright and Privacy Links */}
+          <div className="flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-100 dark:border-slate-800/80 pt-4">
+            <span>Copyright © 2026 {settings.companyName || 'iSysware'} Enterprises LTD.</span>
+            <button
+              type="button"
+              onClick={() => setShowForgotModal(true)}
+              className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+            >
+              Privacy Policy
+            </button>
           </div>
         </div>
+
+        {/* ========================================================================= */}
+        {/* RIGHT COLUMN: VIBRANT ROYAL BLUE HERO CARD WITH DASHBOARD MOCKUP         */}
+        {/* ========================================================================= */}
+        <div className="w-full lg:w-1/2 p-3 sm:p-5 lg:p-6 flex">
+          <div className="w-full rounded-2xl sm:rounded-3xl lg:rounded-[32px] bg-gradient-to-br from-[#2563EB] via-[#1D4ED8] to-[#1E40AF] p-6 sm:p-10 lg:p-12 text-white flex flex-col justify-between relative overflow-hidden shadow-xl">
+            
+            {/* Background Geometric Rings Overlay (Matching Image Style) */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-15">
+              <div className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full border-[60px] border-white" />
+              <div className="absolute top-1/4 -right-16 w-[450px] h-[450px] rounded-full border-[40px] border-white" />
+              <div className="absolute -bottom-24 -left-24 w-[350px] h-[350px] rounded-full border-[30px] border-white" />
+            </div>
+
+            {/* Hero Header Copy */}
+            <div className="relative z-10 max-w-xl space-y-3">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white leading-tight">
+                Effortlessly manage your team and operations.
+              </h2>
+              <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed font-normal">
+                Log in to access your CRM dashboard and manage your team.
+              </p>
+            </div>
+
+            {/* Dashboard Floating Showcase Mockup (Exact Match to Image) */}
+            <div className="relative z-10 mt-8 mb-2 flex items-center justify-center">
+              <div className="w-full max-w-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-2xl text-slate-800 dark:text-slate-100 border border-white/20 relative">
+                
+                {/* Top Metrics Row */}
+                <div className="grid grid-cols-3 gap-2.5 mb-3">
+                  {/* Metric 1: Total Sales */}
+                  <div className="bg-[#5B46F6]/10 dark:bg-indigo-950/60 rounded-xl p-2.5 border border-[#5B46F6]/20">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Total Sales</span>
+                    <span className="text-sm sm:text-base font-bold text-[#5B46F6] dark:text-indigo-400 block mt-0.5">$189,374</span>
+                    <span className="text-[8px] font-bold text-[#5B46F6] bg-[#5B46F6]/15 px-1 py-0.5 rounded mt-1 inline-block">+14% this month</span>
+                  </div>
+
+                  {/* Metric 2: Deal Performance */}
+                  <div className="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-2.5 border border-slate-100 dark:border-slate-700">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Deal Performance</span>
+                    <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white block mt-0.5">00:01:30</span>
+                    <div className="h-4 w-full mt-1">
+                      <svg viewBox="0 0 80 16" className="w-full h-full">
+                        <path d="M 0 12 Q 20 4, 40 8 T 80 2" fill="none" stroke="#6366F1" strokeWidth="2" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Metric 3: Total Profit */}
+                  <div className="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-2.5 border border-slate-100 dark:border-slate-700">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Total Profit</span>
+                    <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white block mt-0.5">$25,684</span>
+                    <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded mt-1 inline-block">+8% growth</span>
+                  </div>
+                </div>
+
+                {/* Overlapping Floating Donut/Gauge Card */}
+                <div className="absolute -top-6 -right-4 sm:-right-6 w-36 sm:w-44 bg-white dark:bg-slate-850 rounded-2xl p-3 shadow-xl border border-slate-200/80 dark:border-slate-700 text-center z-20">
+                  <div className="flex items-center justify-between text-[9px] font-bold text-slate-500 pb-1">
+                    <span>Sales Categories</span>
+                    <span className="text-[8px] text-blue-600">Monthly</span>
+                  </div>
+
+                  {/* Semi-Donut Gauge SVG */}
+                  <div className="relative w-24 h-14 mx-auto my-1">
+                    <svg viewBox="0 0 100 55" className="w-full h-full">
+                      <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#E2E8F0" strokeWidth="12" strokeLinecap="round" />
+                      <path d="M 10 50 A 40 40 0 0 1 75 22" fill="none" stroke="#5B46F6" strokeWidth="12" strokeLinecap="round" />
+                      <path d="M 75 22 A 40 40 0 0 1 90 50" fill="none" stroke="#A78BFA" strokeWidth="12" strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-end pb-1">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white leading-none">8,248</span>
+                      <span className="text-[8px] text-slate-400">Units</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-0.5 text-[8px] text-left text-slate-600 dark:text-slate-300 font-medium pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#5B46F6]" /> Software Suite</span>
+                      <span className="font-bold">52%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#A78BFA]" /> POS Licenses</span>
+                      <span className="font-bold">30%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mini Data Table Preview */}
+                <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden text-[9px]">
+                  <div className="bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1.5 font-bold text-slate-400 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+                    <span>RECENT CONVERSIONS</span>
+                    <span>STATUS</span>
+                  </div>
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                    <div className="px-2.5 py-1.5 flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 block">ARFO Men's Salon</span>
+                        <span className="text-[8px] text-slate-400">Enterprise POS • PKR 65,000</span>
+                      </div>
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-bold text-[8px]">Closed Won</span>
+                    </div>
+                    <div className="px-2.5 py-1.5 flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 block">The Shave Club</span>
+                        <span className="text-[8px] text-slate-400">Cloud ERP • Follow-up Today</span>
+                      </div>
+                      <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-bold text-[8px]">Pending F/U</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Bottom Subtle Pill */}
+            <div className="relative z-10 flex items-center justify-between text-[11px] text-blue-200/80 pt-4 border-t border-white/10">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-300" />
+                <span>Enterprise Grade Security &amp; End-to-End Encryption</span>
+              </span>
+              <span className="font-mono text-[10px] text-white font-bold bg-white/15 px-2 py-0.5 rounded-full">v3.4 Live</span>
+            </div>
+
+          </div>
+        </div>
+
       </div>
 
-      {/* Forgot Password Credentials Modal */}
+      {/* Forgot Password / Credentials Reset Help Modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-fadeIn text-slate-900 dark:text-white">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#2563EB] flex items-center justify-center">
                   <KeyRound className="w-4 h-4" />
                 </div>
                 <h3 className="font-bold text-base">Account Credentials Help</h3>
               </div>
               <button
+                type="button"
                 onClick={() => setShowForgotModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -624,23 +496,23 @@ export const LoginPage: React.FC = () => {
               <ul className="space-y-1.5 text-slate-600 dark:text-slate-400 font-mono text-[11px]">
                 <li className="flex items-center justify-between">
                   <span>• Super Admin:</span>
-                  <span className="text-indigo-600 dark:text-indigo-300 font-semibold">superadmin@crm.com / Admin@123</span>
+                  <span className="text-[#2563EB] font-semibold">superadmin@crm.com / Admin@123</span>
                 </li>
                 <li className="flex items-center justify-between">
                   <span>• Admin:</span>
-                  <span className="text-indigo-600 dark:text-indigo-300 font-semibold">admin@crm.com / Admin@123</span>
+                  <span className="text-[#2563EB] font-semibold">admin@crm.com / Admin@123</span>
                 </li>
                 <li className="flex items-center justify-between">
                   <span>• Manager:</span>
-                  <span className="text-indigo-600 dark:text-indigo-300 font-semibold">manager@crm.com / Manager@123</span>
+                  <span className="text-[#2563EB] font-semibold">manager@crm.com / Manager@123</span>
                 </li>
                 <li className="flex items-center justify-between">
                   <span>• Team Lead:</span>
-                  <span className="text-indigo-600 dark:text-indigo-300 font-semibold">teamlead@crm.com / Lead@123</span>
+                  <span className="text-[#2563EB] font-semibold">teamlead@crm.com / Lead@123</span>
                 </li>
                 <li className="flex items-center justify-between">
                   <span>• Employee:</span>
-                  <span className="text-indigo-600 dark:text-indigo-300 font-semibold">employee@crm.com / Emp@123</span>
+                  <span className="text-[#2563EB] font-semibold">employee@crm.com / Emp@123</span>
                 </li>
               </ul>
             </div>
@@ -648,13 +520,14 @@ export const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowForgotModal(false)}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2.5 rounded-xl transition-colors cursor-pointer"
+              className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs py-2.5 rounded-xl transition-colors cursor-pointer"
             >
               Got It
             </button>
           </div>
         </div>
       )}
+
     </div>
   );
 };
