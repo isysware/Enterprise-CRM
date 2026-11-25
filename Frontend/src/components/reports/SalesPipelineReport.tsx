@@ -15,9 +15,10 @@ import { DataTableScrollFrame } from '../ui';
 
 interface SalesPipelineReportProps {
   leads: Lead[];
+  filterBar?: React.ReactNode;
 }
 
-export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads }) => {
+export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads, filterBar }) => {
   // Calculations strictly from authorized filtered leads
   const totalLeads = leads.length;
 
@@ -37,55 +38,9 @@ export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads 
     ? Math.round((convertedLeads.length / totalLeads) * 100)
     : 0;
 
-  // Stages breakdown
-  const stages: { label: string; count: number; value: number; color: string; bg: string }[] = [
-    {
-      label: 'New Inflow',
-      count: leads.filter(l => l.status === 'New').length,
-      value: leads.filter(l => l.status === 'New').reduce((sum, l) => sum + parseAmount(l.value), 0),
-      color: 'text-blue-700 dark:text-blue-400',
-      bg: 'bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-900'
-    },
-    {
-      label: 'Contacted',
-      count: leads.filter(l => l.status === 'Contacted').length,
-      value: leads.filter(l => l.status === 'Contacted').reduce((sum, l) => sum + parseAmount(l.value), 0),
-      color: 'text-indigo-700 dark:text-indigo-400',
-      bg: 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-900'
-    },
-    {
-      label: 'Follow-Up Required',
-      count: leads.filter(l => l.status === 'Follow-Up Required').length,
-      value: leads.filter(l => l.status === 'Follow-Up Required').reduce((sum, l) => sum + parseAmount(l.value), 0),
-      color: 'text-amber-700 dark:text-amber-400',
-      bg: 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-900'
-    },
-    {
-      label: 'Qualified',
-      count: leads.filter(l => l.status === 'Qualified').length,
-      value: leads.filter(l => l.status === 'Qualified').reduce((sum, l) => sum + parseAmount(l.value), 0),
-      color: 'text-purple-700 dark:text-purple-400',
-      bg: 'bg-purple-50 dark:bg-purple-950/60 border-purple-200 dark:border-purple-900'
-    },
-    {
-      label: 'Converted / Won',
-      count: convertedLeads.length,
-      value: convertedValue,
-      color: 'text-emerald-700 dark:text-emerald-400',
-      bg: 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-900'
-    },
-    {
-      label: 'Lost / Closed',
-      count: lostLeads.length,
-      value: lostLeads.reduce((sum, l) => sum + parseAmount(l.value), 0),
-      color: 'text-slate-600 dark:text-slate-400',
-      bg: 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
-    }
-  ];
-
   return (
-    <div className="space-y-6">
-      {/* 1. Top KPI Summary Cards */}
+    <div className="space-y-5">
+      {/* 1. Top KPI Summary Cards (Cards on TOP) */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Total Leads */}
         <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
@@ -185,40 +140,8 @@ export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads 
         </div>
       </div>
 
-      {/* 2. Pipeline Stages Breakdown */}
-      <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-              Pipeline Stage Distribution
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Live funnel stages, opportunity count, and volume in PKR
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {stages.map(st => (
-            <div
-              key={st.label}
-              className={`p-3 rounded-xl border ${st.bg} flex flex-col justify-between`}
-            >
-              <div>
-                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
-                  {st.label}
-                </p>
-                <p className={`text-xl font-medium mt-1 ${st.color}`}>
-                  {st.count}
-                </p>
-              </div>
-              <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 text-[11px] text-slate-600 dark:text-slate-300 font-medium">
-                {formatPKR(st.value)}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* 2. Global Filter Bar (Filters BELOW Cards) */}
+      {filterBar}
 
       {/* 3. Detailed Sales & Pipeline Table */}
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden">

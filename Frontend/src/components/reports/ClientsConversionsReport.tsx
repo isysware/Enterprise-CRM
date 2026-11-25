@@ -13,9 +13,10 @@ import { DataTableScrollFrame } from '../ui';
 
 interface ClientsConversionsReportProps {
   clients: Client[];
+  filterBar?: React.ReactNode;
 }
 
-export const ClientsConversionsReport: React.FC<ClientsConversionsReportProps> = ({ clients }) => {
+export const ClientsConversionsReport: React.FC<ClientsConversionsReportProps> = ({ clients, filterBar }) => {
   const totalClients = clients.length;
   const activeClients = clients.filter(c => c.status === 'Active' || !c.status).length;
   const totalRevenue = clients.reduce((sum, c) => sum + getClientRevenue(c), 0);
@@ -41,8 +42,8 @@ export const ClientsConversionsReport: React.FC<ClientsConversionsReportProps> =
   }));
 
   return (
-    <div className="space-y-6">
-      {/* 1. Summary Cards */}
+    <div className="space-y-5">
+      {/* 1. Summary Cards (Cards on TOP) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
@@ -91,7 +92,10 @@ export const ClientsConversionsReport: React.FC<ClientsConversionsReportProps> =
         </div>
       </div>
 
-      {/* 2. Conversion Sources Summary */}
+      {/* 2. Global Filter Bar (Filters BELOW Cards) */}
+      {filterBar}
+
+      {/* 3. Conversion Sources Summary */}
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
         <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
           Client Acquisition by Origin Channel

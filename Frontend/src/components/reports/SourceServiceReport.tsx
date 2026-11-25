@@ -17,13 +17,15 @@ interface SourceServiceReportProps {
   clients: Client[];
   sources: string[];
   services: ServiceItem[];
+  filterBar?: React.ReactNode;
 }
 
 export const SourceServiceReport: React.FC<SourceServiceReportProps> = ({
   leads,
   clients,
   sources,
-  services
+  services,
+  filterBar
 }) => {
   const [activeTab, setActiveTab] = useState<'sources' | 'services'>('sources');
 
@@ -78,7 +80,10 @@ export const SourceServiceReport: React.FC<SourceServiceReportProps> = ({
   }).sort((a, b) => b.leadCount - a.leadCount);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Global Filter Bar (Filters on top of tabs) */}
+      {filterBar}
+
       {/* Sub-tab Switcher */}
       <div className="flex items-center gap-2 border-b border-[#E5EAF1] dark:border-slate-800 pb-2">
         <button

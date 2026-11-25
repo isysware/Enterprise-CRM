@@ -435,25 +435,25 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           />
         </div>
 
-        {/* Global Report Filter Bar — hidden on print */}
-        <div className="no-print mb-4">
-          <ReportFilterBar
-            activeReport={activeReport}
-            currentUserRole={currentUser?.role}
-            filterState={filterState}
-            onChangeFilter={handleUpdateFilter}
-            onResetFilters={handleResetFilters}
-            availableTeams={scopedTeams}
-            availableUsers={availableUsers}
-            availableSources={availableSources}
-            availableServices={availableServices}
-          />
-        </div>
-
-        {/* Active Consolidated Report Content Section */}
+        {/* Active Consolidated Report Content Section (Cards are on TOP, Filters are inside each report BELOW cards) */}
         <main aria-label={reportMeta.title} className="print:p-0">
           {activeReport === 'sales-pipeline' && (
-            <SalesPipelineReport leads={filteredLeads} />
+            <SalesPipelineReport
+              leads={filteredLeads}
+              filterBar={
+                <ReportFilterBar
+                  activeReport={activeReport}
+                  currentUserRole={currentUser?.role}
+                  filterState={filterState}
+                  onChangeFilter={handleUpdateFilter}
+                  onResetFilters={handleResetFilters}
+                  availableTeams={scopedTeams}
+                  availableUsers={availableUsers}
+                  availableSources={availableSources}
+                  availableServices={availableServices}
+                />
+              }
+            />
           )}
 
           {activeReport === 'team-staff' && (
@@ -465,6 +465,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               scopedFollowUps={filteredFollowUps}
               selectedTeamId={filterState.teamId}
               selectedUserId={filterState.userId}
+              filterBar={
+                <ReportFilterBar
+                  activeReport={activeReport}
+                  currentUserRole={currentUser?.role}
+                  filterState={filterState}
+                  onChangeFilter={handleUpdateFilter}
+                  onResetFilters={handleResetFilters}
+                  availableTeams={scopedTeams}
+                  availableUsers={availableUsers}
+                  availableSources={availableSources}
+                  availableServices={availableServices}
+                />
+              }
             />
           )}
 
@@ -472,12 +485,38 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
             <FollowUpsActivityReport
               followUps={filteredFollowUps}
               leads={filteredLeads}
+              filterBar={
+                <ReportFilterBar
+                  activeReport={activeReport}
+                  currentUserRole={currentUser?.role}
+                  filterState={filterState}
+                  onChangeFilter={handleUpdateFilter}
+                  onResetFilters={handleResetFilters}
+                  availableTeams={scopedTeams}
+                  availableUsers={availableUsers}
+                  availableSources={availableSources}
+                  availableServices={availableServices}
+                />
+              }
             />
           )}
 
           {activeReport === 'clients-conversions' && (
             <ClientsConversionsReport
               clients={filteredClients}
+              filterBar={
+                <ReportFilterBar
+                  activeReport={activeReport}
+                  currentUserRole={currentUser?.role}
+                  filterState={filterState}
+                  onChangeFilter={handleUpdateFilter}
+                  onResetFilters={handleResetFilters}
+                  availableTeams={scopedTeams}
+                  availableUsers={availableUsers}
+                  availableSources={availableSources}
+                  availableServices={availableServices}
+                />
+              }
             />
           )}
 
@@ -487,6 +526,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               clients={filteredClients}
               sources={availableSources}
               services={services}
+              filterBar={
+                <ReportFilterBar
+                  activeReport={activeReport}
+                  currentUserRole={currentUser?.role}
+                  filterState={filterState}
+                  onChangeFilter={handleUpdateFilter}
+                  onResetFilters={handleResetFilters}
+                  availableTeams={scopedTeams}
+                  availableUsers={availableUsers}
+                  availableSources={availableSources}
+                  availableServices={availableServices}
+                />
+              }
             />
           )}
 
@@ -495,6 +547,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               clients={filteredClients}
               leads={filteredLeads}
               pricingModels={pricingModels}
+              filterBar={
+                <ReportFilterBar
+                  activeReport={activeReport}
+                  currentUserRole={currentUser?.role}
+                  filterState={filterState}
+                  onChangeFilter={handleUpdateFilter}
+                  onResetFilters={handleResetFilters}
+                  availableTeams={scopedTeams}
+                  availableUsers={availableUsers}
+                  availableSources={availableSources}
+                  availableServices={availableServices}
+                />
+              }
             />
           )}
         </main>

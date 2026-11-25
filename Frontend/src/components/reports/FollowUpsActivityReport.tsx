@@ -17,11 +17,13 @@ import { DataTableScrollFrame } from '../ui';
 interface FollowUpsActivityReportProps {
   followUps: FollowUp[];
   leads: Lead[];
+  filterBar?: React.ReactNode;
 }
 
 export const FollowUpsActivityReport: React.FC<FollowUpsActivityReportProps> = ({
   followUps,
-  leads
+  leads,
+  filterBar
 }) => {
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -106,19 +108,24 @@ export const FollowUpsActivityReport: React.FC<FollowUpsActivityReportProps> = (
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs col-span-2 sm:col-span-1">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Completion Rate</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-medium text-slate-900 dark:text-white">{completionRate}%</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all col-span-2 sm:col-span-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Completion Rate</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
               Overall
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Activity fulfillment ratio</p>
+          <div>
+            <div className="text-2xl font-medium text-slate-900 dark:text-white leading-none tracking-tight">{completionRate}%</div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Activity fulfillment ratio</p>
+          </div>
         </div>
       </div>
 
-      {/* 2. Type Breakdown Cards */}
+      {/* 2. Global Filter Bar (Filters BELOW Cards) */}
+      {filterBar}
+
+      {/* 3. Type Breakdown Cards */}
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
         <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
           Activity by Channel &amp; Type

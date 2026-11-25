@@ -15,11 +15,13 @@ interface CommercialRevenueReportProps {
   clients: Client[];
   leads: Lead[];
   pricingModels?: PricingModelItem[];
+  filterBar?: React.ReactNode;
 }
 
 export const CommercialRevenueReport: React.FC<CommercialRevenueReportProps> = ({
   clients,
-  leads
+  leads,
+  filterBar
 }) => {
   const totalRevenue = clients.reduce((sum, c) => sum + getClientRevenue(c), 0);
   const totalPipelineValue = leads.reduce((sum, l) => sum + parseAmount(l.value), 0);
@@ -136,7 +138,10 @@ export const CommercialRevenueReport: React.FC<CommercialRevenueReportProps> = (
         </div>
       </div>
 
-      {/* 2. Pricing Models Breakdown Grid */}
+      {/* 2. Global Filter Bar (Filters BELOW Cards) */}
+      {filterBar}
+
+      {/* 3. Pricing Models Breakdown Grid */}
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden">
         <div className="p-4 sm:p-5 border-b border-[#E5EAF1] dark:border-slate-800">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">

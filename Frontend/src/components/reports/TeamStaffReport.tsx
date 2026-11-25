@@ -21,6 +21,7 @@ interface TeamStaffReportProps {
   scopedFollowUps: FollowUp[];
   selectedTeamId?: string;
   selectedUserId?: string;
+  filterBar?: React.ReactNode;
 }
 
 export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
@@ -30,7 +31,8 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
   scopedLeads,
   scopedFollowUps,
   selectedTeamId = 'All',
-  selectedUserId = 'All'
+  selectedUserId = 'All',
+  filterBar
 }) => {
   const isEmployee = currentUser?.role === 'Employee';
 
@@ -230,14 +232,74 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Global Filter Bar (Filters BELOW Cards) */}
+        {filterBar}
       </div>
     );
   }
 
-  // Non-employee view: Sub-tabs for Reps, Teams, Managers
+  // Non-employee view: Summary Cards on top, Filters below, then Sub-tabs
   return (
     <div className="space-y-5">
-      {/* Sub-section tab switcher */}
+      {/* 1. Team & Staff Summary KPI Cards (Cards on TOP) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Staff</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+              Reps
+            </span>
+          </div>
+          <div>
+            <div className="text-2xl font-medium text-slate-900 dark:text-white leading-none tracking-tight">{repMetrics.length}</div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Scoped sales workforce</p>
+          </div>
+        </div>
+
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Departments &amp; Teams</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+              Units
+            </span>
+          </div>
+          <div>
+            <div className="text-2xl font-medium text-emerald-600 dark:text-emerald-400 leading-none tracking-tight">{teamMetrics.length}</div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Operating business units</p>
+          </div>
+        </div>
+
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Deals Converted</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+              Won
+            </span>
+          </div>
+          <div>
+            <div className="text-2xl font-medium text-slate-900 dark:text-white leading-none tracking-tight">
+              {repMetrics.reduce((s, r) => s + r.convertedCount, 0)}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Aggregate team closures</p>
+          </div>
+        </div>
+
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Pipeline Volume</span>
+          <div>
+            <div className="text-2xl font-medium text-blue-600 dark:text-blue-400 leading-none tracking-tight truncate">
+              {formatPKR(repMetrics.reduce((s, r) => s + r.pipelineValue, 0))}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Total active deal load</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Global Filter Bar (Filters BELOW Cards) */}
+      {filterBar}
+
+      {/* 3. Sub-section tab switcher */}
       <div className="flex items-center gap-2 border-b border-[#E5EAF1] dark:border-slate-800 pb-2">
         <button
           onClick={() => setSubSection('reps')}
