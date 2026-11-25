@@ -558,6 +558,57 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
           </div>
         </div>
 
+        {/* SUB-HEADER: A4 LIVE PREVIEW FIXED CONTROLS BAR (DOCKED AT TOP) */}
+        {activeTab === 'preview' && (
+          <div className="bg-white dark:bg-slate-950 border-b border-[#E5EAF1] dark:border-slate-800 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-2xs z-20">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-[#0F172A] dark:text-slate-300 flex items-center gap-1.5">
+                <Eye className="w-4 h-4 text-[#2563EB]" />
+                <span>A4 Document Preview</span>
+              </span>
+
+              <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-slate-400 cursor-pointer pl-3 border-l border-[#E5EAF1] dark:border-slate-800">
+                <input
+                  type="checkbox"
+                  checked={showLetterheadBg}
+                  onChange={e => setShowLetterheadBg(e.target.checked)}
+                  className="rounded text-[#2563EB] w-4 h-4 cursor-pointer"
+                />
+                <span>Render Letterhead Background</span>
+              </label>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCopySummary}
+                className="inline-flex items-center gap-1.5 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
+              >
+                {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{isCopied ? 'Copied' : 'Copy Summary'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShareWhatsApp}
+                className="inline-flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>Send via WhatsApp</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="inline-flex items-center gap-1.5 py-2 px-4 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print / Save as PDF</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* MODAL MAIN CONTENT */}
         <div className="flex-1 overflow-y-auto bg-[#F7F9FC] dark:bg-slate-900 p-4 sm:p-6">
           {activeTab === 'builder' ? (
@@ -1021,55 +1072,6 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
           ) : (
             /* A4 LIVE PREVIEW & EXPORT VIEW */
             <div className="space-y-5 max-w-4xl mx-auto">
-              {/* Preview Controls Bar */}
-              <div className="bg-white dark:bg-slate-950 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-xs">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-[#0F172A] dark:text-slate-300 flex items-center gap-1.5">
-                    <Eye className="w-4 h-4 text-[#2563EB]" />
-                    <span>A4 Document Preview</span>
-                  </span>
-
-                  <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-slate-400 cursor-pointer pl-3 border-l border-[#E5EAF1] dark:border-slate-800">
-                    <input
-                      type="checkbox"
-                      checked={showLetterheadBg}
-                      onChange={e => setShowLetterheadBg(e.target.checked)}
-                      className="rounded text-[#2563EB] w-4 h-4"
-                    />
-                    <span>Render Letterhead Background</span>
-                  </label>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleCopySummary}
-                    className="inline-flex items-center gap-1.5 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
-                  >
-                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{isCopied ? 'Copied' : 'Copy Summary'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleShareWhatsApp}
-                    className="inline-flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    <span>Send via WhatsApp</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handlePrint}
-                    className="inline-flex items-center gap-1.5 py-2 px-4 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs"
-                  >
-                    <Printer className="w-3.5 h-3.5" />
-                    <span>Print / Save as PDF</span>
-                  </button>
-                </div>
-              </div>
-
               {/* A4 PRINTABLE DOCUMENT CONTAINER */}
               <div
                 ref={printAreaRef}
