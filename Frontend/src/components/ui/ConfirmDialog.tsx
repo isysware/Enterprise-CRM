@@ -77,7 +77,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-slate-400 block tracking-wider">
               Target Record
             </span>
-            <span className="font-extrabold text-[#0F172A] dark:text-white text-sm block mt-0.5 truncate">
+            <span className="font-medium text-[#0F172A] dark:text-white text-sm block mt-0.5 truncate">
               {entityName}
             </span>
           </div>

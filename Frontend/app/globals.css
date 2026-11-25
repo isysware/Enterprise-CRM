@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-poppins), "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: var(--font-poppins), "Poppins", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-inter), "Inter", ui-monospace, SFMono-Regular, monospace;
 
   /* B2B SaaS Design System Tokens */
   --color-brand-primary: #2563EB;
@@ -189,4 +189,22 @@ textarea {
   th {
     background-color: #f8fafc !important;
   }
+}
+
+/* Permanently hide Next.js Dev Overlay / Indicator Toast Pill ("N 1 Issue · 1 Insight") */
+nextjs-portal,
+#nextjs-dev-overlay,
+[data-nextjs-toast],
+[data-nextjs-dialog-overlay],
+[data-nextjs-toast-wrapper],
+div[class*="nextjs-toast"],
+div[data-nextjs-dialog-root],
+[data-nextjs-dev-tools-indicator],
+[data-next-badge],
+button[aria-label="Next.js issues"],
+div:has(> button[aria-label="Next.js issues"]) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }

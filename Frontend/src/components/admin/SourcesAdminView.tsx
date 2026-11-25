@@ -118,7 +118,7 @@ export const SourcesAdminView: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] dark:text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-medium text-[#0F172A] dark:text-white tracking-tight">
               Lead Sources
             </h1>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300 border border-blue-200 dark:border-blue-800">
@@ -147,7 +147,7 @@ export const SourcesAdminView: React.FC = () => {
             Total Sources
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-[#0F172A] dark:text-white">
+            <span className="text-2xl font-medium text-[#0F172A] dark:text-white">
               {totalSourcesCount}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300">
@@ -164,7 +164,7 @@ export const SourcesAdminView: React.FC = () => {
             Active in Pipeline
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
+            <span className="text-2xl font-medium text-emerald-600 dark:text-emerald-400">
               {activeSourcesCount}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
@@ -181,7 +181,7 @@ export const SourcesAdminView: React.FC = () => {
             Unused Channels
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-slate-700 dark:text-slate-200">
+            <span className="text-2xl font-medium text-slate-700 dark:text-slate-200">
               {unusedSourcesCount}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[#64748B] dark:text-slate-400">
@@ -198,7 +198,7 @@ export const SourcesAdminView: React.FC = () => {
             Linked Leads
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-[#0F172A] dark:text-white">
+            <span className="text-2xl font-medium text-[#0F172A] dark:text-white">
               {totalAttributedLeads}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
@@ -284,7 +284,7 @@ export const SourcesAdminView: React.FC = () => {
                         <Icon className="w-4 h-4" />
                       </div>
                       <div>
-                        <span className="font-extrabold text-sm text-[#0F172A] dark:text-white block">
+                        <span className="font-medium text-sm text-[#0F172A] dark:text-white block">
                           {src}
                         </span>
                         <span className="text-[10px] text-[#64748B] dark:text-slate-400 font-medium">
@@ -317,7 +317,7 @@ export const SourcesAdminView: React.FC = () => {
                     <span className="text-xs font-semibold text-[#64748B] dark:text-slate-400">
                       Attributed Leads
                     </span>
-                    <span className="text-sm font-extrabold text-[#0F172A] dark:text-white">
+                    <span className="text-sm font-medium text-[#0F172A] dark:text-white">
                       {count}
                     </span>
                   </div>

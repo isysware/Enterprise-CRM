@@ -270,6 +270,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     priority: 'All'
   });
 
+  const [isHydrated, setIsHydrated] = useState(false);
   const isHydratedRef = useRef(false);
   const isFirstMountRef = useRef(true);
 
@@ -475,6 +476,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     } finally {
       isHydratedRef.current = true;
+      setIsHydrated(true);
     }
   }, []);
 
@@ -484,7 +486,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       isFirstMountRef.current = false;
       return;
     }
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     if (currentUser) {
       safeLocalStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}logged_out`);
       safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}current_user`, JSON.stringify(currentUser));
@@ -492,72 +494,72 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}logged_out`, 'true');
       safeLocalStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}current_user`);
     }
-  }, [currentUser]);
+  }, [currentUser, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}users`, JSON.stringify(users));
-  }, [users]);
+  }, [users, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}teams`, JSON.stringify(teams));
-  }, [teams]);
+  }, [teams, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}services`, JSON.stringify(services));
-  }, [services]);
+  }, [services, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}sources`, JSON.stringify(sources));
-  }, [sources]);
+  }, [sources, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}roles`, JSON.stringify(rolePermissions));
-  }, [rolePermissions]);
+  }, [rolePermissions, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}settings`, JSON.stringify(settings));
-  }, [settings]);
+  }, [settings, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}pricing_models`, JSON.stringify(pricingModels));
-  }, [pricingModels]);
+  }, [pricingModels, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}leads`, JSON.stringify(leads));
-  }, [leads]);
+  }, [leads, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}follow_ups`, JSON.stringify(followUps));
-  }, [followUps]);
+  }, [followUps, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}clients`, JSON.stringify(clients));
-  }, [clients]);
+  }, [clients, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}proposals`, JSON.stringify(proposals));
-  }, [proposals]);
+  }, [proposals, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}activity_logs`, JSON.stringify(activityLogs));
-  }, [activityLogs]);
+  }, [activityLogs, isHydrated]);
 
   useEffect(() => {
-    if (!isHydratedRef.current) return;
+    if (!isHydrated) return;
     safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}incoming_leads`, JSON.stringify(incomingLeads));
-  }, [incomingLeads]);
+  }, [incomingLeads, isHydrated]);
 
   // Logger helper
   const logAction = (
@@ -955,7 +957,11 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ]
     };
 
-    setLeads(prev => [newLead, ...prev]);
+    setLeads(prev => {
+      const updated = [newLead, ...prev];
+      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}leads`, JSON.stringify(updated));
+      return updated;
+    });
     logAction('Lead Created', 'Lead', newLead.businessName || newLead.name, `New lead added with value Rs. ${(newLead.valuePKR || 0).toLocaleString()}`, newId);
 
     // If follow-up date specified, automatically create a follow-up record
@@ -976,12 +982,20 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         assignedToName: newLead.assignedToName,
         createdAt: nowIso
       };
-      setFollowUps(prev => [newFollowUp, ...prev]);
+      setFollowUps(prev => {
+        const updatedFu = [newFollowUp, ...prev];
+        safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}follow_ups`, JSON.stringify(updatedFu));
+        return updatedFu;
+      });
     }
   };
 
   const updateLead = (updatedLead: Lead) => {
-    setLeads(prev => prev.map(l => l.id === updatedLead.id ? updatedLead : l));
+    setLeads(prev => {
+      const updated = prev.map(l => l.id === updatedLead.id ? updatedLead : l);
+      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}leads`, JSON.stringify(updated));
+      return updated;
+    });
     logAction('Lead Updated', 'Lead', updatedLead.businessName || updatedLead.name, `Details updated by ${currentUser?.name}`, updatedLead.id);
   };
 
@@ -990,8 +1004,16 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!lead) return false;
     if (!canDeleteLeadItem(lead)) return false;
 
-    setLeads(prev => prev.filter(l => l.id !== leadId));
-    setFollowUps(prev => prev.filter(f => f.leadId !== leadId));
+    setLeads(prev => {
+      const updated = prev.filter(l => l.id !== leadId);
+      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}leads`, JSON.stringify(updated));
+      return updated;
+    });
+    setFollowUps(prev => {
+      const updatedFu = prev.filter(f => f.leadId !== leadId);
+      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}follow_ups`, JSON.stringify(updatedFu));
+      return updatedFu;
+    });
     logAction('Lead Deleted', 'Lead', lead.businessName || lead.name, `Removed from pipeline`, leadId);
     return true;
   };

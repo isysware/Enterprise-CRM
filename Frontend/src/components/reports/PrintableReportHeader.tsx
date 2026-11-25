@@ -31,14 +31,14 @@ export const PrintableReportHeader: React.FC<PrintableReportHeaderProps> = ({
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xl font-black tracking-tight text-slate-900 uppercase">
+            <span className="text-xl font-medium tracking-tight text-slate-900 uppercase">
               iSysware CRM
             </span>
             <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">
               Executive Report
             </span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 mt-2 tracking-tight">
+          <h1 className="text-2xl font-medium text-slate-900 mt-2 tracking-tight">
             {reportTitle}
           </h1>
         </div>

@@ -66,7 +66,7 @@ export const ReassignModal: React.FC<ReassignModalProps> = ({ lead, onClose }) =
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 block">
             Target Record
           </span>
-          <p className="font-extrabold text-[#0F172A] dark:text-white mt-1 text-sm">
+          <p className="font-medium text-[#0F172A] dark:text-white mt-1 text-sm">
             {lead.businessName}
           </p>
           <p className="text-xs text-[#64748B] dark:text-slate-400 mt-0.5">

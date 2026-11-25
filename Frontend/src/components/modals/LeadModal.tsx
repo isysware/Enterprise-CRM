@@ -687,7 +687,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
               <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                 Calculated Deal Value:
               </span>
-              <span className="font-mono font-bold text-xs text-emerald-800 dark:text-emerald-200">
+              <span className="font-mono font-medium text-xs text-emerald-800 dark:text-emerald-200">
                 {formatPKR(calculatedLeadValue)}
               </span>
             </div>

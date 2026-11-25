@@ -289,7 +289,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
           }`}
         >
           <div className="text-[11px] font-semibold text-[#64748B] dark:text-slate-400">Total Leads</div>
-          <div className="text-xl font-extrabold text-[#0F172A] dark:text-white mt-0.5">{summaryCounts.total}</div>
+          <div className="text-xl font-medium text-[#0F172A] dark:text-white mt-0.5">{summaryCounts.total}</div>
         </button>
 
         <button
@@ -306,7 +306,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
           }`}
         >
           <div className="text-[11px] font-semibold text-sky-700 dark:text-sky-300">New Inquiries</div>
-          <div className="text-xl font-extrabold text-[#0F172A] dark:text-white mt-0.5">{summaryCounts.newCount}</div>
+          <div className="text-xl font-medium text-[#0F172A] dark:text-white mt-0.5">{summaryCounts.newCount}</div>
         </button>
 
         <button
@@ -323,7 +323,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
           }`}
         >
           <div className="text-[11px] font-semibold text-rose-700 dark:text-rose-300">Hot / Urgent</div>
-          <div className="text-xl font-extrabold text-[#0F172A] dark:text-white mt-0.5">{summaryCounts.hotCount}</div>
+          <div className="text-xl font-medium text-[#0F172A] dark:text-white mt-0.5">{summaryCounts.hotCount}</div>
         </button>
 
         <button
@@ -340,7 +340,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
           }`}
         >
           <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">Follow-Up Required</div>
-          <div className="text-xl font-extrabold text-[#0F172A] dark:text-white mt-0.5">{summaryCounts.followUpCount}</div>
+          <div className="text-xl font-medium text-[#0F172A] dark:text-white mt-0.5">{summaryCounts.followUpCount}</div>
         </button>
 
         <button
@@ -357,7 +357,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
           }`}
         >
           <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">Converted Deals</div>
-          <div className="text-xl font-extrabold text-[#0F172A] dark:text-white mt-0.5">{summaryCounts.convertedCount}</div>
+          <div className="text-xl font-medium text-[#0F172A] dark:text-white mt-0.5">{summaryCounts.convertedCount}</div>
         </button>
       </div>
 
@@ -808,7 +808,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                         </td>
 
                         {/* Value PKR */}
-                        <td className="p-3 whitespace-nowrap font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">
+                        <td className="p-3 whitespace-nowrap font-mono font-medium text-xs text-emerald-600 dark:text-emerald-400">
                           {formatPKR(lead.valuePKR)}
                         </td>
 
@@ -950,7 +950,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                         {stageLeads.length}
                       </Badge>
                     </div>
-                    <div className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <div className="text-[11px] font-mono font-medium text-emerald-600 dark:text-emerald-400">
                       {formatPKR(stageValuePKR)}
                     </div>
                   </div>
@@ -1012,7 +1012,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                                   <span className="text-[10px] text-slate-400">+{lead.services.length - 1}</span>
                                 )}
                               </div>
-                              <span className="font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">
+                              <span className="font-mono font-medium text-xs text-emerald-600 dark:text-emerald-400">
                                 {formatPKR(lead.valuePKR)}
                               </span>
                             </div>

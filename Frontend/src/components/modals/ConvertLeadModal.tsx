@@ -297,7 +297,7 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 block">
               Lead Information
             </span>
-            <h4 className="font-extrabold text-[#0F172A] dark:text-white text-sm mt-0.5">
+            <h4 className="font-medium text-[#0F172A] dark:text-white text-sm mt-0.5">
               {lead?.businessName}
             </h4>
             <p className="text-xs text-[#64748B] dark:text-slate-400 mt-0.5">
@@ -307,7 +307,7 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
 
           <div className="text-right sm:shrink-0">
             <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-slate-400 block">Lead Est. Value</span>
-            <span className="font-mono font-bold text-xs text-slate-700 dark:text-slate-300">
+            <span className="font-mono font-medium text-xs text-slate-700 dark:text-slate-300">
               {formatPKR(lead?.valuePKR || 0)}
             </span>
           </div>

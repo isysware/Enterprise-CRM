@@ -84,7 +84,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
         {(centerValue !== undefined || centerLabel) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none">
             {centerValue !== undefined && (
-              <span className="text-base sm:text-lg font-black text-[#0F172A] dark:text-white leading-tight">
+              <span className="text-base sm:text-lg font-medium text-[#0F172A] dark:text-white leading-tight">
                 {centerValue}
               </span>
             )}

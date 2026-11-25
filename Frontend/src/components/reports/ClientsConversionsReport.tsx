@@ -44,46 +44,50 @@ export const ClientsConversionsReport: React.FC<ClientsConversionsReportProps> =
     <div className="space-y-6">
       {/* 1. Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Converted Clients</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">{totalClients}</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
-              Closed Deals
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Converted Clients</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+              Closed
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Successfully acquired accounts</p>
+          <div>
+            <div className="text-2xl font-medium text-slate-900 dark:text-white leading-none tracking-tight">{totalClients}</div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Successfully acquired accounts</p>
+          </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Clients</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{activeClients}</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Clients</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
               Active
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Currently active accounts</p>
+          <div>
+            <div className="text-2xl font-medium text-emerald-600 dark:text-emerald-400 leading-none tracking-tight">{activeClients}</div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Currently active accounts</p>
+          </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Converted Value</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-xl font-extrabold text-slate-900 dark:text-white truncate">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Converted Value</span>
+          <div>
+            <div className="text-2xl font-medium text-slate-900 dark:text-white leading-none tracking-tight truncate">
               {formatPKR(totalRevenue)}
-            </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Accumulated contract revenue</p>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Accumulated contract revenue</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Average Deal Size</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-xl font-extrabold text-blue-600 dark:text-blue-400 truncate">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Average Deal Size</span>
+          <div>
+            <div className="text-2xl font-medium text-blue-600 dark:text-blue-400 leading-none tracking-tight truncate">
               {formatPKR(avgDealSize)}
-            </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Mean closed deal valuation</p>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Mean closed deal valuation</p>
         </div>
       </div>
 
@@ -111,7 +115,7 @@ export const ClientsConversionsReport: React.FC<ClientsConversionsReportProps> =
                     {item.percentage}%
                   </span>
                 </div>
-                <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-2">
+                <p className="text-xl font-medium text-slate-900 dark:text-white mt-2">
                   {item.count} clients
                 </p>
               </div>
@@ -204,7 +208,7 @@ export const ClientsConversionsReport: React.FC<ClientsConversionsReportProps> =
                         {client.pricingModel || 'Custom / SaaS'}
                       </td>
 
-                      <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
                         {formatPKR(rev)}
                       </td>
 

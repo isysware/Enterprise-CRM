@@ -124,7 +124,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       {/* 1. Page Header */}
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-medium text-[#0F172A] dark:text-white tracking-tight">
             Calendar
           </h1>
           <p className="text-xs text-[#64748B] dark:text-slate-400 mt-1">
@@ -177,7 +177,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </button>
 
           <div className="flex items-baseline gap-2">
-            <h2 className="text-base sm:text-lg font-extrabold text-[#0F172A] dark:text-white tracking-tight">
+            <h2 className="text-base sm:text-lg font-medium text-[#0F172A] dark:text-white tracking-tight">
               {monthNames[month]} {year}
             </h2>
             <span className="text-xs text-[#64748B] dark:text-slate-400 font-medium">
@@ -260,9 +260,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     {/* Top Row: Date Number and Activity Count */}
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                        className={`text-xs font-medium w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
                           isToday
-                            ? 'bg-[#2563EB] text-white shadow-2xs font-extrabold'
+                            ? 'bg-[#2563EB] text-white shadow-2xs font-medium'
                             : isSelected
                             ? 'bg-blue-100 dark:bg-blue-900 text-[#2563EB] dark:text-blue-300'
                             : 'text-[#0F172A] dark:text-slate-300'
@@ -272,7 +272,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       </span>
 
                       {events.length > 0 && (
-                        <span className="text-[10px] font-mono font-bold text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/80 px-1.5 py-0.2 rounded-md">
+                        <span className="text-[10px] font-mono font-medium text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/80 px-1.5 py-0.2 rounded-md">
                           {events.length}
                         </span>
                       )}
@@ -327,7 +327,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400">
                   Selected Date
                 </span>
-                <h3 className="text-base font-extrabold text-[#0F172A] dark:text-white mt-0.5">
+                <h3 className="text-base font-medium text-[#0F172A] dark:text-white mt-0.5">
                   {formatDate(selectedDateStr)}
                 </h3>
               </div>
@@ -461,7 +461,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-6">
           <div className="flex items-center justify-between pb-3 border-b border-[#E5EAF1] dark:border-slate-800">
             <div>
-              <h3 className="text-base font-extrabold text-[#0F172A] dark:text-white">
+              <h3 className="text-base font-medium text-[#0F172A] dark:text-white">
                 Upcoming Agenda &amp; Activities
               </h3>
               <p className="text-xs text-[#64748B] dark:text-slate-400">
@@ -482,7 +482,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               {agendaDates.map(({ dateStr, events }) => (
                 <div key={dateStr} className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                       {formatDate(dateStr)}
                     </span>
                     <span className="text-xs font-semibold text-[#64748B] dark:text-slate-400">

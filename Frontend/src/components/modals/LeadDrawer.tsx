@@ -155,7 +155,7 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
 
   const drawerTitle = (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="font-extrabold text-[#0F172A] dark:text-white text-base">
+      <span className="font-medium text-[#0F172A] dark:text-white text-base">
         {lead.businessName}
       </span>
       <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${statusStyle.badge}`}>
@@ -179,7 +179,7 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-1.5 text-xs text-[#64748B] dark:text-slate-400">
         <span>Pipeline Value:</span>
-        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+        <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
           {formatPKR(lead.valuePKR)}
         </span>
       </div>
@@ -225,7 +225,7 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#2563EB] dark:text-blue-300 block">
               Estimated Deal Value
             </span>
-            <span className="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+            <span className="text-2xl font-medium font-mono text-emerald-600 dark:text-emerald-400 mt-0.5 block">
               {formatPKR(lead.valuePKR)}
             </span>
           </div>
@@ -498,7 +498,7 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-[#E5EAF1] dark:border-slate-800">
               <span className="text-[#64748B] dark:text-slate-400 text-[11px] block">Phone Number</span>
-              <span className="font-mono font-bold text-[#0F172A] dark:text-white mt-0.5 block">{lead.phone}</span>
+              <span className="font-mono font-medium text-[#0F172A] dark:text-white mt-0.5 block">{lead.phone}</span>
             </div>
 
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-[#E5EAF1] dark:border-slate-800">
@@ -578,7 +578,7 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
                 <DollarSign className="w-3.5 h-3.5" />
                 Commercial Model &amp; Budget
               </span>
-              <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">
                 {lead.budgetType || lead.pricingModel || 'No Budget Discussed'}
               </span>
             </div>
@@ -606,7 +606,7 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
                 {lead.budgetDetails.totalInitialPayment !== undefined && (
                   <div className="bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-emerald-100 dark:border-emerald-900/40">
                     <span className="text-[#64748B] dark:text-slate-400 block text-[10px]">Initial Payment</span>
-                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">{formatPKR(lead.budgetDetails.totalInitialPayment)}</span>
+                    <span className="font-medium text-emerald-600 dark:text-emerald-400 font-mono">{formatPKR(lead.budgetDetails.totalInitialPayment)}</span>
                   </div>
                 )}
                 {lead.budgetDetails.ownershipPrice !== undefined && (
@@ -675,7 +675,7 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-[11px] text-[#2563EB] dark:text-blue-400">
+                        <span className="font-mono font-medium text-[11px] text-[#2563EB] dark:text-blue-400">
                           {prop.proposalNumber}
                         </span>
                         <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
@@ -699,7 +699,7 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
                     </div>
 
                     <div className="text-right shrink-0">
-                      <div className="font-mono font-black text-xs text-emerald-600 dark:text-emerald-400">
+                      <div className="font-mono font-medium text-xs text-emerald-600 dark:text-emerald-400">
                         {formatPKR(prop.grandTotalPKR)}
                       </div>
                       {onOpenProposalModal && (

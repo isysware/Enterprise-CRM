@@ -252,7 +252,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="font-extrabold text-sm text-[#0F172A] dark:text-white truncate">
+                <h2 className="font-medium text-sm text-[#0F172A] dark:text-white truncate">
                   CRM Copilot
                 </h2>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 border border-blue-200 dark:border-blue-800 shrink-0">

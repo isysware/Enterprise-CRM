@@ -88,90 +88,100 @@ export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads 
       {/* 1. Top KPI Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Total Leads */}
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Total Leads
-          </p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
-              {totalLeads}
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Total Leads
             </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300">
               100%
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            Scoped portfolio volume
-          </p>
+          <div>
+            <div className="text-2xl font-medium text-slate-900 dark:text-white leading-none tracking-tight">
+              {totalLeads}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">
+              Scoped portfolio volume
+            </p>
+          </div>
         </div>
 
         {/* Open Pipeline */}
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Open Pipeline
-          </p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">
-              {openLeads.length}
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Open Pipeline
             </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300">
               {totalLeads > 0 ? Math.round((openLeads.length / totalLeads) * 100) : 0}%
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            Active outreach &amp; qualified
-          </p>
+          <div>
+            <div className="text-2xl font-medium text-indigo-600 dark:text-indigo-400 leading-none tracking-tight">
+              {openLeads.length}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">
+              Active outreach &amp; qualified
+            </p>
+          </div>
         </div>
 
         {/* Converted */}
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Converted Deals
-          </p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
-              {convertedLeads.length}
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Converted Deals
             </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
               Won
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            Closed customer accounts
-          </p>
+          <div>
+            <div className="text-2xl font-medium text-emerald-600 dark:text-emerald-400 leading-none tracking-tight">
+              {convertedLeads.length}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">
+              Closed customer accounts
+            </p>
+          </div>
         </div>
 
         {/* Conversion Rate */}
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Conversion Rate
-          </p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-blue-600 dark:text-blue-400">
-              {conversionRate}%
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Conversion Rate
             </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300">
               Net
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            Lead-to-client win velocity
-          </p>
+          <div>
+            <div className="text-2xl font-medium text-blue-600 dark:text-blue-400 leading-none tracking-tight">
+              {conversionRate}%
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">
+              Lead-to-client win velocity
+            </p>
+          </div>
         </div>
 
         {/* Pipeline Value */}
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs col-span-2 lg:col-span-1">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Pipeline Value
-          </p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white truncate">
-              {formatPKR(totalPipelineValue)}
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all col-span-2 lg:col-span-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Pipeline Value
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            Open: {formatPKR(openPipelineValue)}
-          </p>
+          <div>
+            <div className="text-xl font-medium text-slate-900 dark:text-white leading-none tracking-tight truncate">
+              {formatPKR(totalPipelineValue)}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">
+              Open: {formatPKR(openPipelineValue)}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -198,7 +208,7 @@ export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads 
                 <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
                   {st.label}
                 </p>
-                <p className={`text-xl font-extrabold mt-1 ${st.color}`}>
+                <p className={`text-xl font-medium mt-1 ${st.color}`}>
                   {st.count}
                 </p>
               </div>
@@ -344,7 +354,7 @@ export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads 
                       </td>
 
                       {/* Value */}
-                      <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
                         {val > 0 ? formatPKR(val) : '-'}
                       </td>
 

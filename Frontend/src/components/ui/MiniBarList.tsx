@@ -55,7 +55,7 @@ export const MiniBarList: React.FC<MiniBarListProps> = ({
                 )}
               </div>
 
-              <div className="font-mono text-[11px] font-bold text-[#0F172A] dark:text-white shrink-0">
+              <div className="font-mono text-[11px] font-medium text-[#0F172A] dark:text-white shrink-0">
                 {item.value}
               </div>
             </div>

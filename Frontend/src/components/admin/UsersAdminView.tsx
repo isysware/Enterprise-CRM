@@ -382,7 +382,7 @@ export const UsersAdminView: React.FC = () => {
   const getRoleBadge = (roleName: UserRole) => {
     switch (roleName) {
       case 'Super Admin':
-        return 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-extrabold';
+        return 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-medium';
       case 'Admin':
         return 'bg-blue-50 text-[#2563EB] border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-900 font-bold';
       case 'Manager':
@@ -400,7 +400,7 @@ export const UsersAdminView: React.FC = () => {
       {/* 1. Page Header */}
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-medium text-[#0F172A] dark:text-white tracking-tight">
             Users
           </h1>
           <p className="text-xs text-[#64748B] dark:text-slate-400 mt-1">
@@ -453,7 +453,7 @@ export const UsersAdminView: React.FC = () => {
           <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
             Total Users
           </p>
-          <p className="text-xl font-extrabold text-[#0F172A] dark:text-white mt-1">
+          <p className="text-xl font-medium text-[#0F172A] dark:text-white mt-1">
             {totalUsersCount}
           </p>
         </div>
@@ -462,7 +462,7 @@ export const UsersAdminView: React.FC = () => {
           <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
             Active Accounts
           </p>
-          <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
+          <p className="text-xl font-medium text-emerald-600 dark:text-emerald-400 mt-1">
             {activeUsersCount}
           </p>
         </div>
@@ -471,7 +471,7 @@ export const UsersAdminView: React.FC = () => {
           <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
             Managers
           </p>
-          <p className="text-xl font-extrabold text-purple-600 dark:text-purple-400 mt-1">
+          <p className="text-xl font-medium text-purple-600 dark:text-purple-400 mt-1">
             {managersCount}
           </p>
         </div>
@@ -480,7 +480,7 @@ export const UsersAdminView: React.FC = () => {
           <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
             Team Leads
           </p>
-          <p className="text-xl font-extrabold text-amber-600 dark:text-amber-400 mt-1">
+          <p className="text-xl font-medium text-amber-600 dark:text-amber-400 mt-1">
             {teamLeadsCount}
           </p>
         </div>
@@ -489,7 +489,7 @@ export const UsersAdminView: React.FC = () => {
           <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
             Employees / Reps
           </p>
-          <p className="text-xl font-extrabold text-slate-700 dark:text-slate-200 mt-1">
+          <p className="text-xl font-medium text-slate-700 dark:text-slate-200 mt-1">
             {employeesCount}
           </p>
         </div>
@@ -870,7 +870,7 @@ export const UsersAdminView: React.FC = () => {
                           />
                         </div>
                       ) : (
-                        <div className="w-16 h-16 rounded-full bg-blue-600 text-white font-black text-2xl flex items-center justify-center ring-2 ring-blue-400 shadow-md">
+                        <div className="w-16 h-16 rounded-full bg-blue-600 text-white font-medium text-2xl flex items-center justify-center ring-2 ring-blue-400 shadow-md">
                           {(name.trim() || 'U').charAt(0).toUpperCase()}
                         </div>
                       )}

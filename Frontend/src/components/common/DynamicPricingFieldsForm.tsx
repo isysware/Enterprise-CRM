@@ -80,7 +80,7 @@ export const DynamicPricingFieldsForm: React.FC<DynamicPricingFieldsFormProps> =
                     }}
                     placeholder={field.placeholder || (field.type === 'currency' ? 'e.g. 15000' : '0')}
                     required={field.isRequired}
-                    className={`w-full bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl py-2 pr-3 text-xs font-mono font-bold text-[#0F172A] dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-[#2563EB] ${
+                    className={`w-full bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl py-2 pr-3 text-xs font-mono font-medium text-[#0F172A] dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-[#2563EB] ${
                       field.type === 'currency' ? 'pl-8' : 'pl-3'
                     }`}
                   />

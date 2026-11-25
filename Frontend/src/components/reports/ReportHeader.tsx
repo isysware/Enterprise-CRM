@@ -70,7 +70,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
         {/* Title & Scope Badge */}
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-lg sm:text-xl font-extrabold text-[#0F172A] dark:text-white tracking-tight">
+            <h1 className="text-lg sm:text-xl font-medium text-[#0F172A] dark:text-white tracking-tight">
               {title}
             </h1>
             {userRole && (

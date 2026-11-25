@@ -36,7 +36,7 @@ export const AIQuickInsights: React.FC<AIQuickInsightsProps> = ({
             <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
             <span>Active Pipeline</span>
           </div>
-          <p className="font-extrabold font-mono text-[12px] text-[#0F172A] dark:text-white mt-0.5 truncate">
+          <p className="font-medium font-mono text-[12px] text-[#0F172A] dark:text-white mt-0.5 truncate">
             {formatPKR(totalPipelineValuePKR)}
           </p>
         </div>
@@ -47,7 +47,7 @@ export const AIQuickInsights: React.FC<AIQuickInsightsProps> = ({
             <Layers className="w-3 h-3 text-[#2563EB]" />
             <span>Active Leads</span>
           </div>
-          <p className="font-extrabold text-[12px] text-[#0F172A] dark:text-white mt-0.5">
+          <p className="font-medium text-[12px] text-[#0F172A] dark:text-white mt-0.5">
             {activeLeadsCount} <span className="text-[10px] font-normal text-slate-400">leads</span>
           </p>
         </div>
@@ -58,7 +58,7 @@ export const AIQuickInsights: React.FC<AIQuickInsightsProps> = ({
             <AlertTriangle className="w-3 h-3" />
             <span>Urgent / High</span>
           </div>
-          <p className="font-extrabold text-[12px] text-amber-700 dark:text-amber-300 mt-0.5">
+          <p className="font-medium text-[12px] text-amber-700 dark:text-amber-300 mt-0.5">
             {urgentLeadsCount} <span className="text-[10px] font-normal text-slate-400">priority</span>
           </p>
         </div>
@@ -69,7 +69,7 @@ export const AIQuickInsights: React.FC<AIQuickInsightsProps> = ({
             <Clock className="w-3 h-3" />
             <span>Overdue Follow-ups</span>
           </div>
-          <p className="font-extrabold text-[12px] text-rose-700 dark:text-rose-300 mt-0.5">
+          <p className="font-medium text-[12px] text-rose-700 dark:text-rose-300 mt-0.5">
             {overdueFollowUpsCount} <span className="text-[10px] font-normal text-slate-400">missed</span>
           </p>
         </div>

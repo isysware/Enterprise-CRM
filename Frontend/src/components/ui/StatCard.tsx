@@ -39,49 +39,51 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs transition-all duration-150 ${
-        onClick ? 'cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md' : ''
+      className={`h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all duration-150 ${
+        onClick ? 'cursor-pointer hover:border-[#2563EB] dark:hover:border-slate-700' : ''
       } ${className}`}
     >
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <span className="text-xs font-semibold text-[#64748B] dark:text-slate-400 uppercase tracking-wider truncate">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider truncate">
           {title}
         </span>
         {icon && (
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconVariants[variant]}`}>
-            {icon}
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${iconVariants[variant]}`}>
+            {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { className: 'w-4 h-4' }) : icon}
           </div>
         )}
       </div>
 
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] dark:text-white tracking-tight">
-          {value}
+      <div>
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="text-2xl font-medium text-[#0F172A] dark:text-white leading-none tracking-tight truncate">
+            {value}
+          </div>
+
+          {change && (
+            <div
+              className={`inline-flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded-md shrink-0 ${
+                change.isPositive
+                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
+                  : 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400'
+              }`}
+            >
+              {change.isPositive ? (
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              ) : (
+                <ArrowDownRight className="w-3.5 h-3.5" />
+              )}
+              <span>{change.value}</span>
+            </div>
+          )}
         </div>
 
-        {change && (
-          <div
-            className={`inline-flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded-md shrink-0 ${
-              change.isPositive
-                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
-                : 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400'
-            }`}
-          >
-            {change.isPositive ? (
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            ) : (
-              <ArrowDownRight className="w-3.5 h-3.5" />
-            )}
-            <span>{change.value}</span>
-          </div>
+        {(subtitle || change?.label) && (
+          <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1 truncate">
+            {change?.label || subtitle}
+          </p>
         )}
       </div>
-
-      {(subtitle || change?.label) && (
-        <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-2 truncate">
-          {change?.label || subtitle}
-        </p>
-      )}
     </div>
   );
 };

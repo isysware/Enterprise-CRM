@@ -203,7 +203,7 @@ export const TeamsAdminView: React.FC = () => {
       {/* 1. Page Header */}
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-medium text-[#0F172A] dark:text-white tracking-tight">
             Teams
           </h1>
           <p className="text-xs text-[#64748B] dark:text-slate-400 mt-1">
@@ -227,7 +227,7 @@ export const TeamsAdminView: React.FC = () => {
           <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
             Total Teams
           </p>
-          <p className="text-xl font-extrabold text-[#0F172A] dark:text-white mt-1">
+          <p className="text-xl font-medium text-[#0F172A] dark:text-white mt-1">
             {totalTeamsCount}
           </p>
         </div>
@@ -236,7 +236,7 @@ export const TeamsAdminView: React.FC = () => {
           <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
             Active Units
           </p>
-          <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
+          <p className="text-xl font-medium text-emerald-600 dark:text-emerald-400 mt-1">
             {activeTeamsCount}
           </p>
         </div>
@@ -245,7 +245,7 @@ export const TeamsAdminView: React.FC = () => {
           <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
             Assigned Managers
           </p>
-          <p className="text-xl font-extrabold text-purple-600 dark:text-purple-400 mt-1">
+          <p className="text-xl font-medium text-purple-600 dark:text-purple-400 mt-1">
             {uniqueManagersCount}
           </p>
         </div>
@@ -254,7 +254,7 @@ export const TeamsAdminView: React.FC = () => {
           <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
             Team Leads
           </p>
-          <p className="text-xl font-extrabold text-amber-600 dark:text-amber-400 mt-1">
+          <p className="text-xl font-medium text-amber-600 dark:text-amber-400 mt-1">
             {uniqueLeadsCount}
           </p>
         </div>
@@ -263,7 +263,7 @@ export const TeamsAdminView: React.FC = () => {
           <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
             Assigned Staff
           </p>
-          <p className="text-xl font-extrabold text-[#2563EB] dark:text-blue-400 mt-1">
+          <p className="text-xl font-medium text-[#2563EB] dark:text-blue-400 mt-1">
             {assignedMembersCount}
           </p>
         </div>
@@ -299,11 +299,11 @@ export const TeamsAdminView: React.FC = () => {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-extrabold text-base text-[#0F172A] dark:text-white leading-tight">
+                          <h3 className="font-medium text-base text-[#0F172A] dark:text-white leading-tight">
                             {team.name}
                           </h3>
                           {team.code && (
-                            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 uppercase">
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 uppercase">
                               {team.code}
                             </span>
                           )}
@@ -497,7 +497,7 @@ export const TeamsAdminView: React.FC = () => {
                   onChange={e => setTeamCode(e.target.value.toUpperCase())}
                   placeholder="e.g. ENT"
                   maxLength={6}
-                  className="font-mono font-bold uppercase"
+                  className="font-mono font-medium uppercase"
                 />
               </FormField>
             </div>

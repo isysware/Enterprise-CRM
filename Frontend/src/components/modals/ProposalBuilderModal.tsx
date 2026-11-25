@@ -503,10 +503,10 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-extrabold text-white tracking-tight">
+                <h2 className="text-base font-medium text-white tracking-tight">
                   Commercial Proposal &amp; Quotation Builder
                 </h2>
-                <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-mono font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full">
                   {refNumber}
                 </span>
                 <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
@@ -592,7 +592,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                       type="text"
                       value={refNumber}
                       onChange={e => setRefNumber(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-medium"
                     />
                   </div>
 
@@ -617,7 +617,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                         max={90}
                         value={validityDays}
                         onChange={e => setValidityDays(Number(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold font-mono"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-medium font-mono"
                       />
                       <span className="text-slate-400 font-medium">Days</span>
                     </div>
@@ -790,7 +790,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                             min={0}
                             value={item.unitPrice}
                             onChange={e => handleItemChange(item.id, 'unitPrice', Number(e.target.value))}
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono font-bold"
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono font-medium"
                           />
                         </div>
 
@@ -801,7 +801,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                             min={1}
                             value={item.quantity}
                             onChange={e => handleItemChange(item.id, 'quantity', Number(e.target.value))}
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-white font-mono font-bold text-center"
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-white font-mono font-medium text-center"
                           />
                         </div>
 
@@ -818,7 +818,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
 
                         <div className="sm:col-span-2">
                           <label className="block text-[11px] font-semibold text-slate-400 mb-1">Line Total</label>
-                          <div className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-emerald-400 font-mono font-bold text-right truncate">
+                          <div className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-emerald-400 font-mono font-medium text-right truncate">
                             {settings.currencySymbol || 'Rs.'} {(item.total || 0).toLocaleString()}
                           </div>
                         </div>
@@ -847,7 +847,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                       max={100}
                       value={taxRate}
                       onChange={e => setTaxRate(Number(e.target.value))}
-                      className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-white font-mono font-bold"
+                      className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-white font-mono font-medium"
                     />
                     <span className="text-slate-500 text-[11px]">(e.g. 0% for IT export, 13% for Sindh PST)</span>
                   </div>
@@ -869,7 +869,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                         <span className="font-mono text-white">{settings.currencySymbol || 'Rs.'} {(Math.round(taxAmount || 0)).toLocaleString()}</span>
                       </div>
                     )}
-                    <div className="flex justify-between sm:justify-end gap-6 text-sm font-extrabold text-emerald-400 pt-1 border-t border-slate-800">
+                    <div className="flex justify-between sm:justify-end gap-6 text-sm font-medium text-emerald-400 pt-1 border-t border-slate-800">
                       <span>Grand Total:</span>
                       <span className="font-mono text-base">{settings.currencySymbol || 'Rs.'} {(grandTotal || 0).toLocaleString()}</span>
                     </div>
@@ -926,14 +926,14 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                               max={100}
                               value={ms.percentage}
                               onChange={e => handleMilestoneChange(ms.id, 'percentage', Number(e.target.value))}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-bold text-center"
+                              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-medium text-center"
                             />
                             <span className="text-slate-400 font-bold">%</span>
                           </div>
                         </div>
 
                         <div className="sm:col-span-2">
-                          <div className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-right truncate">
+                          <div className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-medium text-right truncate">
                             {settings.currencySymbol || 'Rs.'} {(computedAmount || 0).toLocaleString()}
                           </div>
                         </div>
@@ -1097,12 +1097,12 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                             referrerPolicy="no-referrer"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-xl bg-[#2563EB] text-white flex items-center justify-center font-extrabold text-lg">
+                          <div className="w-12 h-12 rounded-xl bg-[#2563EB] text-white flex items-center justify-center font-medium text-lg">
                             {settings.companyName ? settings.companyName.substring(0, 2).toUpperCase() : 'CRM'}
                           </div>
                         )}
                         <div>
-                          <h1 className="text-xl font-black text-slate-950 tracking-tight leading-none uppercase">
+                          <h1 className="text-xl font-medium text-slate-950 tracking-tight leading-none uppercase">
                             {settings.companyName || 'iSysware Enterprise'}
                           </h1>
                           <p className="text-xs font-bold text-[#2563EB] mt-1 uppercase tracking-widest">
@@ -1117,10 +1117,10 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                     </div>
 
                     <div className="text-right space-y-1">
-                      <div className="inline-block bg-slate-950 text-white px-3 py-1 text-xs font-black tracking-widest uppercase rounded">
+                      <div className="inline-block bg-slate-950 text-white px-3 py-1 text-xs font-medium tracking-widest uppercase rounded">
                         COMMERCIAL QUOTATION
                       </div>
-                      <p className="font-mono font-bold text-sm text-slate-900">{refNumber}</p>
+                      <p className="font-mono font-medium text-sm text-slate-900">{refNumber}</p>
                       <p className="text-xs text-slate-600 font-medium">Date: {issueDate}</p>
                       <p className="text-xs text-emerald-700 font-bold">Valid Until: {expiryDate}</p>
                     </div>
@@ -1129,20 +1129,20 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                   {/* BILL TO & PREPARED BY GRID */}
                   <div className="grid grid-cols-2 gap-6 pt-4 border-t border-slate-200">
                     <div className="space-y-1">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
                         PROPOSAL PREPARED FOR:
                       </span>
-                      <p className="font-extrabold text-slate-950 text-sm">{businessName || clientName}</p>
+                      <p className="font-medium text-slate-950 text-sm">{businessName || clientName}</p>
                       <p className="text-xs font-bold text-slate-700">Attn: {clientName}</p>
                       <p className="text-xs text-slate-600">{clientPhone} | {clientEmail}</p>
                       <p className="text-xs text-slate-600">{clientAddress}</p>
                     </div>
 
                     <div className="space-y-1 text-right">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
                         ISSUED BY:
                       </span>
-                      <p className="font-extrabold text-slate-950 text-sm">
+                      <p className="font-medium text-slate-950 text-sm">
                         {assignedRep?.name || currentUser?.name || 'Account Director'}
                       </p>
                       <p className="text-xs text-slate-700">{assignedRep?.email || settings.companyEmail}</p>
@@ -1156,7 +1156,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                 <div className="relative z-10 space-y-6 my-6 flex-1">
                   {/* PROJECT TITLE */}
                   <div>
-                    <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-tight">
+                    <h2 className="text-base font-medium text-slate-900 uppercase tracking-tight">
                       Project: {title}
                     </h2>
                   </div>
@@ -1164,7 +1164,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                   {/* SCOPE OF WORK */}
                   {scopeOfWork && (
                     <div className="space-y-1.5">
-                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
+                      <h3 className="text-xs font-medium uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
                         1. Scope of Work &amp; System Deliverables
                       </h3>
                       <div className="text-xs text-slate-700 whitespace-pre-line leading-relaxed pl-1 font-sans">
@@ -1175,13 +1175,13 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
 
                   {/* ITEMIZATION TABLE */}
                   <div className="space-y-2">
-                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
+                    <h3 className="text-xs font-medium uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
                       2. Commercial Investment &amp; Itemized Quotation
                     </h3>
                     <div className="border border-slate-300 rounded overflow-hidden">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                          <tr className="bg-slate-100 text-slate-900 font-black border-b border-slate-300 uppercase tracking-wider">
+                          <tr className="bg-slate-100 text-slate-900 font-medium border-b border-slate-300 uppercase tracking-wider">
                             <th className="py-2.5 px-3 w-8">#</th>
                             <th className="py-2.5 px-3">Service / Deliverable</th>
                             <th className="py-2.5 px-3 text-center w-12">Qty</th>
@@ -1195,17 +1195,17 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                             <tr key={item.id} className="hover:bg-slate-50/50">
                               <td className="py-2.5 px-3 font-bold text-slate-500">{idx + 1}</td>
                               <td className="py-2.5 px-3">
-                                <span className="font-extrabold text-slate-950 block">{item.title}</span>
+                                <span className="font-medium text-slate-950 block">{item.title}</span>
                                 {item.description && (
                                   <span className="text-[11px] text-slate-600 block mt-0.5">{item.description}</span>
                                 )}
                               </td>
-                              <td className="py-2.5 px-3 font-mono font-bold text-center">{item.quantity}</td>
+                              <td className="py-2.5 px-3 font-mono font-medium text-center">{item.quantity}</td>
                               <td className="py-2.5 px-3 font-mono text-right">{(item.unitPrice || 0).toLocaleString()}</td>
                               <td className="py-2.5 px-3 font-mono text-right text-rose-600">
                                 {item.discount ? `-${(item.discount || 0).toLocaleString()}` : '-'}
                               </td>
-                              <td className="py-2.5 px-3 font-mono font-extrabold text-slate-950 text-right">
+                              <td className="py-2.5 px-3 font-mono font-medium text-slate-950 text-right">
                                 {(item.total || 0).toLocaleString()}
                               </td>
                             </tr>
@@ -1214,14 +1214,14 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                         <tfoot>
                           <tr className="bg-slate-50 border-t border-slate-300">
                             <td colSpan={4} className="py-2 px-3 text-right font-bold text-slate-700">Subtotal:</td>
-                            <td colSpan={2} className="py-2 px-3 text-right font-mono font-bold text-slate-900">
+                            <td colSpan={2} className="py-2 px-3 text-right font-mono font-medium text-slate-900">
                               {settings.currencySymbol || 'Rs.'} {(subtotal || 0).toLocaleString()}
                             </td>
                           </tr>
                           {totalDiscount > 0 && (
                             <tr className="bg-slate-50">
                               <td colSpan={4} className="py-1 px-3 text-right font-bold text-rose-600">Discount:</td>
-                              <td colSpan={2} className="py-1 px-3 text-right font-mono font-bold text-rose-600">
+                              <td colSpan={2} className="py-1 px-3 text-right font-mono font-medium text-rose-600">
                                 - {settings.currencySymbol || 'Rs.'} {(totalDiscount || 0).toLocaleString()}
                               </td>
                             </tr>
@@ -1229,12 +1229,12 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                           {taxAmount > 0 && (
                             <tr className="bg-slate-50">
                               <td colSpan={4} className="py-1 px-3 text-right font-bold text-slate-700">Sales Tax ({taxRate}%):</td>
-                              <td colSpan={2} className="py-1 px-3 text-right font-mono font-bold text-slate-900">
+                              <td colSpan={2} className="py-1 px-3 text-right font-mono font-medium text-slate-900">
                                 {settings.currencySymbol || 'Rs.'} {(Math.round(taxAmount || 0)).toLocaleString()}
                               </td>
                             </tr>
                           )}
-                          <tr className="bg-slate-900 text-white font-black text-sm">
+                          <tr className="bg-slate-900 text-white font-medium text-sm">
                             <td colSpan={4} className="py-2.5 px-3 text-right uppercase tracking-wider">
                               Grand Total Payable ({settings.currency || 'PKR'}):
                             </td>
@@ -1250,15 +1250,15 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                   {/* MILESTONE SCHEDULE */}
                   {computedMilestones && computedMilestones.length > 0 && (
                     <div className="space-y-2">
-                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
+                      <h3 className="text-xs font-medium uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
                         3. Payment Milestones &amp; Delivery Schedule
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {computedMilestones.map(ms => (
                           <div key={ms.id} className="p-2.5 rounded border border-slate-300 bg-slate-50/70 text-xs">
-                            <p className="font-extrabold text-slate-900">{ms.title}</p>
+                            <p className="font-medium text-slate-900">{ms.title}</p>
                             <div className="flex justify-between items-baseline mt-1">
-                              <span className="font-black text-[#2563EB] font-mono text-xs">
+                              <span className="font-medium text-[#2563EB] font-mono text-xs">
                                 {settings.currencySymbol || 'Rs.'} {(ms.amount || 0).toLocaleString()}
                               </span>
                               <span className="text-[10px] font-bold text-slate-500">{ms.percentage}%</span>
@@ -1275,7 +1275,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                   {/* TERMS & CONDITIONS */}
                   {termsAndConditions && (
                     <div className="space-y-1">
-                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
+                      <h3 className="text-xs font-medium uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">
                         4. Commercial Terms &amp; Conditions
                       </h3>
                       <div className="text-[10px] text-slate-600 whitespace-pre-line leading-relaxed pl-1 font-mono">
@@ -1289,7 +1289,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                 <div className="relative z-10 pt-6 border-t-2 border-slate-900 grid grid-cols-2 gap-8 items-end">
                   {/* Client Acceptance Signature */}
                   <div className="space-y-3">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 block">
                       CLIENT ACCEPTANCE &amp; SIGN-OFF:
                     </span>
                     <div className="h-10 border-b-2 border-dashed border-slate-400" />
@@ -1302,7 +1302,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
 
                   {/* Company Authorized Signatory */}
                   <div className="space-y-2 text-right">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 block">
                       AUTHORIZED BY {settings.companyName?.toUpperCase() || 'ISYSWARE'}:
                     </span>
                     {signatoryImg ? (
@@ -1316,7 +1316,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                       <div className="h-10 border-b-2 border-slate-400 w-40 ml-auto" />
                     )}
                     <div className="text-xs text-slate-900">
-                      <p className="font-black">{signatoryName}</p>
+                      <p className="font-medium">{signatoryName}</p>
                       <p className="text-[11px] text-slate-600 font-semibold">{signatoryTitle}</p>
                       <p className="text-[10px] text-[#2563EB] font-bold">{settings.companyName}</p>
                     </div>
@@ -1331,7 +1331,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
         <div className="p-4 sm:px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-400">Grand Total:</span>
-            <span className="text-base font-mono font-extrabold text-emerald-400">
+            <span className="text-base font-mono font-medium text-emerald-400">
               {settings.currencySymbol || 'Rs.'} {(grandTotal || 0).toLocaleString()}
             </span>
             <span className="text-xs text-slate-500 font-mono">({items.length} items)</span>

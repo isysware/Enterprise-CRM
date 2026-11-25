@@ -169,7 +169,7 @@ export const ServicesAdminView: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] dark:text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-medium text-[#0F172A] dark:text-white tracking-tight">
               Services &amp; Pricing Catalog
             </h1>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300 border border-blue-200 dark:border-blue-800">
@@ -198,7 +198,7 @@ export const ServicesAdminView: React.FC = () => {
             Total Services
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-[#0F172A] dark:text-white">
+            <span className="text-2xl font-medium text-[#0F172A] dark:text-white">
               {totalCount}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300">
@@ -215,7 +215,7 @@ export const ServicesAdminView: React.FC = () => {
             Active in Quotes
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
+            <span className="text-2xl font-medium text-emerald-600 dark:text-emerald-400">
               {activeCount}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
@@ -232,7 +232,7 @@ export const ServicesAdminView: React.FC = () => {
             Inactive Services
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-[#0F172A] dark:text-white">
+            <span className="text-2xl font-medium text-[#0F172A] dark:text-white">
               {inactiveCount}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[#64748B] dark:text-slate-400">
@@ -249,7 +249,7 @@ export const ServicesAdminView: React.FC = () => {
             Avg Default Price
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-xl font-extrabold text-[#0F172A] dark:text-white truncate font-mono">
+            <span className="text-xl font-medium text-[#0F172A] dark:text-white truncate font-mono">
               {formatPKR(avgPrice)}
             </span>
           </div>
@@ -418,7 +418,7 @@ export const ServicesAdminView: React.FC = () => {
                     </div>
                   </div>
 
-                  <h3 className="font-extrabold text-base text-[#0F172A] dark:text-white tracking-tight">
+                  <h3 className="font-medium text-base text-[#0F172A] dark:text-white tracking-tight">
                     {srv.name}
                   </h3>
                   <p className="text-xs text-[#64748B] dark:text-slate-400 mt-1.5 leading-relaxed line-clamp-3">
@@ -431,7 +431,7 @@ export const ServicesAdminView: React.FC = () => {
                     <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-slate-400 block">
                       Default Price
                     </span>
-                    <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                    <span className="text-lg font-medium text-emerald-600 dark:text-emerald-400 font-mono">
                       {formatPKR(price)}
                     </span>
                   </div>
@@ -538,7 +538,7 @@ export const ServicesAdminView: React.FC = () => {
                 min={0}
                 value={defaultPricePKR}
                 onChange={e => setDefaultPricePKR(Number(e.target.value))}
-                className="font-mono font-bold"
+                className="font-mono font-medium"
               />
             </FormField>
 

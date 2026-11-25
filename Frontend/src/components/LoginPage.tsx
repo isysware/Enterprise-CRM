@@ -200,23 +200,23 @@ export const LoginPage: React.FC = () => {
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {settings.companyLogo ? (
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 p-1 flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 flex items-center justify-center">
                 <img
                   src={settings.companyLogo}
                   alt={settings.companyName || 'Logo'}
-                  className="w-full h-full object-contain rounded-lg"
+                  className="w-full h-full object-contain"
                   referrerPolicy="no-referrer"
                 />
               </div>
             ) : (
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-400 to-purple-300 p-0.5 shadow-lg shadow-indigo-900/40">
-                <div className="w-full h-full bg-[#312e81] rounded-[10px] flex items-center justify-center font-black text-base text-white">
+                <div className="w-full h-full bg-[#312e81] rounded-[10px] flex items-center justify-center font-medium text-base text-white">
                   {settings.companyName ? settings.companyName.charAt(0) : 'i'}
                 </div>
               </div>
             )}
             <div>
-              <h2 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
+              <h2 className="text-lg font-medium tracking-tight text-white flex items-center gap-2">
                 <span>{settings.companyName || 'iSysware'}</span>
                 <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20">
                   CRM System
@@ -258,7 +258,7 @@ export const LoginPage: React.FC = () => {
                 {/* Metric 1: Visitors / Leads */}
                 <div className="p-3 rounded-xl bg-white/5 border border-white/10">
                   <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Leads</p>
-                  <p className="text-xl font-black text-white mt-0.5">20.3K</p>
+                  <p className="text-xl font-medium text-white mt-0.5">20.3K</p>
                   <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-0.5 mt-0.5">
                     <TrendingUp className="w-3 h-3" /> +14.8% this week
                   </span>
@@ -267,7 +267,7 @@ export const LoginPage: React.FC = () => {
                 {/* Metric 2: Conversion Rate */}
                 <div className="p-3 rounded-xl bg-white/5 border border-white/10">
                   <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Yield Rate</p>
-                  <p className="text-xl font-black text-indigo-300 mt-0.5">79.4%</p>
+                  <p className="text-xl font-medium text-indigo-300 mt-0.5">79.4%</p>
                   <span className="text-[10px] font-bold text-indigo-400 flex items-center gap-0.5 mt-0.5">
                     <CheckCircle2 className="w-3 h-3" /> Industry Leading
                   </span>
@@ -276,7 +276,7 @@ export const LoginPage: React.FC = () => {
                 {/* Metric 3: Active Revenue */}
                 <div className="p-3 rounded-xl bg-white/5 border border-white/10 col-span-2 sm:col-span-1">
                   <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Pipeline Value</p>
-                  <p className="text-xl font-black text-emerald-400 font-mono mt-0.5">Rs. 8.4M</p>
+                  <p className="text-xl font-medium text-emerald-400 font-mono mt-0.5">Rs. 8.4M</p>
                   <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">SaaS + Projects</span>
                 </div>
               </div>
@@ -345,7 +345,7 @@ export const LoginPage: React.FC = () => {
         {/* Bottom Feature Carousel / Testimonials */}
         <div className="relative z-10 pt-6 border-t border-white/15 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
+            <span className="text-[10px] font-medium uppercase tracking-widest text-indigo-300 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
               {currentSlide.tag}
             </span>
 
@@ -385,7 +385,7 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <div className="space-y-1 animate-fadeIn">
-            <h3 className="text-base sm:text-lg font-extrabold text-white leading-snug">
+            <h3 className="text-base sm:text-lg font-medium text-white leading-snug">
               {currentSlide.title}
             </h3>
             <p className="text-xs sm:text-sm text-indigo-100/80 leading-relaxed max-w-xl">
@@ -407,7 +407,7 @@ export const LoginPage: React.FC = () => {
               <span>{settings.companyName || 'iSysware'} CRM</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-medium text-slate-900 dark:text-white tracking-tight">
               Welcome back!
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">

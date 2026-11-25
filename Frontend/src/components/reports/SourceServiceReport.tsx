@@ -118,11 +118,11 @@ export const SourceServiceReport: React.FC<SourceServiceReportProps> = ({
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                     {sd.source}
                   </span>
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                  <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
                     {sd.shareOfLeads}%
                   </span>
                 </div>
-                <p className="text-2xl font-extrabold text-slate-900 dark:text-white mt-1.5">
+                <p className="text-2xl font-medium text-slate-900 dark:text-white mt-1.5">
                   {sd.leadCount}
                 </p>
                 <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800">
@@ -162,19 +162,19 @@ export const SourceServiceReport: React.FC<SourceServiceReportProps> = ({
                       <td className="p-3.5 font-bold text-slate-900 dark:text-white">
                         {sd.source}
                       </td>
-                      <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
                         {sd.leadCount}
                       </td>
                       <td className="p-3.5 text-right font-mono text-slate-600 dark:text-slate-400">
                         {sd.shareOfLeads}%
                       </td>
-                      <td className="p-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      <td className="p-3.5 text-right font-mono font-medium text-emerald-600 dark:text-emerald-400">
                         {sd.convertedCount}
                       </td>
-                      <td className="p-3.5 text-right font-mono font-bold text-blue-600 dark:text-blue-400">
+                      <td className="p-3.5 text-right font-mono font-medium text-blue-600 dark:text-blue-400">
                         {sd.conversionRate}%
                       </td>
-                      <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
+                      <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
                         {formatPKR(sd.pipelineValue)}
                       </td>
                     </tr>
@@ -215,16 +215,16 @@ export const SourceServiceReport: React.FC<SourceServiceReportProps> = ({
                     <td className="p-3.5 font-bold text-slate-900 dark:text-white">
                       {sd.service}
                     </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
+                    <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
                       {sd.leadCount}
                     </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <td className="p-3.5 text-right font-mono font-medium text-emerald-600 dark:text-emerald-400">
                       {sd.convertedCount}
                     </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-blue-600 dark:text-blue-400">
+                    <td className="p-3.5 text-right font-mono font-medium text-blue-600 dark:text-blue-400">
                       {sd.conversionRate}%
                     </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
+                    <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
                       {formatPKR(sd.pipelineValue)}
                     </td>
                   </tr>

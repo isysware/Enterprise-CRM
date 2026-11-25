@@ -121,7 +121,7 @@ export const SettingsCommunicationTab: React.FC<SettingsCommunicationTabProps> =
                 <label className="text-xs font-bold text-[#0F172A] dark:text-slate-200">
                   Stale Lead Threshold (Days)
                 </label>
-                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-[#2563EB] dark:text-blue-300">
+                <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-[#2563EB] dark:text-blue-300">
                   {staleLeadDays} Days
                 </span>
               </div>
@@ -143,7 +143,7 @@ export const SettingsCommunicationTab: React.FC<SettingsCommunicationTabProps> =
                 <label className="text-xs font-bold text-[#0F172A] dark:text-slate-200">
                   Follow-Up Reminder Lead Time (Minutes)
                 </label>
-                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-[#2563EB] dark:text-blue-300">
+                <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-[#2563EB] dark:text-blue-300">
                   {followUpReminderMinutes} Mins
                 </span>
               </div>

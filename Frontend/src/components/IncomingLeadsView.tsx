@@ -590,7 +590,7 @@ export const IncomingLeadsView: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-[#64748B] dark:text-slate-400 block text-[11px]">Phone Number</span>
-                  <span className="font-mono font-bold text-[#0F172A] dark:text-white">
+                  <span className="font-mono font-medium text-[#0F172A] dark:text-white">
                     {assignModalLead.phone}
                   </span>
                 </div>

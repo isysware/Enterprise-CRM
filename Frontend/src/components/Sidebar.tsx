@@ -252,7 +252,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="p-3.5 sm:p-4 border-b border-[#E5EAF1] dark:border-slate-800 flex items-center justify-between gap-2 bg-white dark:bg-slate-900">
                 <div className="flex items-center gap-2.5 min-w-0">
                   {settings.companyLogo ? (
-                    <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800 border border-[#E5EAF1] dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0 shadow-xs p-0.5">
+                    <div className="w-9 h-9 flex items-center justify-center shrink-0">
                       <img
                         src={settings.companyLogo}
                         alt={settings.companyName || 'Logo'}
@@ -261,7 +261,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       />
                     </div>
                   ) : (
-                    <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white shadow-xs shrink-0 font-extrabold text-xs tracking-wider">
+                    <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white shrink-0 font-medium text-xs tracking-wider">
                       CR
                     </div>
                   )}
@@ -502,7 +502,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="cursor-pointer focus:outline-none flex items-center justify-center"
               >
                 {settings.companyLogo ? (
-                  <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800 border border-[#E5EAF1] dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0 shadow-xs p-0.5 group-hover:border-blue-400 transition-colors">
+                  <div className="w-9 h-9 flex items-center justify-center shrink-0">
                     <img
                       src={settings.companyLogo}
                       alt={settings.companyName || 'Logo'}
@@ -511,7 +511,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     />
                   </div>
                 ) : (
-                  <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white shadow-xs shrink-0 font-extrabold text-xs tracking-wider group-hover:bg-blue-700 transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white shrink-0 font-medium text-xs tracking-wider group-hover:bg-blue-700 transition-colors">
                     CR
                   </div>
                 )}
@@ -521,7 +521,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <>
               <div className="flex items-center gap-2.5 min-w-0 overflow-hidden">
                 {settings.companyLogo ? (
-                  <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800 border border-[#E5EAF1] dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0 shadow-xs p-0.5">
+                  <div className="w-9 h-9 flex items-center justify-center shrink-0">
                     <img
                       src={settings.companyLogo}
                       alt={settings.companyName || 'Logo'}
@@ -530,7 +530,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     />
                   </div>
                 ) : (
-                  <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white shadow-xs shrink-0 font-extrabold text-xs tracking-wider">
+                  <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white shrink-0 font-medium text-xs tracking-wider">
                     CR
                   </div>
                 )}

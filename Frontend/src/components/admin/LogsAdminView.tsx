@@ -92,7 +92,7 @@ export const LogsAdminView: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] dark:text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-medium text-[#0F172A] dark:text-white tracking-tight">
               Activity Logs
             </h1>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300 border border-blue-200 dark:border-blue-800">
@@ -112,7 +112,7 @@ export const LogsAdminView: React.FC = () => {
             Total Log Events
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-[#0F172A] dark:text-white">
+            <span className="text-2xl font-medium text-[#0F172A] dark:text-white">
               {totalEvents}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300">
@@ -129,7 +129,7 @@ export const LogsAdminView: React.FC = () => {
             Today's Activity
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
+            <span className="text-2xl font-medium text-emerald-600 dark:text-emerald-400">
               {todayEventsCount}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
@@ -146,7 +146,7 @@ export const LogsAdminView: React.FC = () => {
             Active Actors
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-[#0F172A] dark:text-white">
+            <span className="text-2xl font-medium text-[#0F172A] dark:text-white">
               {uniqueUsersCount}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
@@ -163,7 +163,7 @@ export const LogsAdminView: React.FC = () => {
             Distinct Actions
           </p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-[#0F172A] dark:text-white">
+            <span className="text-2xl font-medium text-[#0F172A] dark:text-white">
               {uniqueActions.length}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">

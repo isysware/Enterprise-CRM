@@ -182,7 +182,7 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
               <div className="flex items-center gap-4">
                 {/* Square Preview */}
                 <div className="text-center space-y-1">
-                  <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center overflow-hidden shadow-xs relative group">
+                  <div className={`w-16 h-16 rounded-2xl bg-white dark:bg-slate-900 ${companyLogo ? '' : 'border-2 border-dashed border-slate-300 dark:border-slate-600'} flex items-center justify-center overflow-hidden relative group`}>
                     {companyLogo ? (
                       <img
                         src={companyLogo}
@@ -199,7 +199,7 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
 
                 {/* Circular Preview */}
                 <div className="text-center space-y-1">
-                  <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center overflow-hidden shadow-xs">
+                  <div className={`w-16 h-16 rounded-full bg-white dark:bg-slate-900 ${companyLogo ? '' : 'border-2 border-dashed border-slate-300 dark:border-slate-600'} flex items-center justify-center overflow-hidden`}>
                     {companyLogo ? (
                       <img
                         src={companyLogo}
@@ -208,7 +208,7 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
                         referrerPolicy="no-referrer"
                       />
                     ) : (
-                      <div className="w-full h-full bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-xs">
+                      <div className="w-full h-full bg-[#2563EB] flex items-center justify-center text-white font-medium text-xs">
                         {applicationName ? applicationName.substring(0, 2).toUpperCase() : 'CRM'}
                       </div>
                     )}
@@ -377,7 +377,7 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <span className="font-extrabold text-blue-400 text-xs">
+                    <span className="font-medium text-blue-400 text-xs">
                       {applicationName ? applicationName.substring(0, 2).toUpperCase() : 'CR'}
                     </span>
                   )}

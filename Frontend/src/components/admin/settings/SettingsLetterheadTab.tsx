@@ -665,7 +665,7 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
                 <div className="space-y-3 relative z-10">
                   <div className="flex items-start justify-between border-b pb-3 border-slate-200">
                     <div>
-                      <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-tight">
+                      <h2 className="text-base font-medium text-slate-900 uppercase tracking-tight">
                         {settings.companyName || 'iSysware Solutions'}
                       </h2>
                       <p className="text-[9px] text-slate-500 max-w-[240px] leading-tight mt-0.5">

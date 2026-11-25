@@ -90,47 +90,49 @@ export const CommercialRevenueReport: React.FC<CommercialRevenueReportProps> = (
     <div className="space-y-6">
       {/* 1. Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Client Revenue</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-xl font-extrabold text-slate-900 dark:text-white truncate">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Client Revenue</span>
+          <div>
+            <div className="text-2xl font-medium text-slate-900 dark:text-white leading-none tracking-tight truncate">
               {formatPKR(totalRevenue)}
-            </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Realized contract revenue</p>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Realized contract revenue</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Client Accounts</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
-              {activeClientsCount}
-            </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Accounts</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
               Paying
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Generating active billings</p>
+          <div>
+            <div className="text-2xl font-medium text-emerald-600 dark:text-emerald-400 leading-none tracking-tight">
+              {activeClientsCount}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Generating active billings</p>
+          </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Mean Deal Valuation</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-xl font-extrabold text-blue-600 dark:text-blue-400 truncate">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Mean Deal Valuation</span>
+          <div>
+            <div className="text-2xl font-medium text-blue-600 dark:text-blue-400 leading-none tracking-tight truncate">
               {formatPKR(avgDealSize)}
-            </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Average closed contract size</p>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Average closed contract size</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Open Pipeline Capital</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 truncate">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Open Pipeline Capital</span>
+          <div>
+            <div className="text-2xl font-medium text-indigo-600 dark:text-indigo-400 leading-none tracking-tight truncate">
               {formatPKR(totalPipelineValue)}
-            </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Total active deal volume in stage</p>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Total active deal volume in stage</p>
         </div>
       </div>
 
@@ -165,10 +167,10 @@ export const CommercialRevenueReport: React.FC<CommercialRevenueReportProps> = (
                     <p className="font-bold text-slate-900 dark:text-white">{b.name}</p>
                     <p className="text-[11px] text-slate-500 line-clamp-1">{b.description}</p>
                   </td>
-                  <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
+                  <td className="p-3.5 text-right font-mono font-medium text-slate-900 dark:text-white">
                     {b.clientCount}
                   </td>
-                  <td className="p-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  <td className="p-3.5 text-right font-mono font-medium text-emerald-600 dark:text-emerald-400">
                     {formatPKR(b.revenue)}
                   </td>
                   <td className="p-3.5 text-right">
@@ -179,7 +181,7 @@ export const CommercialRevenueReport: React.FC<CommercialRevenueReportProps> = (
                   <td className="p-3.5 text-right font-mono font-medium text-slate-700 dark:text-slate-300">
                     {formatPKR(b.avgDeal)}
                   </td>
-                  <td className="p-3.5 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
+                  <td className="p-3.5 text-right font-mono font-medium text-slate-800 dark:text-slate-200">
                     {b.leadsCount}
                   </td>
                   <td className="p-3.5 text-right font-mono text-slate-600 dark:text-slate-400">

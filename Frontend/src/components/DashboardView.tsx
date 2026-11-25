@@ -518,7 +518,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </span>
               </div>
 
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5" suppressHydrationWarning>
+              <h1 className="text-xl sm:text-2xl font-medium text-white tracking-tight mt-0.5" suppressHydrationWarning>
                 {greeting}, {currentUser.name}
               </h1>
 
@@ -568,7 +568,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-[10px] text-blue-200 uppercase tracking-wider block font-semibold">
                 Scoped Pipeline
               </span>
-              <span className="text-sm sm:text-base font-extrabold text-white font-mono">
+              <span className="text-sm sm:text-base font-medium text-white font-mono">
                 {scopedLeads.length} Leads
               </span>
             </div>
@@ -577,7 +577,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-[10px] text-blue-200 uppercase tracking-wider block font-semibold">
                 Total Pipeline Value
               </span>
-              <span className="text-sm sm:text-base font-extrabold text-white font-mono">
+              <span className="text-sm sm:text-base font-medium text-white font-mono">
                 {formatPKR(totalPipelineValue)}
               </span>
             </div>
@@ -586,7 +586,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-[10px] text-blue-200 uppercase tracking-wider block font-semibold">
                 Missed Follow-Ups
               </span>
-              <span className={`text-sm sm:text-base font-extrabold font-mono ${missedFollowUpsList.length > 0 ? 'text-rose-200' : 'text-white'}`}>
+              <span className={`text-sm sm:text-base font-medium font-mono ${missedFollowUpsList.length > 0 ? 'text-rose-200' : 'text-white'}`}>
                 {missedFollowUpsList.length} Tasks
               </span>
             </div>
@@ -595,7 +595,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="text-[10px] text-blue-200 uppercase tracking-wider block font-semibold">
                 Hot / Urgent Leads
               </span>
-              <span className="text-sm sm:text-base font-extrabold text-amber-200 font-mono">
+              <span className="text-sm sm:text-base font-medium text-amber-200 font-mono">
                 {urgentLeadsCount} Leads
               </span>
             </div>
@@ -621,7 +621,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-[#0F172A] dark:text-white leading-none tracking-tight">
+            <div className="text-2xl font-medium text-[#0F172A] dark:text-white leading-none tracking-tight">
               {metrics.totalLeads}
             </div>
             <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1 truncate">
@@ -644,7 +644,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-[#0F172A] dark:text-white leading-none tracking-tight">
+            <div className="text-2xl font-medium text-[#0F172A] dark:text-white leading-none tracking-tight">
               {metrics.newLeads}
             </div>
             <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1 truncate">
@@ -667,7 +667,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-[#0F172A] dark:text-white leading-none tracking-tight">
+            <div className="text-2xl font-medium text-[#0F172A] dark:text-white leading-none tracking-tight">
               {metrics.convertedLeads}
             </div>
             <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1 truncate">
@@ -690,7 +690,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-[#0F172A] dark:text-white leading-none tracking-tight">
+            <div className="text-2xl font-medium text-[#0F172A] dark:text-white leading-none tracking-tight">
               {metrics.pendingFollowUps}
             </div>
             <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1 truncate">
@@ -718,7 +718,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           >
             <Flame className="w-3.5 h-3.5 text-rose-500 shrink-0" />
             <span>Hot Leads</span>
-            <span className="font-mono font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 px-1.5 py-0.2 rounded text-[11px]">
+            <span className="font-mono font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 px-1.5 py-0.2 rounded text-[11px]">
               {metrics.hotLeads}
             </span>
           </button>
@@ -732,7 +732,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           >
             <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
             <span>Missed</span>
-            <span className={`font-mono font-bold px-1.5 py-0.2 rounded text-[11px] ${
+            <span className={`font-mono font-medium px-1.5 py-0.2 rounded text-[11px] ${
               metrics.missedFollowUps > 0
                 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
                 : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
@@ -750,7 +750,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           >
             <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
             <span>Stale</span>
-            <span className="font-mono font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 px-1.5 py-0.2 rounded text-[11px]">
+            <span className="font-mono font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 px-1.5 py-0.2 rounded text-[11px]">
               {metrics.staleLeads}
             </span>
           </button>
@@ -764,7 +764,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           >
             <XCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>Lost</span>
-            <span className="font-mono font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-1.5 py-0.2 rounded text-[11px]">
+            <span className="font-mono font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-1.5 py-0.2 rounded text-[11px]">
               {metrics.lostLeads}
             </span>
           </button>
@@ -806,7 +806,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <span className="text-[10px] font-semibold text-[#64748B] dark:text-slate-400 uppercase tracking-wider block">
                     Active Pipeline Value
                   </span>
-                  <span className="text-sm font-extrabold text-[#2563EB] dark:text-blue-400 font-mono">
+                  <span className="text-sm font-medium text-[#2563EB] dark:text-blue-400 font-mono">
                     {formatPKR(activePipelineValue)}
                   </span>
                 </div>
@@ -846,7 +846,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="font-mono text-xs font-bold text-[#0F172A] dark:text-white">
+                        <span className="font-mono text-xs font-medium text-[#0F172A] dark:text-white">
                           {formatPKR(stage.value)}
                         </span>
                         <span className="text-[11px] text-[#64748B] dark:text-slate-400 font-mono w-10 text-right">
@@ -906,7 +906,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <span className="text-[10px] font-semibold text-[#64748B] dark:text-slate-400 uppercase tracking-wider block">
                     Total Value
                   </span>
-                  <div className="text-xs sm:text-sm font-extrabold text-[#0F172A] dark:text-white font-mono mt-0.5 truncate">
+                  <div className="text-xs sm:text-sm font-medium text-[#0F172A] dark:text-white font-mono mt-0.5 truncate">
                     {formatPKR(totalPipelineValue)}
                   </div>
                 </div>
@@ -915,7 +915,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <span className="text-[10px] font-semibold text-[#64748B] dark:text-slate-400 uppercase tracking-wider block">
                     Avg Lead Deal
                   </span>
-                  <div className="text-xs sm:text-sm font-extrabold text-[#0F172A] dark:text-white font-mono mt-0.5 truncate">
+                  <div className="text-xs sm:text-sm font-medium text-[#0F172A] dark:text-white font-mono mt-0.5 truncate">
                     {formatPKR(averageLeadValue)}
                   </div>
                 </div>
@@ -924,7 +924,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <span className="text-[10px] font-semibold text-[#64748B] dark:text-slate-400 uppercase tracking-wider block">
                     Conversion Rate
                   </span>
-                  <div className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 truncate">
+                  <div className="text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 truncate">
                     {conversionRate}%
                   </div>
                 </div>
@@ -933,7 +933,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <span className="text-[10px] font-semibold text-[#64748B] dark:text-slate-400 uppercase tracking-wider block">
                     Urgent Leads
                   </span>
-                  <div className="text-xs sm:text-sm font-extrabold text-rose-600 dark:text-rose-400 font-mono mt-0.5 truncate">
+                  <div className="text-xs sm:text-sm font-medium text-rose-600 dark:text-rose-400 font-mono mt-0.5 truncate">
                     {urgentLeadsCount}
                   </div>
                 </div>
@@ -1014,7 +1014,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           </span>
                         </div>
 
-                        <span className="font-mono text-xs font-bold text-[#0F172A] dark:text-white shrink-0">
+                        <span className="font-mono text-xs font-medium text-[#0F172A] dark:text-white shrink-0">
                           {formatPKR(src.value)}
                         </span>
                       </div>
@@ -1189,7 +1189,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <span className="font-semibold text-[#0F172A] dark:text-slate-200">
                       {p.label}
                     </span>
-                    <span className="font-mono text-xs font-bold text-[#0F172A] dark:text-white">
+                    <span className="font-mono text-xs font-medium text-[#0F172A] dark:text-white">
                       {p.count} <span className="text-[10px] text-[#64748B] font-normal">({p.percent}%)</span>
                     </span>
                   </div>
@@ -1248,7 +1248,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </span>
                     </div>
 
-                    <span className="font-mono text-xs font-bold text-[#0F172A] dark:text-white shrink-0">
+                    <span className="font-mono text-xs font-medium text-[#0F172A] dark:text-white shrink-0">
                       {rep.leadCount}
                     </span>
                   </div>
@@ -1377,19 +1377,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div key={myPerf.id} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                   <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Assigned Leads</span>
-                  <span className="text-lg font-extrabold text-[#0F172A] dark:text-white font-mono mt-0.5 block">{myPerf.assignedLeadsCount}</span>
+                  <span className="text-lg font-medium text-[#0F172A] dark:text-white font-mono mt-0.5 block">{myPerf.assignedLeadsCount}</span>
                 </div>
                 <div className="p-3 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                   <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Pipeline Value</span>
-                  <span className="text-lg font-extrabold text-[#2563EB] dark:text-blue-400 font-mono mt-0.5 block">{formatPKR(myPerf.pipelineValue)}</span>
+                  <span className="text-lg font-medium text-[#2563EB] dark:text-blue-400 font-mono mt-0.5 block">{formatPKR(myPerf.pipelineValue)}</span>
                 </div>
                 <div className="p-3 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                   <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Conversion Rate</span>
-                  <span className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">{myPerf.conversionRate}%</span>
+                  <span className="text-lg font-medium text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">{myPerf.conversionRate}%</span>
                 </div>
                 <div className="p-3 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                   <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Pending Tasks</span>
-                  <span className="text-lg font-extrabold text-amber-600 dark:text-amber-400 font-mono mt-0.5 block">{myPerf.pendingFollowUps}</span>
+                  <span className="text-lg font-medium text-amber-600 dark:text-amber-400 font-mono mt-0.5 block">{myPerf.pendingFollowUps}</span>
                 </div>
               </div>
             ))}
@@ -1405,23 +1405,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Visible Teams</span>
-                    <span className="text-sm font-extrabold text-[#0F172A] dark:text-white font-mono mt-0.5 block">{scopedTeams.length}</span>
+                    <span className="text-sm font-medium text-[#0F172A] dark:text-white font-mono mt-0.5 block">{scopedTeams.length}</span>
                   </div>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Assigned Leads</span>
-                    <span className="text-sm font-extrabold text-[#0F172A] dark:text-white font-mono mt-0.5 block">
+                    <span className="text-sm font-medium text-[#0F172A] dark:text-white font-mono mt-0.5 block">
                       {teamPerformanceData.reduce((acc, t) => acc + t.assignedLeadsCount, 0)}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Total Pipeline</span>
-                    <span className="text-sm font-extrabold text-[#2563EB] dark:text-blue-400 font-mono mt-0.5 block">
+                    <span className="text-sm font-medium text-[#2563EB] dark:text-blue-400 font-mono mt-0.5 block">
                       {formatPKR(teamPerformanceData.reduce((acc, t) => acc + t.pipelineValue, 0))}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Converted Deals</span>
-                    <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
+                    <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
                       {teamPerformanceData.reduce((acc, t) => acc + t.convertedLeadsCount, 0)}
                     </span>
                   </div>
@@ -1432,23 +1432,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Team Leads</span>
-                    <span className="text-sm font-extrabold text-[#0F172A] dark:text-white font-mono mt-0.5 block">{teamLeadPerformanceData.length}</span>
+                    <span className="text-sm font-medium text-[#0F172A] dark:text-white font-mono mt-0.5 block">{teamLeadPerformanceData.length}</span>
                   </div>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Managed Reps</span>
-                    <span className="text-sm font-extrabold text-[#0F172A] dark:text-white font-mono mt-0.5 block">
+                    <span className="text-sm font-medium text-[#0F172A] dark:text-white font-mono mt-0.5 block">
                       {teamLeadPerformanceData.reduce((acc, tl) => acc + tl.membersCount, 0)}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Sub-Team Pipeline</span>
-                    <span className="text-sm font-extrabold text-[#2563EB] dark:text-blue-400 font-mono mt-0.5 block">
+                    <span className="text-sm font-medium text-[#2563EB] dark:text-blue-400 font-mono mt-0.5 block">
                       {formatPKR(teamLeadPerformanceData.reduce((acc, tl) => acc + tl.pipelineValue, 0))}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Converted Deals</span>
-                    <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
+                    <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
                       {teamLeadPerformanceData.reduce((acc, tl) => acc + tl.convertedLeadsCount, 0)}
                     </span>
                   </div>
@@ -1459,23 +1459,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Authorized Reps</span>
-                    <span className="text-sm font-extrabold text-[#0F172A] dark:text-white font-mono mt-0.5 block">{userPerformanceData.length}</span>
+                    <span className="text-sm font-medium text-[#0F172A] dark:text-white font-mono mt-0.5 block">{userPerformanceData.length}</span>
                   </div>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Assigned Leads</span>
-                    <span className="text-sm font-extrabold text-[#0F172A] dark:text-white font-mono mt-0.5 block">
+                    <span className="text-sm font-medium text-[#0F172A] dark:text-white font-mono mt-0.5 block">
                       {userPerformanceData.reduce((acc, u) => acc + u.assignedLeadsCount, 0)}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Total Pipeline</span>
-                    <span className="text-sm font-extrabold text-[#2563EB] dark:text-blue-400 font-mono mt-0.5 block">
+                    <span className="text-sm font-medium text-[#2563EB] dark:text-blue-400 font-mono mt-0.5 block">
                       {formatPKR(userPerformanceData.reduce((acc, u) => acc + u.pipelineValue, 0))}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-lg border border-[#E5EAF1] dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850">
                     <span className="text-[10px] text-[#64748B] uppercase font-bold tracking-wider block">Converted Deals</span>
-                    <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
+                    <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
                       {userPerformanceData.reduce((acc, u) => acc + u.convertedLeadsCount, 0)}
                     </span>
                   </div>
@@ -1566,15 +1566,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             <td className="p-3 text-center font-mono text-xs text-[#0F172A] dark:text-white">
                               {t.activeMembersCount}
                             </td>
-                            <td className="p-3 font-mono font-bold text-xs text-[#0F172A] dark:text-white">
+                            <td className="p-3 font-mono font-medium text-xs text-[#0F172A] dark:text-white">
                               {t.assignedLeadsCount}
                             </td>
-                            <td className="p-3 font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">
+                            <td className="p-3 font-mono font-medium text-xs text-emerald-600 dark:text-emerald-400">
                               {t.convertedLeadsCount}
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
-                                <span className="font-mono text-xs font-bold text-[#0F172A] dark:text-white w-10">
+                                <span className="font-mono text-xs font-medium text-[#0F172A] dark:text-white w-10">
                                   {t.conversionRate}%
                                 </span>
                                 <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -1582,11 +1582,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 </div>
                               </div>
                             </td>
-                            <td className="p-3 font-mono font-bold text-xs text-[#2563EB] dark:text-blue-400">
+                            <td className="p-3 font-mono font-medium text-xs text-[#2563EB] dark:text-blue-400">
                               {formatPKR(t.pipelineValue)}
                             </td>
                             <td className="p-3 text-right">
-                              <span className={`font-mono text-xs font-bold ${t.missedFollowUps > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-[#64748B]'}`}>
+                              <span className={`font-mono text-xs font-medium ${t.missedFollowUps > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-[#64748B]'}`}>
                                 {t.missedFollowUps}
                               </span>
                             </td>
@@ -1643,15 +1643,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             <td className="p-3 text-center font-mono text-xs text-[#0F172A] dark:text-white">
                               {tl.membersCount}
                             </td>
-                            <td className="p-3 font-mono font-bold text-xs text-[#0F172A] dark:text-white">
+                            <td className="p-3 font-mono font-medium text-xs text-[#0F172A] dark:text-white">
                               {tl.assignedLeadsCount}
                             </td>
-                            <td className="p-3 font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">
+                            <td className="p-3 font-mono font-medium text-xs text-emerald-600 dark:text-emerald-400">
                               {tl.convertedLeadsCount}
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
-                                <span className="font-mono text-xs font-bold text-[#0F172A] dark:text-white w-10">
+                                <span className="font-mono text-xs font-medium text-[#0F172A] dark:text-white w-10">
                                   {tl.conversionRate}%
                                 </span>
                                 <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -1659,14 +1659,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 </div>
                               </div>
                             </td>
-                            <td className="p-3 font-mono font-bold text-xs text-[#2563EB] dark:text-blue-400">
+                            <td className="p-3 font-mono font-medium text-xs text-[#2563EB] dark:text-blue-400">
                               {formatPKR(tl.pipelineValue)}
                             </td>
                             <td className="p-3 font-mono text-xs text-[#64748B]">
                               {tl.pendingFollowUps}
                             </td>
                             <td className="p-3 text-right">
-                              <span className={`font-mono text-xs font-bold ${tl.missedFollowUps > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-[#64748B]'}`}>
+                              <span className={`font-mono text-xs font-medium ${tl.missedFollowUps > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-[#64748B]'}`}>
                                 {tl.missedFollowUps}
                               </span>
                             </td>
@@ -1726,18 +1726,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             <td className="p-3 text-xs text-[#64748B] dark:text-slate-300 truncate">
                               {u.teamName}
                             </td>
-                            <td className="p-3 font-mono font-bold text-xs text-[#0F172A] dark:text-white">
+                            <td className="p-3 font-mono font-medium text-xs text-[#0F172A] dark:text-white">
                               {u.assignedLeadsCount}
                             </td>
                             <td className="p-3 font-mono text-xs text-sky-600 dark:text-sky-400">
                               {u.newLeadsCount}
                             </td>
-                            <td className="p-3 font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">
+                            <td className="p-3 font-mono font-medium text-xs text-emerald-600 dark:text-emerald-400">
                               {u.convertedLeadsCount}
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
-                                <span className="font-mono text-xs font-bold text-[#0F172A] dark:text-white w-10">
+                                <span className="font-mono text-xs font-medium text-[#0F172A] dark:text-white w-10">
                                   {u.conversionRate}%
                                 </span>
                                 <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -1745,14 +1745,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 </div>
                               </div>
                             </td>
-                            <td className="p-3 font-mono font-bold text-xs text-[#2563EB] dark:text-blue-400">
+                            <td className="p-3 font-mono font-medium text-xs text-[#2563EB] dark:text-blue-400">
                               {formatPKR(u.pipelineValue)}
                             </td>
                             <td className="p-3 font-mono text-xs text-[#64748B]">
                               {u.pendingFollowUps}
                             </td>
                             <td className="p-3 text-right">
-                              <span className={`font-mono text-xs font-bold ${u.missedFollowUps > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-[#64748B]'}`}>
+                              <span className={`font-mono text-xs font-medium ${u.missedFollowUps > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-[#64748B]'}`}>
                                 {u.missedFollowUps}
                               </span>
                             </td>

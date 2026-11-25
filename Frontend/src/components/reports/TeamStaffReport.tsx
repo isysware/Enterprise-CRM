@@ -193,29 +193,41 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
 
         {/* Metric Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assigned Leads</p>
-            <p className="text-2xl font-medium text-slate-900 dark:text-white mt-1">{myStats.assignedCount}</p>
+            <div>
+              <p className="text-2xl font-medium text-slate-900 dark:text-white leading-none tracking-tight">{myStats.assignedCount}</p>
+            </div>
           </div>
-          <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Converted</p>
-            <p className="text-2xl font-medium text-emerald-600 dark:text-emerald-400 mt-1">{myStats.convertedCount}</p>
+            <div>
+              <p className="text-2xl font-medium text-emerald-600 dark:text-emerald-400 leading-none tracking-tight">{myStats.convertedCount}</p>
+            </div>
           </div>
-          <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Conversion Rate</p>
-            <p className="text-2xl font-medium text-blue-600 dark:text-blue-400 mt-1">{myStats.conversionRate}%</p>
+            <div>
+              <p className="text-2xl font-medium text-blue-600 dark:text-blue-400 leading-none tracking-tight">{myStats.conversionRate}%</p>
+            </div>
           </div>
-          <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pipeline Value</p>
-            <p className="text-base font-medium text-slate-900 dark:text-white mt-1 truncate">{formatPKR(myStats.pipelineValue)}</p>
+            <div>
+              <p className="text-lg font-medium text-slate-900 dark:text-white leading-none tracking-tight truncate">{formatPKR(myStats.pipelineValue)}</p>
+            </div>
           </div>
-          <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending Follow-Ups</p>
-            <p className="text-2xl font-medium text-amber-600 dark:text-amber-400 mt-1">{myStats.pendingFollowUps}</p>
+            <div>
+              <p className="text-2xl font-medium text-amber-600 dark:text-amber-400 leading-none tracking-tight">{myStats.pendingFollowUps}</p>
+            </div>
           </div>
-          <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+          <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Missed Follow-Ups</p>
-            <p className="text-2xl font-medium text-rose-600 dark:text-rose-400 mt-1">{myStats.missedFollowUps}</p>
+            <div>
+              <p className="text-2xl font-medium text-rose-600 dark:text-rose-400 leading-none tracking-tight">{myStats.missedFollowUps}</p>
+            </div>
           </div>
         </div>
       </div>

@@ -152,7 +152,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       {/* 1. Page Header */}
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-medium text-[#0F172A] dark:text-white tracking-tight">
             Clients
           </h1>
           <p className="text-xs text-[#64748B] dark:text-slate-400 mt-1">
@@ -173,69 +173,77 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       {/* 2. Real Metric Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Clients */}
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
-            Total Clients
-          </p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-[#0F172A] dark:text-white">
-              {totalClientsCount}
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
+              Total Clients
             </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300">
               Accounts
             </span>
           </div>
-          <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1">
-            All closed &amp; converted customer records
-          </p>
+          <div>
+            <div className="text-2xl font-medium text-[#0F172A] dark:text-white leading-none tracking-tight">
+              {totalClientsCount}
+            </div>
+            <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1 truncate">
+              All closed &amp; converted customer records
+            </p>
+          </div>
         </div>
 
         {/* Active Clients */}
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
-            Active Accounts
-          </p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
-              {activeClientsCount}
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
+              Active Accounts
             </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
               Active
             </span>
           </div>
-          <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1">
-            Currently active commercial partnerships
-          </p>
+          <div>
+            <div className="text-2xl font-medium text-emerald-600 dark:text-emerald-400 leading-none tracking-tight">
+              {activeClientsCount}
+            </div>
+            <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1 truncate">
+              Currently active commercial partnerships
+            </p>
+          </div>
         </div>
 
         {/* Total Client Value */}
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
-            Total Client Value
-          </p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-xl font-extrabold text-[#0F172A] dark:text-white truncate">
-              {formatPKR(totalClientRevenue)}
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
+              Total Client Value
             </span>
           </div>
-          <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1">
-            Realized contract &amp; active revenue
-          </p>
+          <div>
+            <div className="text-2xl font-medium text-[#0F172A] dark:text-white leading-none tracking-tight truncate">
+              {formatPKR(totalClientRevenue)}
+            </div>
+            <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1 truncate">
+              Realized contract &amp; active revenue
+            </p>
+          </div>
         </div>
 
         {/* Average Deal Size */}
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
-            Average Client Value
-          </p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-xl font-extrabold text-[#2563EB] dark:text-blue-400 truncate">
-              {formatPKR(avgClientValue)}
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">
+              Average Client Value
             </span>
           </div>
-          <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1">
-            Mean closed client contract yield
-          </p>
+          <div>
+            <div className="text-2xl font-medium text-[#2563EB] dark:text-blue-400 leading-none tracking-tight truncate">
+              {formatPKR(avgClientValue)}
+            </div>
+            <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-1 truncate">
+              Mean closed client contract yield
+            </p>
+          </div>
         </div>
       </div>
 
@@ -483,7 +491,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       </td>
 
                       {/* Contract Value */}
-                      <td className="p-3.5 text-right font-mono font-bold text-[#0F172A] dark:text-white text-xs">
+                      <td className="p-3.5 text-right font-mono font-medium text-[#0F172A] dark:text-white text-xs">
                         {formatPKR(clientValue)}
                       </td>
 
@@ -581,7 +589,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 <span className="font-semibold text-[#2563EB] dark:text-blue-400 block mt-0.5">
                   {selectedClientDetail.pricingModel || 'Subscription'}
                 </span>
-                <span className="block font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                <span className="block font-mono font-medium text-emerald-600 dark:text-emerald-400 mt-0.5">
                   {formatPKR(getClientRevenue(selectedClientDetail))}
                 </span>
               </div>
@@ -594,7 +602,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   <span className="text-[10px] font-bold text-[#2563EB] dark:text-blue-300 uppercase tracking-wider">
                     Commercial Fee Structure
                   </span>
-                  <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300 text-xs">
+                  <span className="font-mono font-medium text-emerald-700 dark:text-emerald-300 text-xs">
                     Total: {formatPKR(getClientRevenue(selectedClientDetail))}
                   </span>
                 </div>

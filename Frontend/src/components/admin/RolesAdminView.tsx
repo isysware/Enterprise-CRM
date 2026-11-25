@@ -326,7 +326,7 @@ export const RolesAdminView: React.FC = () => {
   const getRoleBadgeClasses = (role: UserRole) => {
     switch (role) {
       case 'Super Admin':
-        return 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-extrabold';
+        return 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-medium';
       case 'Admin':
         return 'bg-blue-50 text-[#2563EB] border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-900 font-bold';
       case 'Manager':
@@ -345,7 +345,7 @@ export const RolesAdminView: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] dark:text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-medium text-[#0F172A] dark:text-white tracking-tight">
               Roles &amp; Permissions
             </h1>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300 border border-blue-200 dark:border-blue-800">

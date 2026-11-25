@@ -54,54 +54,62 @@ export const FollowUpsActivityReport: React.FC<FollowUpsActivityReportProps> = (
     <div className="space-y-6">
       {/* 1. Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Due Today</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-blue-600 dark:text-blue-400">{dueToday}</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Due Today</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
               Immediate
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Scheduled for {todayStr}</p>
+          <div>
+            <div className="text-2xl font-medium text-blue-600 dark:text-blue-400 leading-none tracking-tight">{dueToday}</div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Scheduled for {todayStr}</p>
+          </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Missed / Overdue</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-rose-600 dark:text-rose-400">{missed}</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Missed / Overdue</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300">
               Attention
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Requires urgent rescheduling</p>
+          <div>
+            <div className="text-2xl font-medium text-rose-600 dark:text-rose-400 leading-none tracking-tight">{missed}</div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Requires urgent rescheduling</p>
+          </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Upcoming</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{upcoming}</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Upcoming</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
               Scheduled
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Future pipeline touchpoints</p>
+          <div>
+            <div className="text-2xl font-medium text-indigo-600 dark:text-indigo-400 leading-none tracking-tight">{upcoming}</div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Future pipeline touchpoints</p>
+          </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Completed</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{completed}</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+        <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Completed</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
               Done
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Logged outreach interactions</p>
+          <div>
+            <div className="text-2xl font-medium text-emerald-600 dark:text-emerald-400 leading-none tracking-tight">{completed}</div>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Logged outreach interactions</p>
+          </div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs col-span-2 sm:col-span-1">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Completion Rate</p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-extrabold text-slate-900 dark:text-white">{completionRate}%</span>
+            <span className="text-2xl font-medium text-slate-900 dark:text-white">{completionRate}%</span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
               Overall
             </span>
@@ -133,7 +141,7 @@ export const FollowUpsActivityReport: React.FC<FollowUpsActivityReportProps> = (
                   {tb.rate}%
                 </span>
               </div>
-              <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-2">
+              <p className="text-xl font-medium text-slate-900 dark:text-white mt-2">
                 {tb.total}
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
