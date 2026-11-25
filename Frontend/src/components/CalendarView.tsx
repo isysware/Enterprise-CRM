@@ -20,7 +20,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { formatDate, getWhatsAppUrl, getLocalDateString } from '../utils/formatters';
-import { EmptyState } from './ui';
+import { EmptyState, PageHeader, Button } from './ui';
 
 interface CalendarViewProps {
   onOpenScheduleModal: (initialDate?: string) => void;
@@ -122,25 +122,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   return (
     <div className="space-y-5 pb-16">
       {/* 1. Page Header */}
-      <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-medium text-[#0F172A] dark:text-white tracking-tight">
-            Calendar
-          </h1>
-          <p className="text-xs text-[#64748B] dark:text-slate-400 mt-1">
-            Plan and monitor scheduled lead follow-ups and sales activity.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => onOpenScheduleModal(selectedDateStr)}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-blue-500/20 active:scale-95 transition-all cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Schedule Follow-Up</span>
-        </button>
-      </div>
+      <PageHeader
+        title="Calendar"
+        subtitle="Plan and monitor scheduled lead follow-ups and sales activity."
+        actions={
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => onOpenScheduleModal(selectedDateStr)}
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
+          >
+            Schedule Follow-Up
+          </Button>
+        }
+      />
 
       {/* 2. Unified Calendar Toolbar */}
       <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">

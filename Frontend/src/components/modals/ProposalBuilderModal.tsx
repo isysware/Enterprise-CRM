@@ -493,27 +493,27 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
   if (!isOpen || !lead) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-xs animate-fadeIn">
-      <div className="bg-slate-900 rounded-2xl border border-slate-700/80 shadow-2xl w-full max-w-6xl h-[94vh] flex flex-col overflow-hidden text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-fadeIn">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5EAF1] dark:border-slate-800 shadow-2xl w-full max-w-6xl h-[94vh] flex flex-col overflow-hidden text-[#0F172A] dark:text-slate-100">
         {/* MODAL HEADER */}
-        <div className="p-4 sm:px-6 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div className="p-4 sm:px-6 py-3.5 bg-white dark:bg-slate-950 border-b border-[#E5EAF1] dark:border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563EB] dark:bg-blue-950/60 dark:text-blue-400 border border-blue-100 dark:border-blue-800 flex items-center justify-center font-bold">
               <FileSignature className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-medium text-white tracking-tight">
+                <h2 className="text-base font-semibold text-[#0F172A] dark:text-white tracking-tight">
                   Commercial Proposal &amp; Quotation Builder
                 </h2>
-                <span className="text-[10px] font-mono font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-mono font-medium bg-blue-50 text-[#2563EB] dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-full">
                   {refNumber}
                 </span>
-                <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
                   Lead: {lead.name}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[#64748B] dark:text-slate-400">
                 Generate itemized commercial quotations, milestones, custom letterhead branding, and A4 PDF exports.
               </p>
             </div>
@@ -521,14 +521,14 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
 
           {/* Action Tabs & Close */}
           <div className="flex items-center gap-2">
-            <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-[#E5EAF1] dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => setActiveTab('builder')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                   activeTab === 'builder'
-                    ? 'bg-[#2563EB] text-white shadow-xs'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-white dark:bg-slate-900 text-[#2563EB] shadow-xs'
+                    : 'text-[#64748B] hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white'
                 }`}
               >
                 <Sliders className="w-3.5 h-3.5" />
@@ -537,10 +537,10 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('preview')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                   activeTab === 'preview'
-                    ? 'bg-[#2563EB] text-white shadow-xs'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-white dark:bg-slate-900 text-[#2563EB] shadow-xs'
+                    : 'text-[#64748B] hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white'
                 }`}
               >
                 <Eye className="w-3.5 h-3.5" />
@@ -551,7 +551,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -559,22 +559,22 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
         </div>
 
         {/* MODAL MAIN CONTENT */}
-        <div className="flex-1 overflow-y-auto bg-slate-900 p-4 sm:p-6">
+        <div className="flex-1 overflow-y-auto bg-[#F7F9FC] dark:bg-slate-900 p-4 sm:p-6">
           {activeTab === 'builder' ? (
             <div className="space-y-6 max-w-5xl mx-auto">
               {/* SECTION 1: HEADER & CLIENT META */}
-              <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="bg-white dark:bg-slate-950/80 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#E5EAF1] dark:border-slate-800">
                   <div className="flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-[#2563EB]" />
-                    <h3 className="font-bold text-sm text-white">Proposal Identification &amp; Client Details</h3>
+                    <h3 className="font-bold text-sm text-[#0F172A] dark:text-white">Proposal Identification &amp; Client Details</h3>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400">Proposal Status:</span>
+                    <span className="text-xs text-[#64748B] dark:text-slate-400">Proposal Status:</span>
                     <select
                       value={status}
                       onChange={e => setStatus(e.target.value as Proposal['status'])}
-                      className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white font-bold cursor-pointer"
+                      className="bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-[#0F172A] dark:text-white font-semibold cursor-pointer"
                     >
                       <option value="Draft">Draft</option>
                       <option value="Sent">Sent</option>
@@ -587,27 +587,27 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                   <div>
-                    <label className="block font-bold text-slate-300 mb-1">Proposal Ref #</label>
+                    <label className="block font-semibold text-[#64748B] dark:text-slate-300 mb-1">Proposal Ref #</label>
                     <input
                       type="text"
                       value={refNumber}
                       onChange={e => setRefNumber(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-medium"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3 py-2 text-[#0F172A] dark:text-white font-mono font-medium focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-300 mb-1">Issue Date</label>
+                    <label className="block font-semibold text-[#64748B] dark:text-slate-300 mb-1">Issue Date</label>
                     <input
                       type="date"
                       value={issueDate}
                       onChange={e => setIssueDate(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-medium"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3 py-2 text-[#0F172A] dark:text-white font-medium focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-300 mb-1">
+                    <label className="block font-semibold text-[#64748B] dark:text-slate-300 mb-1">
                       Validity Period (Days) - Expires {expiryDate}
                     </label>
                     <div className="flex items-center gap-2">
@@ -617,93 +617,93 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                         max={90}
                         value={validityDays}
                         onChange={e => setValidityDays(Number(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-medium font-mono"
+                        className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3 py-2 text-[#0F172A] dark:text-white font-medium font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
-                      <span className="text-slate-400 font-medium">Days</span>
+                      <span className="text-[#64748B] dark:text-slate-400 font-medium">Days</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1 text-xs">Proposal Project Title *</label>
+                  <label className="block font-semibold text-[#64748B] dark:text-slate-300 mb-1 text-xs">Proposal Project Title *</label>
                   <input
                     type="text"
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                     placeholder="e.g. Commercial Quotation for Enterprise CRM & Custom SaaS Automation"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white font-bold"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm text-[#0F172A] dark:text-white font-semibold focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
                 {/* Client Details Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2 text-xs">
                   <div>
-                    <label className="block font-semibold text-slate-400 mb-1">Client Contact Name</label>
+                    <label className="block font-semibold text-[#64748B] dark:text-slate-400 mb-1">Client Contact Name</label>
                     <input
                       type="text"
                       value={clientName}
                       onChange={e => setClientName(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-medium"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3 py-2 text-[#0F172A] dark:text-white font-medium focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-400 mb-1">Company / Business</label>
+                    <label className="block font-semibold text-[#64748B] dark:text-slate-400 mb-1">Company / Business</label>
                     <input
                       type="text"
                       value={businessName}
                       onChange={e => setBusinessName(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-medium"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3 py-2 text-[#0F172A] dark:text-white font-medium focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-400 mb-1">Phone / WhatsApp</label>
+                    <label className="block font-semibold text-[#64748B] dark:text-slate-400 mb-1">Phone / WhatsApp</label>
                     <input
                       type="text"
                       value={clientPhone}
                       onChange={e => setClientPhone(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-medium"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3 py-2 text-[#0F172A] dark:text-white font-medium focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-400 mb-1">Official Email</label>
+                    <label className="block font-semibold text-[#64748B] dark:text-slate-400 mb-1">Official Email</label>
                     <input
                       type="email"
                       value={clientEmail}
                       onChange={e => setClientEmail(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-medium"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3 py-2 text-[#0F172A] dark:text-white font-medium focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                 </div>
               </div>
 
               {/* SECTION 2: SCOPE OF WORK / EXECUTIVE SUMMARY */}
-              <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-                  <FileText className="w-4 h-4 text-cyan-400" />
-                  <h3 className="font-bold text-sm text-white">Project Scope of Work &amp; Deliverables Overview</h3>
+              <div className="bg-white dark:bg-slate-950/80 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-[#E5EAF1] dark:border-slate-800">
+                  <FileText className="w-4 h-4 text-[#2563EB]" />
+                  <h3 className="font-bold text-sm text-[#0F172A] dark:text-white">Project Scope of Work &amp; Deliverables Overview</h3>
                 </div>
                 <textarea
                   rows={4}
                   value={scopeOfWork}
                   onChange={e => setScopeOfWork(e.target.value)}
                   placeholder="Outline the deliverables, system features, modules, and service level commitments included in this proposal..."
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 font-mono leading-relaxed focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl p-3 text-xs text-[#0F172A] dark:text-slate-200 font-mono leading-relaxed focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
               {/* SECTION 3: ITEMIZED SERVICES & PRICING TABLE */}
-              <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+              <div className="bg-white dark:bg-slate-950/80 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5EAF1] dark:border-slate-800">
                   <div className="flex items-center gap-2">
-                    <Receipt className="w-4 h-4 text-emerald-400" />
+                    <Receipt className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <div>
-                      <h3 className="font-bold text-sm text-white">
+                      <h3 className="font-bold text-sm text-[#0F172A] dark:text-white">
                         Itemized Pricing &amp; Service Quotation Table
                       </h3>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-[#64748B] dark:text-slate-400">
                         Add services from your organization catalog or define custom scope deliverables.
                       </p>
                     </div>
@@ -720,7 +720,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                           }
                         }}
                         defaultValue=""
-                        className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-blue-300 font-bold cursor-pointer"
+                        className="bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-[#2563EB] dark:text-blue-300 font-semibold cursor-pointer"
                       >
                         <option value="" disabled>
                           + Insert From Catalog...
@@ -739,7 +739,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                     <button
                       type="button"
                       onClick={handleAddItem}
-                      className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs transition-colors cursor-pointer shrink-0"
+                      className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs transition-colors cursor-pointer shrink-0"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Item</span>
@@ -752,15 +752,15 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                   {items.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 relative group"
+                      className="p-4 rounded-xl bg-slate-50/70 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 space-y-3 relative group"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-blue-400">#{idx + 1} Line Item</span>
+                        <span className="text-xs font-bold text-[#2563EB] dark:text-blue-400">#{idx + 1} Line Item</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(item.id)}
                           disabled={items.length <= 1}
-                          className="text-slate-500 hover:text-rose-400 disabled:opacity-30 disabled:cursor-not-allowed p-1 transition-colors cursor-pointer"
+                          className="text-slate-400 hover:text-rose-500 disabled:opacity-30 disabled:cursor-not-allowed p-1 transition-colors cursor-pointer"
                           title={items.length <= 1 ? 'At least one item is required' : 'Remove Line Item'}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -769,7 +769,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
 
                       <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs">
                         <div className="sm:col-span-4">
-                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                          <label className="block text-[11px] font-semibold text-[#64748B] dark:text-slate-400 mb-1">
                             Service / Deliverable Title
                           </label>
                           <input
@@ -777,12 +777,12 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                             value={item.title}
                             onChange={e => handleItemChange(item.id, 'title', e.target.value)}
                             placeholder="e.g. Enterprise CRM SaaS License"
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-bold"
+                            className="w-full bg-white dark:bg-slate-950 border border-[#E5EAF1] dark:border-slate-700 rounded-lg px-3 py-2 text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
                           />
                         </div>
 
                         <div className="sm:col-span-3">
-                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                          <label className="block text-[11px] font-semibold text-[#64748B] dark:text-slate-400 mb-1">
                             Unit Price ({settings.currencySymbol || 'PKR'})
                           </label>
                           <input
@@ -790,35 +790,35 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                             min={0}
                             value={item.unitPrice}
                             onChange={e => handleItemChange(item.id, 'unitPrice', Number(e.target.value))}
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono font-medium"
+                            className="w-full bg-white dark:bg-slate-950 border border-[#E5EAF1] dark:border-slate-700 rounded-lg px-3 py-2 text-[#0F172A] dark:text-white font-mono font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
                           />
                         </div>
 
                         <div className="sm:col-span-1">
-                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Qty</label>
+                          <label className="block text-[11px] font-semibold text-[#64748B] dark:text-slate-400 mb-1">Qty</label>
                           <input
                             type="number"
                             min={1}
                             value={item.quantity}
                             onChange={e => handleItemChange(item.id, 'quantity', Number(e.target.value))}
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-white font-mono font-medium text-center"
+                            className="w-full bg-white dark:bg-slate-950 border border-[#E5EAF1] dark:border-slate-700 rounded-lg px-2 py-2 text-[#0F172A] dark:text-white font-mono font-medium text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
                           />
                         </div>
 
                         <div className="sm:col-span-2">
-                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Discount (PKR)</label>
+                          <label className="block text-[11px] font-semibold text-[#64748B] dark:text-slate-400 mb-1">Discount (PKR)</label>
                           <input
                             type="number"
                             min={0}
                             value={item.discount || 0}
                             onChange={e => handleItemChange(item.id, 'discount', Number(e.target.value))}
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono"
+                            className="w-full bg-white dark:bg-slate-950 border border-[#E5EAF1] dark:border-slate-700 rounded-lg px-3 py-2 text-[#0F172A] dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
                           />
                         </div>
 
                         <div className="sm:col-span-2">
-                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Line Total</label>
-                          <div className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-emerald-400 font-mono font-medium text-right truncate">
+                          <label className="block text-[11px] font-semibold text-[#64748B] dark:text-slate-400 mb-1">Line Total</label>
+                          <div className="w-full bg-emerald-50 dark:bg-slate-950 border border-emerald-200 dark:border-slate-800 rounded-lg px-3 py-2 text-emerald-700 dark:text-emerald-400 font-mono font-semibold text-right truncate">
                             {settings.currencySymbol || 'Rs.'} {(item.total || 0).toLocaleString()}
                           </div>
                         </div>
@@ -830,7 +830,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                           value={item.description || ''}
                           onChange={e => handleItemChange(item.id, 'description', e.target.value)}
                           placeholder="Detailed specifications, modules included, or service level details..."
-                          className="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] text-slate-300 placeholder-slate-500"
+                          className="w-full bg-white dark:bg-slate-950/60 border border-[#E5EAF1] dark:border-slate-800 rounded-lg px-3 py-1.5 text-[11px] text-[#0F172A] dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                       </div>
                     </div>
@@ -838,53 +838,53 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                 </div>
 
                 {/* Subtotal & Calculations Summary */}
-                <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div className="flex items-center gap-3 text-xs">
-                    <label className="font-semibold text-slate-400">Applicable Sales Tax / GST Rate (%):</label>
+                    <label className="font-semibold text-[#64748B] dark:text-slate-400">Applicable Sales Tax / GST Rate (%):</label>
                     <input
                       type="number"
                       min={0}
                       max={100}
                       value={taxRate}
                       onChange={e => setTaxRate(Number(e.target.value))}
-                      className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-white font-mono font-medium"
+                      className="w-20 bg-white dark:bg-slate-950 border border-[#E5EAF1] dark:border-slate-700 rounded-lg px-2.5 py-1 text-[#0F172A] dark:text-white font-mono font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
-                    <span className="text-slate-500 text-[11px]">(e.g. 0% for IT export, 13% for Sindh PST)</span>
+                    <span className="text-[#64748B] text-[11px]">(e.g. 0% for IT export, 13% for Sindh PST)</span>
                   </div>
 
                   <div className="text-right space-y-1 text-xs w-full sm:w-auto">
-                    <div className="flex justify-between sm:justify-end gap-6 text-slate-400">
+                    <div className="flex justify-between sm:justify-end gap-6 text-[#64748B]">
                       <span>Subtotal:</span>
-                      <span className="font-mono text-white">{settings.currencySymbol || 'Rs.'} {(subtotal || 0).toLocaleString()}</span>
+                      <span className="font-mono text-[#0F172A] dark:text-white font-semibold">{settings.currencySymbol || 'Rs.'} {(subtotal || 0).toLocaleString()}</span>
                     </div>
                     {totalDiscount > 0 && (
-                      <div className="flex justify-between sm:justify-end gap-6 text-rose-400">
+                      <div className="flex justify-between sm:justify-end gap-6 text-rose-600">
                         <span>Total Discounts:</span>
-                        <span className="font-mono">- {settings.currencySymbol || 'Rs.'} {(totalDiscount || 0).toLocaleString()}</span>
+                        <span className="font-mono font-semibold">- {settings.currencySymbol || 'Rs.'} {(totalDiscount || 0).toLocaleString()}</span>
                       </div>
                     )}
                     {taxAmount > 0 && (
-                      <div className="flex justify-between sm:justify-end gap-6 text-slate-400">
+                      <div className="flex justify-between sm:justify-end gap-6 text-[#64748B]">
                         <span>Sales Tax ({taxRate}%):</span>
-                        <span className="font-mono text-white">{settings.currencySymbol || 'Rs.'} {(Math.round(taxAmount || 0)).toLocaleString()}</span>
+                        <span className="font-mono text-[#0F172A] dark:text-white font-semibold">{settings.currencySymbol || 'Rs.'} {(Math.round(taxAmount || 0)).toLocaleString()}</span>
                       </div>
                     )}
-                    <div className="flex justify-between sm:justify-end gap-6 text-sm font-medium text-emerald-400 pt-1 border-t border-slate-800">
+                    <div className="flex justify-between sm:justify-end gap-6 text-sm font-semibold text-emerald-600 dark:text-emerald-400 pt-1 border-t border-[#E5EAF1] dark:border-slate-800">
                       <span>Grand Total:</span>
-                      <span className="font-mono text-base">{settings.currencySymbol || 'Rs.'} {(grandTotal || 0).toLocaleString()}</span>
+                      <span className="font-mono text-base font-bold">{settings.currencySymbol || 'Rs.'} {(grandTotal || 0).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* SECTION 4: PAYMENT SCHEDULE & MILESTONES */}
-              <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="bg-white dark:bg-slate-950/80 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#E5EAF1] dark:border-slate-800">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-amber-400" />
+                    <Calendar className="w-4 h-4 text-amber-500" />
                     <div>
-                      <h3 className="font-bold text-sm text-white">Payment Milestones &amp; Billing Schedule</h3>
-                      <p className="text-[11px] text-slate-400">
+                      <h3 className="font-bold text-sm text-[#0F172A] dark:text-white">Payment Milestones &amp; Billing Schedule</h3>
+                      <p className="text-[11px] text-[#64748B] dark:text-slate-400">
                         Set structured percentage payments tied to project deliverables.
                       </p>
                     </div>
@@ -893,7 +893,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                   <button
                     type="button"
                     onClick={handleAddMilestone}
-                    className="inline-flex items-center gap-1 py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1 py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-[#0F172A] dark:text-white font-semibold text-xs transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add Milestone</span>
@@ -906,7 +906,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                     return (
                       <div
                         key={ms.id}
-                        className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 p-3 rounded-xl bg-slate-900 border border-slate-800 items-center text-xs"
+                        className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 p-3 rounded-xl bg-slate-50/70 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 items-center text-xs"
                       >
                         <div className="sm:col-span-5">
                           <input
@@ -914,7 +914,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                             value={ms.title}
                             onChange={e => handleMilestoneChange(ms.id, 'title', e.target.value)}
                             placeholder="Milestone Description"
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-white font-medium"
+                            className="w-full bg-white dark:bg-slate-950 border border-[#E5EAF1] dark:border-slate-700 rounded-lg px-3 py-1.5 text-[#0F172A] dark:text-white font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
                           />
                         </div>
 
@@ -926,14 +926,14 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                               max={100}
                               value={ms.percentage}
                               onChange={e => handleMilestoneChange(ms.id, 'percentage', Number(e.target.value))}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-medium text-center"
+                              className="w-full bg-white dark:bg-slate-950 border border-[#E5EAF1] dark:border-slate-700 rounded-lg px-2 py-1.5 text-[#0F172A] dark:text-white font-mono font-medium text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
                             />
-                            <span className="text-slate-400 font-bold">%</span>
+                            <span className="text-[#64748B] font-bold">%</span>
                           </div>
                         </div>
 
                         <div className="sm:col-span-2">
-                          <div className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-medium text-right truncate">
+                          <div className="w-full bg-emerald-50 dark:bg-slate-950 border border-emerald-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-emerald-700 dark:text-emerald-400 font-mono font-semibold text-right truncate">
                             {settings.currencySymbol || 'Rs.'} {(computedAmount || 0).toLocaleString()}
                           </div>
                         </div>
@@ -944,7 +944,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                             value={ms.dueDate || ''}
                             onChange={e => handleMilestoneChange(ms.id, 'dueDate', e.target.value)}
                             placeholder="e.g. On Contract"
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white"
+                            className="w-full bg-white dark:bg-slate-950 border border-[#E5EAF1] dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-[#0F172A] dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                           />
                         </div>
 
@@ -952,7 +952,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                           <button
                             type="button"
                             onClick={() => handleRemoveMilestone(ms.id)}
-                            className="text-slate-500 hover:text-rose-400 p-1 cursor-pointer"
+                            className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -965,53 +965,53 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
 
               {/* SECTION 5: TERMS & SIGNATURE */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 space-y-3">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                <div className="bg-white dark:bg-slate-950/80 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-[#E5EAF1] dark:border-slate-800">
                     <FileSignature className="w-4 h-4 text-[#2563EB]" />
-                    <h3 className="font-bold text-sm text-white">Commercial Terms &amp; Conditions</h3>
+                    <h3 className="font-bold text-sm text-[#0F172A] dark:text-white">Commercial Terms &amp; Conditions</h3>
                   </div>
                   <textarea
                     rows={6}
                     value={termsAndConditions}
                     onChange={e => setTermsAndConditions(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-slate-300 font-mono leading-relaxed focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl p-3 text-xs text-[#0F172A] dark:text-slate-300 font-mono leading-relaxed focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
-                <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                <div className="bg-white dark:bg-slate-950/80 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-[#E5EAF1] dark:border-slate-800">
                     <UserIcon className="w-4 h-4 text-[#2563EB]" />
-                    <h3 className="font-bold text-sm text-white">Authorized Signatory &amp; Representative</h3>
+                    <h3 className="font-bold text-sm text-[#0F172A] dark:text-white">Authorized Signatory &amp; Representative</h3>
                   </div>
 
                   <div className="space-y-3 text-xs">
                     <div>
-                      <label className="block font-semibold text-slate-400 mb-1">Signatory Name</label>
+                      <label className="block font-semibold text-[#64748B] dark:text-slate-400 mb-1">Signatory Name</label>
                       <input
                         type="text"
                         value={signatoryName}
                         onChange={e => setSignatoryName(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold"
+                        className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3 py-2 text-[#0F172A] dark:text-white font-semibold focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-slate-400 mb-1">Executive Title</label>
+                      <label className="block font-semibold text-[#64748B] dark:text-slate-400 mb-1">Executive Title</label>
                       <input
                         type="text"
                         value={signatoryTitle}
                         onChange={e => setSignatoryTitle(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                        className="w-full bg-slate-50 dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3 py-2 text-[#0F172A] dark:text-white font-medium focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-slate-400 mb-1">Assigned Sales Representative</label>
+                      <label className="block font-semibold text-[#64748B] dark:text-slate-400 mb-1">Assigned Sales Representative</label>
                       <input
                         type="text"
                         readOnly
                         value={assignedRep?.name || 'Sales Representative'}
-                        className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 font-semibold"
+                        className="w-full bg-slate-100 dark:bg-slate-900/50 border border-[#E5EAF1] dark:border-slate-800 rounded-xl px-3 py-2 text-[#64748B] dark:text-slate-300 font-semibold"
                       />
                     </div>
                   </div>
@@ -1022,14 +1022,14 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
             /* A4 LIVE PREVIEW & EXPORT VIEW */
             <div className="space-y-5 max-w-4xl mx-auto">
               {/* Preview Controls Bar */}
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-lg">
+              <div className="bg-white dark:bg-slate-950 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-xs">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-[#0F172A] dark:text-slate-300 flex items-center gap-1.5">
                     <Eye className="w-4 h-4 text-[#2563EB]" />
                     <span>A4 Document Preview</span>
                   </span>
 
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-400 cursor-pointer pl-3 border-l border-slate-800">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-slate-400 cursor-pointer pl-3 border-l border-[#E5EAF1] dark:border-slate-800">
                     <input
                       type="checkbox"
                       checked={showLetterheadBg}
@@ -1044,16 +1044,16 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                   <button
                     type="button"
                     onClick={handleCopySummary}
-                    className="inline-flex items-center gap-1.5 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
                   >
-                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{isCopied ? 'Copied' : 'Copy Summary'}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleShareWhatsApp}
-                    className="inline-flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors cursor-pointer shadow-xs"
+                    className="inline-flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs"
                   >
                     <MessageCircle className="w-3.5 h-3.5" />
                     <span>Send via WhatsApp</span>
@@ -1062,7 +1062,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                   <button
                     type="button"
                     onClick={handlePrint}
-                    className="inline-flex items-center gap-1.5 py-2 px-4 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs transition-colors cursor-pointer shadow-md"
+                    className="inline-flex items-center gap-1.5 py-2 px-4 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs"
                   >
                     <Printer className="w-3.5 h-3.5" />
                     <span>Print / Save as PDF</span>
@@ -1328,20 +1328,20 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
         </div>
 
         {/* MODAL FOOTER ACTIONS */}
-        <div className="p-4 sm:px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0">
+        <div className="p-4 sm:px-6 py-3 bg-white dark:bg-slate-950 border-t border-[#E5EAF1] dark:border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400">Grand Total:</span>
-            <span className="text-base font-mono font-medium text-emerald-400">
+            <span className="text-xs font-semibold text-[#64748B] dark:text-slate-400">Grand Total:</span>
+            <span className="text-base font-mono font-medium text-emerald-600 dark:text-emerald-400">
               {settings.currencySymbol || 'Rs.'} {(grandTotal || 0).toLocaleString()}
             </span>
-            <span className="text-xs text-slate-500 font-mono">({items.length} items)</span>
+            <span className="text-xs text-[#94A3B8] font-mono">({items.length} items)</span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+              className="py-2 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[#0F172A] dark:text-slate-200 font-semibold text-xs border border-[#E5EAF1] dark:border-slate-700 transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -1350,7 +1350,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
               type="button"
               onClick={handleSaveProposal}
               disabled={isSaving}
-              className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs shadow-md active:scale-98 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 py-2 px-5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs shadow-xs active:scale-98 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saveSuccess ? (
                 <>

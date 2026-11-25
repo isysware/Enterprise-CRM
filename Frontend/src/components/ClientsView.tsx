@@ -23,7 +23,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { formatPKR, formatDate, getWhatsAppUrl, getClientRevenue } from '../utils/formatters';
-import { DataTableScrollFrame, EmptyState, ModalShell, Button, ConfirmDialog } from './ui';
+import { DataTableScrollFrame, EmptyState, ModalShell, Button, ConfirmDialog, PageHeader } from './ui';
 
 interface ClientsViewProps {
   onOpenNewClientModal: () => void;
@@ -150,25 +150,20 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   return (
     <div className="space-y-5 pb-16">
       {/* 1. Page Header */}
-      <div className="bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-medium text-[#0F172A] dark:text-white tracking-tight">
-            Clients
-          </h1>
-          <p className="text-xs text-[#64748B] dark:text-slate-400 mt-1">
-            Manage converted customer accounts and ongoing commercial relationships.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={onOpenNewClientModal}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-blue-500/20 active:scale-95 transition-all cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Client</span>
-        </button>
-      </div>
+      <PageHeader
+        title="Clients"
+        subtitle="Manage converted customer accounts and ongoing commercial relationships."
+        actions={
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={onOpenNewClientModal}
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
+          >
+            Add Client
+          </Button>
+        }
+      />
 
       {/* 2. Real Metric Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
