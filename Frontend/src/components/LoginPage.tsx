@@ -138,11 +138,11 @@ export const LoginPage: React.FC = () => {
                 onChange={e => handleSelectRole(e.target.value as UserRole)}
                 className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold rounded-xl pl-3 pr-8 py-2 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563EB] cursor-pointer shadow-2xs hover:bg-slate-100 dark:hover:bg-slate-750 transition-all"
               >
-                <option value="Super Admin">👑 Super Admin Portal</option>
-                <option value="Admin">🛡️ Admin Portal</option>
-                <option value="Manager">💼 Manager Portal</option>
-                <option value="Team Lead">👥 Team Lead Portal</option>
-                <option value="Employee">⚡ Employee Portal</option>
+                <option value="Super Admin">Super Admin Portal</option>
+                <option value="Admin">Admin Portal</option>
+                <option value="Manager">Manager Portal</option>
+                <option value="Team Lead">Team Lead Portal</option>
+                <option value="Employee">Employee Portal</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -341,90 +341,115 @@ export const LoginPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Dashboard Floating Showcase Mockup */}
-          <div className="relative z-10 my-8 flex items-center justify-center">
-            <div className="w-full max-w-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-2xl text-slate-800 dark:text-slate-100 border border-white/20 relative">
+          {/* Dashboard Showcase Mockup (Fully Visible, No Cut Off) */}
+          <div className="relative z-10 my-auto py-4 flex items-center justify-center">
+            <div className="w-full max-w-xl xl:max-w-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl text-slate-800 dark:text-slate-100 border border-white/30 space-y-3.5">
               
-              {/* Top Metrics Row */}
-              <div className="grid grid-cols-3 gap-2.5 mb-3">
-                {/* Metric 1: Total Sales */}
-                <div className="bg-[#5B46F6]/10 dark:bg-indigo-950/60 rounded-xl p-2.5 border border-[#5B46F6]/20">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Total Sales</span>
-                  <span className="text-sm sm:text-base font-bold text-[#5B46F6] dark:text-indigo-400 block mt-0.5">$189,374</span>
-                  <span className="text-[8px] font-bold text-[#5B46F6] bg-[#5B46F6]/15 px-1 py-0.5 rounded mt-1 inline-block">+14% this month</span>
+              {/* Top Row: Metrics and Categories Card Side-by-Side */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-stretch">
+                {/* Left 7 cols: 3 KPI Cards */}
+                <div className="sm:col-span-7 grid grid-cols-2 gap-2.5">
+                  {/* Metric 1: Total Sales */}
+                  <div className="col-span-2 sm:col-span-1 bg-[#5B46F6]/10 dark:bg-indigo-950/60 rounded-xl p-2.5 border border-[#5B46F6]/20 flex flex-col justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Sales</span>
+                    <span className="text-base sm:text-lg font-bold text-[#5B46F6] dark:text-indigo-400 block mt-0.5">$189,374</span>
+                    <span className="text-[9px] font-bold text-[#5B46F6] bg-[#5B46F6]/15 px-1.5 py-0.5 rounded mt-1.5 inline-block w-fit">+14% this month</span>
+                  </div>
+
+                  {/* Metric 2: Deal Performance */}
+                  <div className="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-2.5 border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Deal Velocity</span>
+                    <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white block mt-0.5">00:01:30</span>
+                    <div className="h-4 w-full mt-1.5">
+                      <svg viewBox="0 0 80 16" className="w-full h-full">
+                        <path d="M 0 12 Q 20 4, 40 8 T 80 2" fill="none" stroke="#6366F1" strokeWidth="2.5" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Metric 3: Total Profit */}
+                  <div className="col-span-2 bg-slate-50 dark:bg-slate-800/80 rounded-xl p-2.5 border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Profit</span>
+                      <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white block mt-0.5">$25,684</span>
+                    </div>
+                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-1 rounded-md">
+                      +8% growth
+                    </span>
+                  </div>
                 </div>
 
-                {/* Metric 2: Deal Performance */}
-                <div className="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-2.5 border border-slate-100 dark:border-slate-700">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Deal Performance</span>
-                  <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white block mt-0.5">00:01:30</span>
-                  <div className="h-4 w-full mt-1">
-                    <svg viewBox="0 0 80 16" className="w-full h-full">
-                      <path d="M 0 12 Q 20 4, 40 8 T 80 2" fill="none" stroke="#6366F1" strokeWidth="2" />
+                {/* Right 5 cols: Sales Categories Donut / Gauge Card */}
+                <div className="sm:col-span-5 bg-white dark:bg-slate-850 rounded-xl p-3 shadow-xs border border-slate-200/90 dark:border-slate-700 flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                    <span>Sales Categories</span>
+                    <span className="text-[9px] text-[#2563EB] font-semibold">Monthly</span>
+                  </div>
+
+                  {/* Semi-Donut Gauge SVG */}
+                  <div className="relative w-28 h-16 mx-auto my-1">
+                    <svg viewBox="0 0 100 55" className="w-full h-full">
+                      <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#E2E8F0" strokeWidth="11" strokeLinecap="round" />
+                      <path d="M 10 50 A 40 40 0 0 1 75 22" fill="none" stroke="#5B46F6" strokeWidth="11" strokeLinecap="round" />
+                      <path d="M 75 22 A 40 40 0 0 1 90 50" fill="none" stroke="#A78BFA" strokeWidth="11" strokeLinecap="round" />
                     </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-end pb-0.5">
+                      <span className="text-sm font-bold text-slate-900 dark:text-white leading-none">8,248</span>
+                      <span className="text-[8px] text-slate-400">Units</span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Metric 3: Total Profit */}
-                <div className="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-2.5 border border-slate-100 dark:border-slate-700">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Total Profit</span>
-                  <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white block mt-0.5">$25,684</span>
-                  <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded mt-1 inline-block">+8% growth</span>
-                </div>
-              </div>
-
-              {/* Overlapping Floating Donut/Gauge Card */}
-              <div className="absolute -top-6 -right-4 sm:-right-6 w-36 sm:w-44 bg-white dark:bg-slate-850 rounded-2xl p-3 shadow-xl border border-slate-200/80 dark:border-slate-700 text-center z-20">
-                <div className="flex items-center justify-between text-[9px] font-bold text-slate-500 pb-1">
-                  <span>Sales Categories</span>
-                  <span className="text-[8px] text-blue-600">Monthly</span>
-                </div>
-
-                {/* Semi-Donut Gauge SVG */}
-                <div className="relative w-24 h-14 mx-auto my-1">
-                  <svg viewBox="0 0 100 55" className="w-full h-full">
-                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#E2E8F0" strokeWidth="12" strokeLinecap="round" />
-                    <path d="M 10 50 A 40 40 0 0 1 75 22" fill="none" stroke="#5B46F6" strokeWidth="12" strokeLinecap="round" />
-                    <path d="M 75 22 A 40 40 0 0 1 90 50" fill="none" stroke="#A78BFA" strokeWidth="12" strokeLinecap="round" />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-end pb-1">
-                    <span className="text-xs font-bold text-slate-900 dark:text-white leading-none">8,248</span>
-                    <span className="text-[8px] text-slate-400">Units</span>
-                  </div>
-                </div>
-
-                <div className="space-y-0.5 text-[8px] text-left text-slate-600 dark:text-slate-300 font-medium pt-1 border-t border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#5B46F6]" /> Software Suite</span>
-                    <span className="font-bold">52%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#A78BFA]" /> POS Licenses</span>
-                    <span className="font-bold">30%</span>
+                  <div className="space-y-1 text-[9px] text-slate-600 dark:text-slate-300 font-medium pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#5B46F6]" /> Software Suite</span>
+                      <span className="font-bold">52%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#A78BFA]" /> POS Licenses</span>
+                      <span className="font-bold">30%</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Mini Data Table Preview */}
-              <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden text-[9px]">
-                <div className="bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1.5 font-bold text-slate-400 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
-                  <span>RECENT CONVERSIONS</span>
+              {/* Bottom: Full Rich Deals & Transactions Table */}
+              <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden text-[10px]">
+                <div className="bg-slate-50 dark:bg-slate-800/80 px-3 py-2 font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
+                  <span>RECENT DEALS &amp; TRANSACTIONS</span>
                   <span>STATUS</span>
                 </div>
                 <div className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
-                  <div className="px-2.5 py-1.5 flex items-center justify-between">
+                  <div className="px-3 py-2 flex items-center justify-between">
                     <div>
-                      <span className="font-bold text-slate-800 dark:text-slate-200 block">ARFO Men's Salon</span>
-                      <span className="text-[8px] text-slate-400">Enterprise POS • PKR 65,000</span>
+                      <span className="font-bold text-slate-900 dark:text-slate-100 block">ARFO Men's Salon</span>
+                      <span className="text-[9px] text-slate-400">Enterprise POS Suite • Direct Walk-in</span>
                     </div>
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-bold text-[8px]">Closed Won</span>
+                    <div className="text-right">
+                      <span className="font-bold font-mono text-slate-900 dark:text-white block">PKR 65,000</span>
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-bold text-[9px]">Closed Won</span>
+                    </div>
                   </div>
-                  <div className="px-2.5 py-1.5 flex items-center justify-between">
+
+                  <div className="px-3 py-2 flex items-center justify-between">
                     <div>
-                      <span className="font-bold text-slate-800 dark:text-slate-200 block">The Shave Club</span>
-                      <span className="text-[8px] text-slate-400">Cloud ERP • Follow-up Today</span>
+                      <span className="font-bold text-slate-900 dark:text-slate-100 block">The Shave Club</span>
+                      <span className="text-[9px] text-slate-400">Cloud ERP Solution • Follow-up Today</span>
                     </div>
-                    <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-bold text-[8px]">Pending F/U</span>
+                    <div className="text-right">
+                      <span className="font-bold font-mono text-slate-900 dark:text-white block">PKR 120,000</span>
+                      <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-bold text-[9px]">Pending F/U</span>
+                    </div>
+                  </div>
+
+                  <div className="px-3 py-2 flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-slate-100 block">Apex Retail Solutions</span>
+                      <span className="text-[9px] text-slate-400">Inventory &amp; Multi-Branch Billing</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold font-mono text-slate-900 dark:text-white block">PKR 250,000</span>
+                      <span className="px-1.5 py-0.5 rounded bg-blue-50 text-[#2563EB] font-bold text-[9px]">Qualified</span>
+                    </div>
                   </div>
                 </div>
               </div>
