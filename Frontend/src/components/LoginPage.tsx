@@ -95,21 +95,17 @@ export const LoginPage: React.FC = () => {
       {/* TOP BRAND HEADER (CENTERED LOGO, TITLE & SECURITY PILL)                   */}
       {/* ========================================================================= */}
       <div className="flex flex-col items-center text-center mb-6">
-        {/* Dark Circular Brand Logo Badge */}
-        <div className="w-20 h-20 rounded-full bg-[#0B132B] dark:bg-slate-900 border-2 border-slate-700/60 shadow-xl flex items-center justify-center p-3 mb-4 transition-transform hover:scale-105">
-          {settings.companyLogo ? (
-            <img
-              src={settings.companyLogo}
-              alt={settings.companyName || 'Logo'}
-              className="w-full h-full object-contain"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="text-center">
-              <span className="text-white font-bold text-xs tracking-wider block uppercase">isysware</span>
-              <span className="text-[8px] text-blue-400 font-mono tracking-widest block">SOFTWARE</span>
-            </div>
-          )}
+        {/* Brand Circular Logo Badge */}
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full shadow-[0_10px_30px_rgba(11,19,43,0.3)] flex items-center justify-center overflow-hidden mb-4 transition-transform hover:scale-105">
+          <img
+            src={settings.companyLogo || '/isysware-logo.png'}
+            alt={settings.companyName || 'iSysware Logo'}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = '/isysware-logo.png';
+            }}
+            referrerPolicy="no-referrer"
+          />
         </div>
 
         {/* Brand System Title */}

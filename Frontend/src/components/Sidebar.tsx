@@ -251,20 +251,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Mobile Header with Branding & Close Button */}
               <div className="p-3.5 sm:p-4 border-b border-[#E5EAF1] dark:border-slate-800 flex items-center justify-between gap-2 bg-white dark:bg-slate-900">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  {settings.companyLogo ? (
-                    <div className="w-9 h-9 flex items-center justify-center shrink-0">
-                      <img
-                        src={settings.companyLogo}
-                        alt={settings.companyName || 'Logo'}
-                        className="w-full h-full object-contain"
-                        referrerPolicy="no-referrer"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white shrink-0 font-medium text-xs tracking-wider">
-                      CR
-                    </div>
-                  )}
+                  <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
+                    <img
+                      src={settings.companyLogo || '/isysware-logo.png'}
+                      alt={settings.companyName || 'Logo'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/isysware-logo.png';
+                      }}
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold text-[#0F172A] dark:text-white text-sm tracking-tight truncate">
@@ -497,43 +494,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {isCollapsed ? (
             <div className="flex items-center justify-center w-full relative group">
               <button
+                type="button"
                 onClick={() => setIsCollapsed(false)}
                 title="Expand Sidebar"
                 className="cursor-pointer focus:outline-none flex items-center justify-center"
               >
-                {settings.companyLogo ? (
-                  <div className="w-9 h-9 flex items-center justify-center shrink-0">
-                    <img
-                      src={settings.companyLogo}
-                      alt={settings.companyName || 'Logo'}
-                      className="w-full h-full object-contain"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white shrink-0 font-medium text-xs tracking-wider group-hover:bg-blue-700 transition-colors">
-                    CR
-                  </div>
-                )}
+                <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                  <img
+                    src={settings.companyLogo || '/isysware-logo.png'}
+                    alt={settings.companyName || 'Logo'}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/isysware-logo.png';
+                    }}
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
               </button>
             </div>
           ) : (
             <>
               <div className="flex items-center gap-2.5 min-w-0 overflow-hidden">
-                {settings.companyLogo ? (
-                  <div className="w-9 h-9 flex items-center justify-center shrink-0">
-                    <img
-                      src={settings.companyLogo}
-                      alt={settings.companyName || 'Logo'}
-                      className="w-full h-full object-contain"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white shrink-0 font-medium text-xs tracking-wider">
-                    CR
-                  </div>
-                )}
+                <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
+                  <img
+                    src={settings.companyLogo || '/isysware-logo.png'}
+                    alt={settings.companyName || 'Logo'}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/isysware-logo.png';
+                    }}
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
 
                 <div className="min-w-0 overflow-hidden whitespace-nowrap">
                   <div className="flex items-center gap-1.5">

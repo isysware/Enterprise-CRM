@@ -408,6 +408,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (savedLetterhead) { try { combined = { ...combined, ...JSON.parse(savedLetterhead) }; } catch { /* ignore */ } }
         if (savedPricing) { try { combined = { ...combined, ...JSON.parse(savedPricing) }; } catch { /* ignore */ } }
         if (savedComm) { try { combined = { ...combined, ...JSON.parse(savedComm) }; } catch { /* ignore */ } }
+        if (!combined.companyLogo) { combined.companyLogo = '/isysware-logo.png'; }
         setSettings(combined);
       }
 

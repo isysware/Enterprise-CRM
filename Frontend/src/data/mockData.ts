@@ -648,7 +648,7 @@ export const DEFAULT_PRICING_MODELS: PricingModelItem[] = [
 export const DEFAULT_SETTINGS: SystemSettings = {
   applicationName: 'CRM',
   companyName: 'iSysware',
-  companyLogo: '',
+  companyLogo: '/isysware-logo.png',
   proposalLetterheadBg: '',
   companyAddress: 'Suite #402, Business Executive Center, Main Shahrah-e-Faisal, Karachi, Pakistan',
   companyTaxId: 'NTN: 8294719-4 | STRN: 3277876123456',
