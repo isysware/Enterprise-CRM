@@ -9,12 +9,20 @@ import { DEFAULT_ROLE_PERMISSIONS } from '../constants';
 
 export class RbacService {
   /**
-   * Resolves effective permissions by combining the role baseline with any dynamic matrix overrides.
+   * Resolves effective permissions by combining the role baseline defaults with dynamic matrix overrides.
    *
-   * CRITICAL HARD INVARIANTS:
-   * 1. Dynamic permissions may REDUCE access only; they must NEVER expand access beyond the role baseline.
-   * 2. canManageRoles and canManageSuperAdmin are strictly reserved for Super Admin only.
-   * 3. Employees can NEVER access incoming leads (canViewIncomingLeads and canAssignIncomingLeads are hard-clamped to false).
+   * PERMISSION SEMANTICS:
+   * 1. Default role permissions are DEFAULTS only, not permanent ceilings.
+   * 2. The 21-capability Roles & Permissions Matrix is dynamically editable by Super Admin.
+   * 3. Super Admin may enable or disable normal capabilities (e.g. canViewReports, canGenerateProposals)
+   *    for Manager, Team Lead, and Employee.
+   * 4. Dynamic permissions must NEVER override HARD IMMUTABLE SECURITY & SCOPE RULES.
+   *
+   * HARD IMMUTABLE RULES:
+   * - canManageRoles is strictly Super Admin only.
+   * - canManageSuperAdmin is strictly Super Admin only.
+   * - Employee incoming lead capabilities (canViewIncomingLeads, canAssignIncomingLeads) remain hard-locked to false.
+   * - Capabilities grant action authority ONLY inside the actor's hard organizational scope ceiling.
    */
   public static getEffectivePermissions(
     role: UserRole,
@@ -24,26 +32,27 @@ export class RbacService {
       DEFAULT_ROLE_PERMISSIONS.find((r) => r.role === role) ||
       DEFAULT_ROLE_PERMISSIONS.find((r) => r.role === 'Employee')!;
 
-    // Clone baseline
+    // Start with default role baseline
     const effective: RolePermission = { ...base };
 
-    // If dynamic matrix is provided, allow it to REDUCE permissions, never expand
+    // Apply dynamic overrides configured by Super Admin
     if (dynamicMatrix) {
       const override = dynamicMatrix.find((r) => r.role === role);
       if (override) {
         for (const key of Object.keys(base) as (keyof RolePermission)[]) {
           if (key === 'role' || key === 'description') continue;
-          // Rule: Dynamic permissions can only reduce (true -> false), never expand (false -> true)
-          if (base[key] === false) {
-            (effective as unknown as Record<string, boolean>)[key] = false;
-          } else {
+          if (override[key] !== undefined) {
             (effective as unknown as Record<string, boolean>)[key] = Boolean(override[key]);
           }
         }
       }
     }
 
-    // Hard Invariant: Super Admin-only capabilities
+    // =========================================================================
+    // HARD IMMUTABLE SECURITY INVARIANTS (Cannot be overridden by dynamic matrix)
+    // =========================================================================
+
+    // Rule 1: canManageRoles & canManageSuperAdmin are strictly reserved for Super Admin
     if (role !== 'Super Admin') {
       effective.canManageRoles = false;
       effective.canManageSuperAdmin = false;
@@ -52,7 +61,7 @@ export class RbacService {
       effective.canManageSuperAdmin = true;
     }
 
-    // Hard Invariant: Employee can NEVER access or assign incoming leads
+    // Rule 2: Employee Incoming Lead restrictions remain hard-locked to false
     if (role === 'Employee') {
       effective.canViewIncomingLeads = false;
       effective.canAssignIncomingLeads = false;
@@ -63,7 +72,7 @@ export class RbacService {
 
   /**
    * Validates if actor can access and modify Roles & Permissions matrix.
-   * Strict Rule: Super Admin only.
+   * Strict Hard Rule: Super Admin only.
    */
   public static canManageRolesMatrix(actor: AuthUser): boolean {
     return actor.role === 'Super Admin' && actor.status === 'active';
@@ -275,8 +284,12 @@ export class RbacService {
   }
 
   /**
-   * Enforces hard organizational scope ceiling on lead records.
-   * Dynamic capabilities can NEVER expand beyond this ceiling.
+   * Enforces hard organizational scope ceiling on records (leads, reports, metrics).
+   *
+   * HARD SCOPE RULE:
+   * Dynamic capabilities grant actions STRICTLY inside the actor's hard data scope.
+   * Example: If Super Admin enables canViewReports for Employee, Employee may see reports
+   * only for their own authorized data, never organization-wide data.
    */
   public static getHardScopedLeadIds(
     actor: AuthUser,
@@ -298,7 +311,24 @@ export class RbacService {
         .map((l) => l.id);
     }
 
-    // Employee: Strictly self-assigned leads
+    // Employee: Hard scope ceiling is STRICTLY records assigned to themselves
     return leads.filter((l) => l.assignedToId === actor.id).map((l) => l.id);
+  }
+
+  /**
+   * Filters operational records (e.g. leads, reports, conversions) by evaluating
+   * dynamic capability within the actor's hard organizational scope ceiling.
+   */
+  public static getScopedRecordIds<T extends { id: string; assignedToId?: string; teamId?: string }>(
+    actor: AuthUser,
+    records: T[],
+    hierarchy: HierarchyScope,
+    hasCapability: boolean
+  ): string[] {
+    if (!hasCapability) return [];
+
+    // Apply hard organizational ceiling first
+    const ceilingIds = this.getHardScopedLeadIds(actor, records, hierarchy);
+    return ceilingIds;
   }
 }

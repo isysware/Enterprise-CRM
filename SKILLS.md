@@ -187,44 +187,30 @@ Do not put all backend logic in one `server.ts`.
 
 ---
 
-## 7. MongoDB Atlas Skills
+## 7. PostgreSQL Database Skills
 
 Required:
 
-- schema design for query patterns
-- indexes
-- normalized identifiers
-- unique constraints
-- pagination
-- aggregation pipelines for reports
-- transaction/session use where a multi-document business mutation must be atomic
-- careful handling of embedded vs referenced history
-
-Important examples:
-
-- unique normalized user email
-- unique incoming integration key
-- lead assignment/status indexes
-- follow-up schedule indexes
-- report-friendly date/status/team/user indexes
-
-Do not blindly embed unbounded activity/audit arrays into primary documents.
+- Relational schema design with foreign key constraints
+- Indexes on frequently queried columns (user email, lead status, assignedToId, teamId)
+- Normalized identifiers and unique constraints
+- Keyset or limit/offset pagination
+- SQL aggregations and joins for reporting
+- ACID transactions for multi-table business mutations
+- Database connection pooling
+- Final database is PostgreSQL (connection added later; MongoDB/Mongoose and Supabase are NOT used)
 
 ---
 
-## 8. Mongoose / ODM Skills
+## 8. Relational Data Modeling Skills
 
-If Mongoose is selected:
+Required:
 
-- one canonical schema per collection
-- timestamps enabled where appropriate
-- indexes declared intentionally
-- validation in schema plus request layer
-- never return password hash by default
-- use lean queries for read-heavy report/list endpoints when useful
-- keep business authorization outside model hooks
-
-Do not mix multiple ODM styles without reason.
+- Canonical table definitions per business entity
+- Timestamps (createdAt, updatedAt) enabled across tables
+- Validation in schema plus request layer
+- Never return password hash in user responses
+- Keep business authorization outside raw model queries
 
 ---
 
@@ -457,7 +443,7 @@ For Namecheap:
 - configure environment variables securely.
 - configure HTTPS.
 - configure backend process/restart.
-- configure MongoDB Atlas access.
+- configure PostgreSQL access and connection pooling.
 - configure frontend/backend origins.
 - verify CORS.
 - verify persistent runtime needs for integrations.

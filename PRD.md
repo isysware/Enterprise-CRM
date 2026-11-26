@@ -4,7 +4,7 @@
 **Product:** Enterprise Lead CRM  
 **Company / default workspace:** iSysware  
 **Current phase:** Frontend completed in Google AI Studio; local verification and backend/database integration are next  
-**Final target stack:** Next.js + TypeScript + shadcn/ui frontend, Node.js + Express.js backend, MongoDB Atlas database, Namecheap deployment
+**Final target stack:** Next.js + TypeScript + shadcn/ui frontend, Node.js + Express.js backend, PostgreSQL database (connection will be added later; MongoDB/Mongoose and Supabase NOT used), Namecheap deployment
 
 ---
 
@@ -22,7 +22,7 @@ The product must provide:
 - Future Meta Lead Ads, WhatsApp/Baileys, and AI Assistant integrations through a secure backend.
 - Full actor attribution and audit history for meaningful business actions.
 
-The current frontend uses local mock data/local browser persistence only. The production backend and MongoDB Atlas database are intentionally deferred to the next development phase.
+The current frontend uses local mock data/local browser persistence only. The production backend and PostgreSQL database are intentionally deferred to the next development phase (connection will be added later; MongoDB/Mongoose and Supabase NOT used).
 
 ---
 
@@ -176,7 +176,7 @@ Requirements:
 - Unified login screen.
 - User status must be checked before login is accepted.
 - Production authentication must move to backend-managed secure sessions.
-- Passwords must never be stored in plain text in MongoDB.
+- Passwords must never be stored in plain text in PostgreSQL.
 - Login/logout actions should be auditable.
 - Current mock credentials/local authentication are development-only.
 
@@ -666,7 +666,7 @@ Rules:
 
 ### Performance
 
-- Indexed MongoDB queries.
+- Indexed PostgreSQL queries.
 - Paginated large lists/logs/reports.
 - Avoid loading full organization datasets when not required.
 - Efficient report aggregation.
@@ -677,7 +677,7 @@ Rules:
 - Central error handling.
 - Idempotency for integration ingestion and sensitive repeated mutations.
 - Retry strategy for external integration processing.
-- Backups through MongoDB Atlas policy.
+- Backups through PostgreSQL backup policy.
 - Production logging.
 
 ### Accessibility
@@ -713,8 +713,7 @@ Rules:
 
 ### Database
 
-- MongoDB Atlas
-- Mongoose or equivalent ODM may be used during backend implementation if selected consistently.
+- PostgreSQL (Connection will be added later; MongoDB/Mongoose and Supabase are NOT used).
 
 ### Deployment
 
@@ -752,9 +751,9 @@ Completed:
 
 Not production-connected yet:
 
-- Express backend.
-- MongoDB Atlas.
-- Real authentication.
+- Express backend (Step 1 & Step 2 completed).
+- PostgreSQL database connection (connection will be added in later step).
+- Real authentication (Step 2 completed, awaiting DB connection).
 - Real API persistence.
 - Real file storage.
 - Meta OAuth/webhooks.
@@ -771,7 +770,7 @@ The product is ready for production only when:
 
 1. Frontend runs cleanly with production API instead of local mock/localStorage business persistence.
 2. Express backend is implemented and documented.
-3. MongoDB Atlas schemas/indexes/migrations/seed strategy are complete.
+3. PostgreSQL schemas/indexes/seed strategy are complete.
 4. Authentication is secure and server enforced.
 5. All 21 capabilities and hard scopes are enforced backend-side.
 6. Protected Admin/Super Admin rules pass integration tests.

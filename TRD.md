@@ -2,7 +2,7 @@
 
 **Document status:** Technical baseline  
 **Current implementation:** Next.js frontend with local/mock runtime  
-**Production target:** Next.js + Node.js/Express + MongoDB Atlas + Namecheap
+**Production target:** Next.js + Node.js/Express + PostgreSQL + Namecheap
 
 ---
 
@@ -35,9 +35,10 @@ The application must use a clear frontend/backend separation.
 
 ### Database
 
-- MongoDB Atlas
-- Recommended ODM: Mongoose, used consistently if adopted
-- Production indexes and validation rules defined in schema layer
+- PostgreSQL (Connection will be added later)
+- MongoDB/Mongoose: NOT USED
+- Supabase: NOT USED
+- Production indexes, foreign key constraints, and validation rules defined in schema layer
 
 ### Deployment
 
@@ -68,7 +69,7 @@ Important:
 - Vite has been removed.
 - Production backend/database are not connected.
 - Current localStorage/mock persistence is temporary and must be replaced with API-backed persistence.
-- Any old source comments referring to PostgreSQL are stale and must be updated to MongoDB Atlas during cleanup.
+- Final database architecture is strictly PostgreSQL (MongoDB/Mongoose and Supabase are NOT used). PostgreSQL connection will be added later.
 
 ---
 
@@ -244,9 +245,9 @@ The backend implementation must preserve the canonical frontend rules defined in
 
 ---
 
-## 7. MongoDB Atlas Data Model
+## 7. PostgreSQL Relational Data Model
 
-The exact schema may evolve during backend implementation, but the following collections are required.
+The exact schema and tables for PostgreSQL will be added in the database integration phase (MongoDB/Mongoose and Supabase are NOT used). The following relational entities/tables are required.
 
 ### 7.1 `users`
 
@@ -765,7 +766,7 @@ Production uploads may include:
 - authorized signature/stamp
 - future attachments
 
-Use a backend-controlled storage strategy. Do not store large base64 payloads permanently in MongoDB unless explicitly justified.
+Use a backend-controlled storage strategy. Do not store large base64 payloads permanently in PostgreSQL unless explicitly justified.
 
 Persist only secure file references/metadata where possible.
 
@@ -816,8 +817,8 @@ Backend `.env` may contain:
 ```env
 NODE_ENV=production
 PORT=...
-MONGODB_URI=...
-JWT_SECRET=...
+DATABASE_URL=postgresql://...
+JWT_ACCESS_SECRET=...
 JWT_REFRESH_SECRET=...
 COOKIE_SECRET=...
 FRONTEND_ORIGIN=...
@@ -930,7 +931,7 @@ Before production:
 - configure HTTPS
 - configure backend process
 - configure environment variables securely
-- configure MongoDB Atlas network access for the production host
+- configure PostgreSQL network access and connection pooling for the production host
 - configure CORS origin
 - configure process restart strategy
 - verify logs
@@ -942,7 +943,7 @@ If the selected Namecheap plan does not support the long-lived Node process requ
 ## 20. Technical Cleanup Backlog Before Backend Start
 
 1. Verify latest frontend locally, not only in Google AI Studio Preview.
-2. Update stale code comments that still mention PostgreSQL; MongoDB Atlas is final.
+2. Final database architecture is strictly PostgreSQL; MongoDB/Mongoose and Supabase are NOT used.
 3. Rename generic package name (`react-example`) to a CRM-specific package name.
 4. Audit current custom `src/components/ui` components against shadcn/ui and standardize only where beneficial.
 5. Remove AI Studio-only metadata/artifacts if not required for local/production development.

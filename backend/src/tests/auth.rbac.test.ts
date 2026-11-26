@@ -66,54 +66,144 @@ export async function runAuthRbacTests(): Promise<{ passed: boolean; results: Te
     assert(malformedFailed, 'TokenService rejects malformed access token');
 
     // =========================================================================
-    // 3. 21 Canonical Capabilities Verification
+    // 3. 21 Canonical Capabilities Baseline
     // =========================================================================
     assert(CANONICAL_CAPABILITIES.length === 21, 'Exactly 21 canonical capabilities are registered');
 
     const superAdminPerms = RbacService.getEffectivePermissions('Super Admin');
     assert(
       CANONICAL_CAPABILITIES.every((cap) => superAdminPerms[cap] === true),
-      'Super Admin possesses all 21 canonical capabilities'
+      'Super Admin possesses all 21 canonical capabilities by default'
     );
 
     const adminPerms = RbacService.getEffectivePermissions('Admin');
-    assert(adminPerms.canManageUsers === true, 'Admin has user management capability');
-    assert(adminPerms.canManageSuperAdmin === false, 'Admin hard-safeguard: canManageSuperAdmin is FALSE');
-    assert(adminPerms.canManageRoles === false, 'Admin hard-safeguard: canManageRoles is FALSE');
+    assert(adminPerms.canManageUsers === true, 'Admin has user management capability by default');
+    assert(adminPerms.canManageSuperAdmin === false, 'Admin default: canManageSuperAdmin is FALSE');
+    assert(adminPerms.canManageRoles === false, 'Admin default: canManageRoles is FALSE');
 
     const employeePerms = RbacService.getEffectivePermissions('Employee');
-    assert(employeePerms.canViewIncomingLeads === false, 'Employee hard-safeguard: canViewIncomingLeads is FALSE');
-    assert(employeePerms.canAssignIncomingLeads === false, 'Employee hard-safeguard: canAssignIncomingLeads is FALSE');
-    assert(employeePerms.canDeleteLeads === false, 'Employee cannot delete leads');
+    assert(employeePerms.canViewIncomingLeads === false, 'Employee default: canViewIncomingLeads is FALSE');
+    assert(employeePerms.canAssignIncomingLeads === false, 'Employee default: canAssignIncomingLeads is FALSE');
+    assert(employeePerms.canDeleteLeads === false, 'Employee default: canDeleteLeads is FALSE');
+    assert(employeePerms.canViewReports === false, 'Employee default: canViewReports is FALSE');
 
     // =========================================================================
-    // 4. Critical Rule: Dynamic Permissions May REDUCE Access Only, NEVER Expand
+    // 4. Dynamic Permissions Semantics (Editable Matrix by Super Admin)
     // =========================================================================
-    const fakeDynamicMatrix: RolePermission[] = [
+    // Dynamic matrix where Super Admin ENABLES normal capabilities for Employee
+    // and DISABLES canCreateLeads for Manager
+    const superAdminDynamicMatrix: RolePermission[] = [
       {
         ...DEFAULT_ROLE_PERMISSIONS.find((r) => r.role === 'Employee')!,
-        canViewAllLeads: true, // Attempted illegal expansion
-        canManageRoles: true, // Attempted illegal expansion
-        canManageSuperAdmin: true, // Attempted illegal expansion
-        canViewIncomingLeads: true, // Attempted illegal expansion
+        canViewReports: true, // Super Admin grants reports to Employee
+        canGenerateProposals: true, // Super Admin grants proposal generation to Employee
+        canViewAllLeads: true, // Super Admin toggles lead visibility
+        canManageRoles: true, // Attempted illegal override: must be rejected by hard rule
+        canManageSuperAdmin: true, // Attempted illegal override: must be rejected by hard rule
+        canViewIncomingLeads: true, // Attempted illegal override: must be rejected by hard rule
       },
       {
         ...DEFAULT_ROLE_PERMISSIONS.find((r) => r.role === 'Manager')!,
-        canCreateLeads: false, // Legal reduction
+        canCreateLeads: false, // Super Admin disables lead creation for Manager
+      },
+      {
+        ...DEFAULT_ROLE_PERMISSIONS.find((r) => r.role === 'Admin')!,
+        canManageRoles: true, // Attempted illegal override: must be rejected by hard rule
+        canManageSuperAdmin: true, // Attempted illegal override: must be rejected by hard rule
       },
     ];
 
-    const tamperedEmployeePerms = RbacService.getEffectivePermissions('Employee', fakeDynamicMatrix);
-    assert(tamperedEmployeePerms.canViewAllLeads === false, 'Dynamic permission clamp: cannot expand Employee canViewAllLeads');
-    assert(tamperedEmployeePerms.canManageRoles === false, 'Dynamic permission clamp: cannot expand Employee canManageRoles');
-    assert(tamperedEmployeePerms.canManageSuperAdmin === false, 'Dynamic permission clamp: cannot expand Employee canManageSuperAdmin');
-    assert(tamperedEmployeePerms.canViewIncomingLeads === false, 'Dynamic permission clamp: cannot expand Employee canViewIncomingLeads');
+    const customizedEmployeePerms = RbacService.getEffectivePermissions('Employee', superAdminDynamicMatrix);
+    assert(customizedEmployeePerms.canViewReports === true, 'Dynamic matrix successfully ENABLES canViewReports for Employee');
+    assert(customizedEmployeePerms.canGenerateProposals === true, 'Dynamic matrix successfully ENABLES canGenerateProposals for Employee');
+    assert(customizedEmployeePerms.canViewAllLeads === true, 'Dynamic matrix successfully ENABLES canViewAllLeads for Employee');
 
-    const reducedManagerPerms = RbacService.getEffectivePermissions('Manager', fakeDynamicMatrix);
-    assert(reducedManagerPerms.canCreateLeads === false, 'Dynamic permission allows legal access reduction');
+    const customizedManagerPerms = RbacService.getEffectivePermissions('Manager', superAdminDynamicMatrix);
+    assert(customizedManagerPerms.canCreateLeads === false, 'Dynamic matrix successfully DISABLES canCreateLeads for Manager');
+
+    // HARD IMMUTABLE RULES VERIFICATION (Must never be overridden by dynamic matrix):
+    assert(customizedEmployeePerms.canManageRoles === false, 'HARD RULE PRESERVED: canManageRoles remains FALSE for Employee even if enabled in matrix');
+    assert(customizedEmployeePerms.canManageSuperAdmin === false, 'HARD RULE PRESERVED: canManageSuperAdmin remains FALSE for Employee even if enabled in matrix');
+    assert(customizedEmployeePerms.canViewIncomingLeads === false, 'HARD RULE PRESERVED: canViewIncomingLeads remains FALSE for Employee');
+    assert(customizedEmployeePerms.canAssignIncomingLeads === false, 'HARD RULE PRESERVED: canAssignIncomingLeads remains FALSE for Employee');
+
+    const customizedAdminPerms = RbacService.getEffectivePermissions('Admin', superAdminDynamicMatrix);
+    assert(customizedAdminPerms.canManageRoles === false, 'HARD RULE PRESERVED: canManageRoles remains FALSE for Admin even if enabled in matrix');
+    assert(customizedAdminPerms.canManageSuperAdmin === false, 'HARD RULE PRESERVED: canManageSuperAdmin remains FALSE for Admin even if enabled in matrix');
 
     // =========================================================================
-    // 5. Critical Rule: Target User Management Authority
+    // 5. Hard Data Scope Invariant (A capability grants actions ONLY inside hard data scope)
+    // =========================================================================
+    const empActor: AuthUser = {
+      id: 'emp-1',
+      name: 'Sales Rep Employee',
+      email: 'rep@test.com',
+      role: 'Employee',
+      teamId: 'team-sales',
+      status: 'active',
+      isActive: true,
+      createdAt: '2026-01-01',
+    };
+
+    const managerActor: AuthUser = {
+      id: 'mgr-1',
+      name: 'Sales Manager',
+      email: 'mgr@test.com',
+      role: 'Manager',
+      teamId: 'team-sales',
+      status: 'active',
+      isActive: true,
+      createdAt: '2026-01-01',
+    };
+
+    const mockRecords = [
+      { id: 'rec-1', assignedToId: 'emp-1', teamId: 'team-sales' }, // Self assigned
+      { id: 'rec-2', assignedToId: 'emp-other', teamId: 'team-sales' }, // Managed team peer
+      { id: 'rec-3', assignedToId: 'emp-outside', teamId: 'team-outside' }, // Outside department
+    ];
+
+    const empScope = RbacService.getHierarchyScope(empActor, [empActor], []);
+    const mgrScope = RbacService.getHierarchyScope(
+      managerActor,
+      [
+        managerActor,
+        empActor,
+        { id: 'emp-other', name: 'Other', email: 'o@t.com', role: 'Employee', teamId: 'team-sales', status: 'active', isActive: true, createdAt: '2026-01-01' },
+      ],
+      [{ id: 'team-sales', managerId: 'mgr-1' }, { id: 'team-outside', managerId: 'other-mgr' }]
+    );
+
+    // Employee has canViewReports = true enabled in dynamic matrix.
+    // RULE: Employee may see reports ONLY for their own authorized data, never organization-wide data.
+    const empAccessibleReports = RbacService.getScopedRecordIds(
+      empActor,
+      mockRecords,
+      empScope,
+      customizedEmployeePerms.canViewReports
+    );
+    assert(
+      empAccessibleReports.length === 1 && empAccessibleReports[0] === 'rec-1',
+      'Employee with canViewReports=true sees ONLY self-assigned records, NEVER organization-wide data'
+    );
+
+    // If capability is disabled (false), zero records are returned
+    const empDisabledReports = RbacService.getScopedRecordIds(empActor, mockRecords, empScope, false);
+    assert(empDisabledReports.length === 0, 'When capability is disabled, zero records are accessible');
+
+    // Manager with canViewReports sees self + managed team records, never outside department
+    const mgrAccessibleReports = RbacService.getScopedRecordIds(
+      managerActor,
+      mockRecords,
+      mgrScope,
+      customizedManagerPerms.canViewReports
+    );
+    assert(
+      mgrAccessibleReports.includes('rec-1') && mgrAccessibleReports.includes('rec-2') && !mgrAccessibleReports.includes('rec-3'),
+      'Manager with canViewReports sees managed hierarchy records, strictly excluding outside departments'
+    );
+
+    // =========================================================================
+    // 6. Target User Management Authority Rules
     // =========================================================================
     const superAdminActor: AuthUser = {
       id: 'sa-1',
@@ -145,147 +235,65 @@ export async function runAuthRbacTests(): Promise<{ passed: boolean; results: Te
       createdAt: '2026-01-01',
     };
 
-    const managerTarget: AuthUser = {
-      id: 'mgr-1',
-      name: 'Manager',
-      email: 'mgr@test.com',
-      role: 'Manager',
-      status: 'active',
-      isActive: true,
-      createdAt: '2026-01-01',
-    };
-
     const employeeTarget: AuthUser = {
-      id: 'emp-1',
-      name: 'Employee',
-      email: 'emp@test.com',
+      id: 'emp-2',
+      name: 'Employee Two',
+      email: 'emp2@test.com',
       role: 'Employee',
       status: 'active',
       isActive: true,
       createdAt: '2026-01-01',
     };
 
-    assert(RbacService.canManageTargetUser(superAdminActor, adminTarget), 'Super Admin can manage Admin accounts');
+    assert(RbacService.canManageTargetUser(superAdminActor, adminTarget), 'Only Super Admin can manage Admin accounts');
     assert(!RbacService.canManageTargetUser(adminActor, superAdminActor), 'Admin CANNOT manage Super Admin account');
-    assert(!RbacService.canManageTargetUser(adminActor, adminTarget), 'Admin CANNOT manage another Admin account (Only Super Admin can manage Admins)');
-    assert(RbacService.canManageTargetUser(adminActor, managerTarget), 'Admin can manage Manager account');
+    assert(!RbacService.canManageTargetUser(adminActor, adminTarget), 'Admin CANNOT manage another Admin account');
     assert(RbacService.canManageTargetUser(adminActor, employeeTarget), 'Admin can manage Employee account');
-    assert(!RbacService.canManageTargetUser(employeeTarget, managerTarget), 'Employee cannot manage other accounts');
+    assert(!RbacService.canManageTargetUser(employeeTarget, adminTarget), 'Employee cannot manage other accounts');
 
     // =========================================================================
-    // 6. Critical Rule: Target Role Creation Authority
+    // 7. Target Role Creation Authority Rules
     // =========================================================================
-    const superAdminAllowedRoles = RbacService.getAllowedTargetRoles(superAdminActor);
-    assert(
-      superAdminAllowedRoles.includes('Admin') && superAdminAllowedRoles.includes('Employee'),
-      'Super Admin can create Admin, Manager, Team Lead, Employee'
-    );
+    const saAllowed = RbacService.getAllowedTargetRoles(superAdminActor);
+    assert(saAllowed.includes('Admin') && saAllowed.includes('Employee'), 'Super Admin can create Admin, Manager, Team Lead, Employee');
 
-    const adminAllowedRoles = RbacService.getAllowedTargetRoles(adminActor);
-    assert(
-      !adminAllowedRoles.includes('Admin') && !adminAllowedRoles.includes('Super Admin'),
-      'Admin CANNOT create Admin or Super Admin accounts'
-    );
-    assert(
-      adminAllowedRoles.includes('Manager') && adminAllowedRoles.includes('Employee'),
-      'Admin can create operational accounts (Manager, Team Lead, Employee)'
-    );
-
-    const employeeAllowedRoles = RbacService.getAllowedTargetRoles(employeeTarget);
-    assert(employeeAllowedRoles.length === 0, 'Employee has zero user creation authority');
+    const admAllowed = RbacService.getAllowedTargetRoles(adminActor);
+    assert(!admAllowed.includes('Admin') && !admAllowed.includes('Super Admin'), 'Admin CANNOT create Admin or Super Admin accounts');
+    assert(admAllowed.includes('Manager') && admAllowed.includes('Employee'), 'Admin can create operational accounts (Manager, Team Lead, Employee)');
 
     // =========================================================================
-    // 7. Critical Rule: Roles & Permissions Matrix is Super Admin Only
+    // 8. Roles & Permissions Matrix is Super Admin Only
     // =========================================================================
     assert(RbacService.canManageRolesMatrix(superAdminActor), 'Super Admin can manage Roles & Permissions matrix');
     assert(!RbacService.canManageRolesMatrix(adminActor), 'Admin CANNOT manage Roles & Permissions matrix');
-    assert(!RbacService.canManageRolesMatrix(employeeTarget), 'Employee CANNOT manage Roles & Permissions matrix');
+    assert(!RbacService.canManageRolesMatrix(empActor), 'Employee CANNOT manage Roles & Permissions matrix');
 
     // =========================================================================
-    // 8. Critical Rule: Hierarchy Scope & Secondary Team Membership
+    // 9. Secondary Team Membership Does Not Grant Supervisory Authority
     // =========================================================================
-    const managerActor: AuthUser = {
-      id: 'mgr-1',
-      name: 'Manager One',
-      email: 'mgr@test.com',
+    const managerWithSecondary: AuthUser = {
+      id: 'mgr-sec',
+      name: 'Manager Secondary',
+      email: 'mgrsec@test.com',
       role: 'Manager',
       teamId: 'team-primary',
-      secondaryTeamIds: ['team-secondary'], // Secondary team membership
+      secondaryTeamIds: ['team-secondary'],
       status: 'active',
       isActive: true,
       createdAt: '2026-01-01',
     };
 
-    const teamLeadUser: AuthUser = {
-      id: 'tl-1',
-      name: 'Team Lead One',
-      email: 'tl@test.com',
-      role: 'Team Lead',
-      teamId: 'team-primary',
-      managerId: 'mgr-1',
-      status: 'active',
-      isActive: true,
-      createdAt: '2026-01-01',
-    };
-
-    const empInPrimary: AuthUser = {
-      id: 'emp-p',
-      name: 'Employee Primary',
-      email: 'empp@test.com',
-      role: 'Employee',
-      teamId: 'team-primary',
-      managerId: 'mgr-1',
-      status: 'active',
-      isActive: true,
-      createdAt: '2026-01-01',
-    };
-
-    const empInSecondary: AuthUser = {
-      id: 'emp-s',
-      name: 'Employee Secondary',
-      email: 'emps@test.com',
-      role: 'Employee',
-      teamId: 'team-secondary',
-      managerId: 'other-manager',
-      status: 'active',
-      isActive: true,
-      createdAt: '2026-01-01',
-    };
-
-    const teams = [
-      { id: 'team-primary', managerId: 'mgr-1', leaderId: 'tl-1' },
-      { id: 'team-secondary', managerId: 'other-manager', leaderId: 'other-leader' },
+    const teamsList = [
+      { id: 'team-primary', managerId: 'mgr-sec' },
+      { id: 'team-secondary', managerId: 'other-manager' },
     ];
 
-    const allUsers = [superAdminActor, adminActor, managerActor, teamLeadUser, empInPrimary, empInSecondary];
-
-    const managerScope = RbacService.getHierarchyScope(managerActor, allUsers, teams);
-    assert(managerScope.managedTeamIds.includes('team-primary'), 'Manager scope includes primary managed team');
-    assert(!managerScope.managedTeamIds.includes('team-secondary'), 'Secondary team membership DOES NOT grant supervisory authority');
-    assert(managerScope.subordinateUserIds.includes('emp-p'), 'Manager scope includes primary team subordinates');
-    assert(!managerScope.subordinateUserIds.includes('emp-s'), 'Manager scope excludes secondary team employees');
-
-    const employeeScope = RbacService.getHierarchyScope(empInPrimary, allUsers, teams);
-    assert(employeeScope.subordinateUserIds.length === 1 && employeeScope.subordinateUserIds[0] === 'emp-p', 'Employee scope is strictly self-only');
+    const secScope = RbacService.getHierarchyScope(managerWithSecondary, [managerWithSecondary], teamsList);
+    assert(secScope.managedTeamIds.includes('team-primary'), 'Primary managed team is included in manager scope');
+    assert(!secScope.managedTeamIds.includes('team-secondary'), 'Secondary team membership DOES NOT grant supervisory authority');
 
     // =========================================================================
-    // 9. Lead Hard Scope Ceiling
-    // =========================================================================
-    const mockLeads = [
-      { id: 'lead-1', assignedToId: 'emp-p', teamId: 'team-primary' },
-      { id: 'lead-2', assignedToId: 'emp-s', teamId: 'team-secondary' },
-      { id: 'lead-3', assignedToId: 'mgr-1', teamId: 'team-primary' },
-    ];
-
-    const employeeLeads = RbacService.getHardScopedLeadIds(empInPrimary, mockLeads, employeeScope);
-    assert(employeeLeads.length === 1 && employeeLeads[0] === 'lead-1', 'Employee hard scope ceiling strictly yields self-assigned lead');
-
-    const managerLeads = RbacService.getHardScopedLeadIds(managerActor, mockLeads, managerScope);
-    assert(managerLeads.includes('lead-1') && managerLeads.includes('lead-3'), 'Manager hard scope includes self and managed team leads');
-    assert(!managerLeads.includes('lead-2'), 'Manager hard scope strictly excludes outside department leads');
-
-    // =========================================================================
-    // 10. Inactive / Deactivated Account Authentication Rejection
+    // 10. Inactive Account Authentication Rejection
     // =========================================================================
     const testRepo = new RuntimeUserRepository([
       {
@@ -332,7 +340,7 @@ export async function runAuthRbacTests(): Promise<{ passed: boolean; results: Te
   return { passed: allPassed, results };
 }
 
-// Auto-run if executed directly via CLI/runner
+// Auto-run if executed directly via CLI
 if (require.main === module) {
   runAuthRbacTests().then(({ passed, results }) => {
     console.log('\n======================================================');

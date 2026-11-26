@@ -42,17 +42,17 @@ This stack is frozen unless the user explicitly changes it.
 
 ### Database
 
-- MongoDB Atlas
+- PostgreSQL (Connection will be added later)
+- MongoDB/Mongoose: NOT USED
+- Supabase: NOT USED
 
 ### Deployment
 
 - Namecheap
 
 Supabase is NOT part of the final architecture.
-
-PostgreSQL is NOT the final database for this project.
-
-If stale code/comments mention Supabase or PostgreSQL, flag and update them only within an approved cleanup task.
+MongoDB / Mongoose is NOT used for this project.
+PostgreSQL is the final database for this project (connection will be added later).
 
 ---
 
@@ -64,8 +64,8 @@ Current state:
 - The frontend was migrated from Vite to Next.js.
 - Supabase was removed.
 - Current business persistence is still local/mock/localStorage.
-- Backend does not yet exist.
-- MongoDB Atlas is not yet connected.
+- Backend was created (Express + TypeScript).
+- PostgreSQL database is not yet connected (will be connected in later step).
 - Meta, WhatsApp, and AI backend services are not yet connected.
 - Existing authorization tests are valuable and must remain passing.
 
@@ -76,7 +76,7 @@ Immediate order:
 3. Perform a focused shadcn/UI/code cleanup if requested.
 4. Freeze frontend.
 5. Create backend.
-6. Connect MongoDB Atlas.
+6. Connect PostgreSQL database.
 7. Build production auth/RBAC.
 8. Migrate modules from local persistence to API.
 9. Add integrations/AI.
@@ -241,18 +241,16 @@ Frontend must never be the sole enforcement point.
 
 ---
 
-## 10. MongoDB Rules
+## 10. PostgreSQL Database Rules
 
-- Use MongoDB Atlas.
-- Define indexes intentionally.
+- Final database architecture is strictly PostgreSQL (MongoDB/Mongoose and Supabase are NOT used).
+- PostgreSQL connection will be added later; do not connect yet.
+- Define indexes and relational foreign key constraints intentionally.
 - Normalize email/identifiers.
-- Use server-generated IDs/ObjectIds.
-- Avoid unbounded embedded history.
-- Prefer dedicated collections for activity/audit history when growth is unbounded.
-- Preserve historical snapshots for proposals/commercial documents where appropriate.
-- Use transactions for multi-document operations where consistency requires them.
-
-Do not introduce SQL migrations or PostgreSQL-specific schema logic.
+- Use server-generated UUIDs or integer IDs.
+- Dedicated relational tables for audit/activity logs.
+- Transactions for multi-table operations where consistency requires them.
+- Single source of truth in PostgreSQL once connected; zero business data in LocalStorage.
 
 ---
 
