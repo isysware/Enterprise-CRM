@@ -11,6 +11,22 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000), // 15 minutes
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100), // 100 requests per window
   API_PREFIX: z.string().default('/api/v1'),
+
+  // Auth & Token Security
+  JWT_ACCESS_SECRET: z
+    .string()
+    .min(32, 'JWT_ACCESS_SECRET must be at least 32 characters long')
+    .default('dev_jwt_access_secret_super_secure_32_characters_minimum'),
+  JWT_REFRESH_SECRET: z
+    .string()
+    .min(32, 'JWT_REFRESH_SECRET must be at least 32 characters long')
+    .default('dev_jwt_refresh_secret_super_secure_32_characters_minimum'),
+  JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
+  JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
+  COOKIE_SECRET: z
+    .string()
+    .min(32, 'COOKIE_SECRET must be at least 32 characters long')
+    .default('dev_cookie_signing_secret_32_characters_minimum'),
 });
 
 const parseEnv = () => {

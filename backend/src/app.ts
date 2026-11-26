@@ -1,6 +1,7 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { env } from './config';
 import { apiV1Router } from './routes';
 import {
@@ -26,9 +27,10 @@ export const createApp = (): Application => {
     })
   );
 
-  // 3. Request Parsers
+  // 3. Request Parsers & Cookie Parser
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  app.use(cookieParser(env.COOKIE_SECRET));
 
   // 4. HTTP Request Logging
   app.use(requestLogger);
