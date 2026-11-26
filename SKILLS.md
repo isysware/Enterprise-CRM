@@ -368,16 +368,19 @@ Never:
 
 ---
 
-## 16. AI Assistant Skills
+## 16. AI Assistant Skills (Internal CRM Copilot)
 
-AI assistant rules:
+Internal CRM Copilot rules:
 
-- provider key is backend-only
-- context is authorization-scoped
-- sensitive credentials excluded
-- context should be minimal, not a database dump
-- no cross-scope inference
-- mutating actions require explicit user confirmation and normal API authorization
+- operates as an INTERNAL CRM COPILOT for operational intelligence
+- for CRM questions: query authorized CRM/PostgreSQL database records only; strictly NO Google/web/external data sourcing
+- authenticate user first and resolve capability matrix + hard organizational hierarchy ceiling
+- queries authorized records (e.g. yesterday's leads, today's follow-ups, missed follow-ups, pipeline summary, team/user performance, client/conversion info)
+- provider key is backend-only; zero keys in frontend
+- context is authorization-scoped and sanitized; sensitive credentials excluded
+- context should be minimal and focused, not a database dump
+- no cross-scope inference; AI cannot expand user access
+- mutating actions require explicit user confirmation and execution through normal CRM API authorization
 - drafts do not auto-send
 
 When AI is unavailable, return a clear service state, not fake answers.

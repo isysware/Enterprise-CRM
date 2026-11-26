@@ -145,47 +145,67 @@ Recommended backend structure:
 
 ```text
 backend/
-  src/
-    app.ts
-    server.ts
-    config/
-      env.ts
-      db.ts
-    middleware/
-      auth.middleware.ts
-      rbac.middleware.ts
-      error.middleware.ts
-      rateLimit.middleware.ts
-      validate.middleware.ts
-    modules/
-      auth/
-      users/
-      roles/
-      teams/
-      leads/
-      incoming-leads/
-      follow-ups/
-      clients/
-      proposals/
-      services/
-      sources/
-      pricing-models/
-      reports/
-      activity-logs/
-      settings/
-      integrations/
-        meta/
-        whatsapp/
-      ai/
-    shared/
-      errors/
-      utils/
-      types/
-      audit/
-    tests/
-  package.json
-  tsconfig.json
-  .env.example
+├── .env
+├── .env.example
+├── .gitignore
+├── package.json
+├── tsconfig.json
+└── src/
+    ├── app.ts
+    ├── server.ts
+    ├── config/
+    │   ├── env.ts
+    │   └── index.ts
+    ├── constants/
+    │   ├── rbac.constants.ts
+    │   └── index.ts
+    ├── controllers/
+    │   ├── health.controller.ts
+    │   └── index.ts
+    ├── middleware/
+    │   ├── asyncHandler.ts
+    │   ├── auth.middleware.ts
+    │   ├── error.middleware.ts
+    │   ├── logger.middleware.ts
+    │   ├── notFound.middleware.ts
+    │   ├── rateLimiter.ts
+    │   ├── validate.middleware.ts
+    │   └── index.ts
+    ├── modules/
+    │   ├── auth/
+    │   ├── clients/
+    │   ├── follow-ups/
+    │   ├── leads/
+    │   ├── users/
+    │   └── index.ts
+    ├── repositories/
+    │   ├── index.ts
+    │   ├── runtime.user.repository.ts
+    │   └── user.repository.interface.ts
+    ├── routes/
+    │   ├── api.v1.ts
+    │   ├── health.routes.ts
+    │   └── index.ts
+    ├── services/
+    │   ├── health.service.ts
+    │   ├── password.service.ts
+    │   ├── rbac.service.ts
+    │   ├── token.service.ts
+    │   └── index.ts
+    ├── tests/
+    │   └── auth.rbac.test.ts
+    ├── types/
+    │   ├── auth.types.ts
+    │   ├── http.types.ts
+    │   └── index.ts
+    ├── utils/
+    │   ├── AppError.ts
+    │   ├── logger.ts
+    │   ├── response.ts
+    │   └── index.ts
+    └── validators/
+        ├── health.validator.ts
+        └── index.ts
 ```
 
 Backend language should be TypeScript unless there is a documented reason to use plain JavaScript.
@@ -235,13 +255,17 @@ The backend implementation must preserve the canonical frontend rules defined in
 - Team Lead: led team/direct employees.
 - Employee: self.
 
-### 6.2 Protected Account Invariants
+### 6.2 Protected Account Invariants & Dynamic Semantics
 
-- Only Super Admin can manage Admin.
-- Admin cannot create Admin/Super Admin.
-- Admin cannot modify Admin/Super Admin.
+- Only Super Admin can manage Admin accounts.
+- Admin cannot create, edit, delete, deactivate, or reset Admin or Super Admin accounts.
 - Roles & Permissions matrix is Super Admin only.
-- Dynamic permissions cannot enable protected Super Admin controls for lower roles.
+- Default role permissions are baseline defaults only, not permanent ceilings.
+- Super Admin may dynamically enable or disable normal capabilities across Manager, Team Lead, and Employee.
+- Capabilities grant actions strictly inside the actor's hard data scope (e.g. Employee with canViewReports enabled sees reports only for their own authorized records, never organization-wide).
+- Dynamic permissions must NEVER override hard immutable security rules (`canManageRoles` and `canManageSuperAdmin` remain Super Admin only).
+- Employee Incoming Lead capabilities (`canViewIncomingLeads`, `canAssignIncomingLeads`) remain hard-locked to false.
+- Secondary team membership grants no supervisory authority.
 
 ---
 
@@ -253,7 +277,7 @@ The exact schema and tables for PostgreSQL will be added in the database integra
 
 Core fields:
 
-- `_id`
+- `id` (PRIMARY KEY, UUID or BIGINT/SERIAL)
 - `name`
 - `email` — normalized, unique
 - `phone`
@@ -315,9 +339,9 @@ Fields:
 - status
 - timestamps
 
-### 7.5 `teamMemberships`
+### 7.5 `team_memberships`
 
-Recommended separate collection for robust membership history:
+Recommended separate join table (team_memberships) for robust membership history:
 
 - teamId
 - userId
@@ -403,9 +427,9 @@ Indexes should cover:
 - nextFollowUpDate
 - common report filter combinations where justified
 
-Lead activity history may be embedded only if bounded. For scalable audit/history, use a separate lead activity collection.
+For scalable activity audit/history, use a dedicated relational lead_activities table linked by foreign key (lead_id).
 
-### 7.10 `leadActivities`
+### 7.10 `lead_activities`
 
 Recommended:
 
@@ -741,19 +765,20 @@ Backend module should handle:
 
 Baileys must never run inside the browser.
 
-### AI Assistant
+### AI Assistant (Internal CRM Copilot)
+
+The AI Assistant is an INTERNAL CRM COPILOT designed for CRM operational intelligence.
 
 Backend module:
 
-1. authenticates user
-2. resolves current authorization
-3. validates/sanitizes provided context
-4. optionally fetches trusted server-side context
-5. calls selected AI provider with server-side secret
-6. validates response
-7. returns suggestions/drafts, not unauthorized direct mutations
-
-No provider API key in frontend.
+1. Authenticates user session before any LLM processing.
+2. Resolves current user role, capability matrix, and hard organizational scope ceiling.
+3. For CRM queries: queries authorized PostgreSQL database records only (e.g. yesterday's leads, today's follow-ups, missed follow-ups, pipeline summary, team/user performance, client/conversion info). Strictly NO Google/web/external data sourcing.
+4. Validates, sanitizes, and minimizes context sent to selected AI provider (server-side secret only; zero secrets in browser).
+5. Validates LLM response.
+6. Returns summarizations, metric explanations, or draft texts (messages/proposals) without auto-sending.
+7. Any mutating suggestions require explicit user confirmation and execution through canonical CRM API endpoints.
+8. AI can never expand user access or bypass organizational hierarchy boundaries.
 
 ---
 
@@ -783,7 +808,7 @@ Mandatory:
 - Secure cookie configuration.
 - Password hashing.
 - Input validation.
-- Mongo query/operator sanitization strategy.
+- Parameterized SQL queries & SQL injection protection.
 - Authorization middleware.
 - Object-level authorization.
 - Secret management.

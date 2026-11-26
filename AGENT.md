@@ -60,27 +60,22 @@ PostgreSQL is the final database for this project (connection will be added late
 
 Current state:
 
-- Frontend is largely complete.
-- The frontend was migrated from Vite to Next.js.
-- Supabase was removed.
-- Current business persistence is still local/mock/localStorage.
-- Backend was created (Express + TypeScript).
-- PostgreSQL database is not yet connected (will be connected in later step).
+- Frontend is largely complete with Next.js App Router, Tailwind CSS, and shadcn/ui.
+- Temporary mock/localStorage business data currently remains in frontend during backend cutover.
+- Backend Step 1 complete: Express + TypeScript architecture, health check (/api/v1/health), security headers, CORS, rate limiting, request logging, and centralized error handling.
+- Backend Step 2 Auth/RBAC complete: 5 canonical roles, 21 capabilities, JWT access/refresh token engine, secure HttpOnly cookies, password hashing (bcrypt), and 46/46 automated auth/RBAC tests passing.
+- PostgreSQL database is NOT yet connected (will be connected in Backend Step 3).
 - Meta, WhatsApp, and AI backend services are not yet connected.
-- Existing authorization tests are valuable and must remain passing.
 
 Immediate order:
 
-1. Run latest frontend locally.
-2. Fix only proven local runtime issues.
-3. Perform a focused shadcn/UI/code cleanup if requested.
-4. Freeze frontend.
-5. Create backend.
-6. Connect PostgreSQL database.
-7. Build production auth/RBAC.
-8. Migrate modules from local persistence to API.
-9. Add integrations/AI.
-10. Deploy and verify.
+1. Backend Step 1: Foundation, error handling, health endpoint (COMPLETED).
+2. Backend Step 2: Authentication & Canonical RBAC Engine (COMPLETED).
+3. Backend Step 3: PostgreSQL Database Integration & Schema (PENDING).
+4. Backend Step 4: Business Modules API (Leads, Clients, Teams, Users, Follow-Ups, Reports).
+5. Frontend Zero-LocalStorage & API Cutover (Purge mockData.ts).
+6. Integrations (Meta Lead Ads, WhatsApp/Baileys, Internal AI CRM Copilot).
+7. Production Deployment & Verification on Namecheap.
 
 Do not skip local verification and jump directly to backend integration.
 
@@ -169,7 +164,16 @@ May NOT:
 
 - self only
 
-Dynamic permissions never expand hard scope.
+### RBAC Permission Semantics & Hard Rules
+
+- Default role permissions are baseline defaults only, not permanent ceilings.
+- Super Admin may dynamically enable or disable normal capabilities across Manager, Team Lead, and Employee.
+- Capabilities grant actions strictly inside the actor's hard organizational scope ceiling (e.g. Employee with canViewReports enabled sees reports only for their own authorized records, never organization-wide).
+- Dynamic permissions must NEVER override hard immutable security rules.
+- canManageRoles and canManageSuperAdmin are strictly Super Admin only.
+- Admin cannot manage, edit, delete, deactivate, or reset Admin or Super Admin accounts.
+- Employee Incoming Lead capabilities (canViewIncomingLeads, canAssignIncomingLeads) remain hard-locked to false.
+- Secondary team membership grants no supervisory authority.
 
 ---
 
@@ -326,16 +330,18 @@ No browser-side Baileys.
 
 ---
 
-## 16. AI Assistant Rules
+## 16. AI Assistant Rules (Internal CRM Copilot)
 
-- No AI provider key in frontend.
-- No direct browser LLM SDK.
-- AI context must be scope-safe.
-- Do not send raw full-database context.
-- Do not expose auth/integration secrets.
-- AI cannot bypass normal APIs.
-- Mutating suggestions require user review and confirmation.
+- It is an INTERNAL CRM COPILOT strictly designed for CRM operational intelligence.
+- For CRM questions: use authorized CRM/PostgreSQL data only; strictly NO Google/web/external data sourcing.
+- Authenticate user first; apply capability + hard organizational scope ceiling.
+- Query only authorized records (e.g. yesterday's leads, today's follow-ups, missed follow-ups, pipeline summary, team/user performance, client/conversion info).
+- Send only minimal, sanitized, necessary context to AI provider (no raw database dumps, no auth/integration secrets).
+- AI may summarize, explain, and draft proposal/message text.
+- Mutating actions require normal authorization and explicit user review/confirmation.
 - Drafts must not auto-send.
+- AI can never expand user access or bypass organizational hierarchy boundaries.
+- No AI provider API keys in frontend; all LLM calls originate server-side.
 
 ---
 
@@ -489,7 +495,7 @@ Code and docs must not intentionally contradict each other.
 
 Before backend implementation, check and resolve in controlled tasks:
 
-- stale PostgreSQL wording in current TypeScript comments
+- ensure all docs and comments align with final PostgreSQL architecture (MongoDB/Mongoose and Supabase removed)
 - generic package name `react-example`
 - AI Studio artifacts/metadata no longer needed locally
 - shadcn component audit

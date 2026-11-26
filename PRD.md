@@ -159,10 +159,15 @@ The frontend currently defines 21 canonical capabilities:
 
 Rules:
 
-- Dynamic permissions may reduce access.
-- Dynamic permissions may never expand hard scope.
-- `canManageRoles` and `canManageSuperAdmin` are hard-reserved for Super Admin.
-- Employee Incoming Lead capabilities remain locked off.
+- The 21-capability Roles & Permissions Matrix is dynamically editable by Super Admin.
+- Default role permissions are baseline defaults only, not permanent ceilings.
+- Super Admin may dynamically enable or disable normal capabilities across Manager, Team Lead, and Employee.
+- Capabilities grant actions strictly inside the actor's hard data scope (e.g. enabling canViewReports for Employee allows viewing reports for self-assigned data only, never organization-wide).
+- Dynamic permissions must NEVER override hard immutable security rules.
+- `canManageRoles` and `canManageSuperAdmin` are hard-reserved for Super Admin only.
+- Admin cannot create, edit, delete, deactivate, or reset Admin or Super Admin accounts.
+- Employee Incoming Lead capabilities (`canViewIncomingLeads`, `canAssignIncomingLeads`) remain hard-locked to false.
+- Secondary team membership grants no supervisory authority.
 - Backend enforcement is mandatory. Frontend permission checks are UX controls, not production security.
 
 ---
@@ -542,23 +547,25 @@ Current settings include:
 
 File previews are currently frontend-only until backend storage is connected.
 
-### 5.18 AI Assistant
+### 5.18 AI Assistant (Internal CRM Copilot)
 
-The AI Assistant frontend is already prepared.
+The AI Assistant is an INTERNAL CRM COPILOT designed for CRM operational analysis, summarization, and drafting.
 
 Principles:
 
-- AI never expands user scope.
-- Backend receives only pre-authorized/sanitized context.
-- No API keys or LLM secrets in frontend.
-- No fake AI responses.
+- For CRM questions: uses authorized CRM/PostgreSQL database records only; strictly NO Google/web/external data sourcing.
+- Authenticate user first; enforce capability and hard organizational scope ceiling.
+- Query only authorized records for the requesting actor (e.g. yesterday's leads, today's follow-ups, missed follow-ups, pipeline summary, team/user performance, client/conversion information).
+- Backend receives and forwards only minimal, pre-authorized, sanitized context to the AI provider.
+- AI may summarize, explain metrics, and draft proposal text or client messages, but must never auto-send messages.
+- Mutating actions require explicit user review, confirmation, and normal CRM API authorization.
+- AI can never expand user scope or bypass organizational boundaries.
+- No AI provider API keys or LLM secrets in frontend; all LLM operations run server-side.
 - CRM Quick Insights are deterministic and clearly separate from AI-generated content.
-- Mutating actions require explicit user review and normal CRM authorization.
-- AI may draft messages/proposal text but must not auto-send messages.
 
-Future backend endpoint:
+Backend endpoint:
 
-`POST /api/ai/assistant`
+`POST /api/v1/ai/assistant`
 
 ---
 
