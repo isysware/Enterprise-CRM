@@ -47,6 +47,7 @@ export interface AuthUser {
   teamLeadName?: string;
   secondaryTeamIds?: string[];
   avatar?: string;
+  avatarUrl?: string;
   phone?: string;
   createdAt: string;
   lastLogin?: string;
@@ -55,8 +56,8 @@ export interface AuthUser {
 export interface HierarchyScope {
   managedTeamIds: string[];
   subordinateUserIds: string[];
-  scopedTeamIds: string[];
-  assignableUserIds: string[];
+  scopedTeamIds?: string[];
+  assignableUserIds?: string[];
 }
 
 export interface JwtAccessPayload {

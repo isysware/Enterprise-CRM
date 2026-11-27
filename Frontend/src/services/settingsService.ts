@@ -1,15 +1,25 @@
 import { SystemSettings } from '../types';
+import { settingsApi } from '../api';
 
 /**
- * System Settings Database Service (Quarantined - database persistence not enabled yet)
+ * System Settings Database Service — Connected to PostgreSQL REST API (/api/v1/settings)
  */
 export const settingsService = {
-  async get(): Promise<{ data: SystemSettings | null; error: any }> {
-    return { data: null, error: new Error('System settings database persistence is not enabled yet.') };
+  async get(): Promise<{ data: SystemSettings | null; error: unknown }> {
+    try {
+      const data = await settingsApi.getSettings();
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
   },
 
-  async update(_settings: Partial<SystemSettings>): Promise<{ data: any; error: any }> {
-    return { data: null, error: new Error('System settings database persistence is not enabled yet.') };
+  async update(settings: Partial<SystemSettings>): Promise<{ data: SystemSettings | null; error: unknown }> {
+    try {
+      const data = await settingsApi.updateCategory('general', settings);
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
   }
 };
-

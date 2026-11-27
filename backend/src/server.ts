@@ -2,10 +2,31 @@ import http from 'http';
 import { app } from './app';
 import { env } from './config';
 import { logger } from './utils';
+import { verifyDatabaseConnection, closeDatabasePool } from './database/connection';
+import { DatabaseMigrator } from './database/migrator';
+import { DatabaseSeeder } from './database/seed';
 
 const server = http.createServer(app);
 
-const startServer = (): void => {
+const startServer = async (): Promise<void> => {
+  // 1. Verify PostgreSQL Database Connection & Ensure Schemas
+  try {
+    const dbStatus = await verifyDatabaseConnection();
+    if (dbStatus.connected) {
+      logger.info(
+        `🐘 PostgreSQL connected: database "${dbStatus.database}" (v${dbStatus.serverVersion}) in ${dbStatus.latencyMs}ms`
+      );
+      // Run pending migrations and essential system seeds
+      await DatabaseMigrator.runMigrations();
+      await DatabaseSeeder.seed();
+    } else {
+      logger.warn(`⚠️ PostgreSQL connection check: ${dbStatus.error || 'Disconnected'}`);
+    }
+  } catch (dbErr) {
+    logger.error('Failed to initialize PostgreSQL database during startup:', dbErr);
+  }
+
+  // 2. Start HTTP Listener
   server.listen(env.PORT, () => {
     logger.info(`=======================================================`);
     logger.info(`🚀 Enterprise CRM Backend Service Started Successfully`);
@@ -19,10 +40,17 @@ const startServer = (): void => {
 };
 
 // Graceful Termination
-const handleTermination = (signal: string) => {
+const handleTermination = async (signal: string) => {
   logger.info(`Received ${signal}. Gracefully shutting down HTTP server...`);
-  server.close(() => {
-    logger.info('HTTP server closed cleanly. Exiting process.');
+  
+  server.close(async () => {
+    logger.info('HTTP server closed cleanly.');
+    try {
+      await closeDatabasePool();
+    } catch (err) {
+      logger.error('Error closing database pool during shutdown:', err);
+    }
+    logger.info('Process exit clean.');
     process.exit(0);
   });
 

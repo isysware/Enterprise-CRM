@@ -78,13 +78,13 @@ export const buildAIAuthorizedContext = (
   const safeAuthContext: AISafeAuthorizationContext = {
     scopeType,
     capabilities: {
-      canViewAllLeads: !!capabilities.canViewAllLeads,
-      canViewReports: !!capabilities.canViewReports,
-      canGenerateProposals: !!capabilities.canGenerateProposals,
-      canManageFollowUps: !!capabilities.canManageFollowUps,
-      canBulkImportExport: !!capabilities.canBulkImportExport,
-      canViewIncomingLeads: !!capabilities.canViewIncomingLeads,
-      canAccessAdmin: !!capabilities.canAccessAdmin
+      canViewAllLeads: Boolean(capabilities?.canViewAllLeads),
+      canViewReports: Boolean(capabilities?.canViewReports),
+      canGenerateProposals: Boolean(capabilities?.canGenerateProposals),
+      canManageFollowUps: Boolean(capabilities?.canManageFollowUps),
+      canBulkImportExport: Boolean(capabilities?.canBulkImportExport),
+      canViewIncomingLeads: Boolean(capabilities?.canViewIncomingLeads),
+      canAccessAdmin: Boolean(capabilities?.canAccessAdmin)
     }
   };
 
@@ -172,7 +172,7 @@ export const buildAIAuthorizedContext = (
     case 'reports-commercial-revenue':
       pageDetails = {
         activeReport: currentPage.startsWith('reports-') ? currentPage.replace('reports-', '') : 'sales-pipeline',
-        canViewReports: capabilities.canViewReports,
+        canViewReports: Boolean(capabilities?.canViewReports),
         scope: scopeType
       };
       break;

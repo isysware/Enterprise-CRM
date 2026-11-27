@@ -21,6 +21,7 @@ import {
   Users
 } from 'lucide-react';
 import { AIMessage } from './types';
+import { aiApi } from '../../api';
 import { buildAIAuthorizedContext, getAIScopeType } from '../../utils/buildAIAuthorizedContext';
 import { formatPKR } from '../../utils/formatters';
 
@@ -191,25 +192,25 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
       text
     );
 
-    // Dynamic intelligent CRM response based on role & query
-    setTimeout(() => {
-      let reply = '';
-      const lower = text.toLowerCase();
+    try {
+      const historyPayload = messages.slice(-10).map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content
+      }));
 
-      if (lower.includes('lead')) {
-        reply = `📊 **Active Leads Overview (${scopeLabel})**:\n- Active In-Pipeline: **${activeLeadsCount} leads**\n- Scoped Portfolio Value: **${formatPKR(totalPipelineVal)}**\n- Top Lead: **ARFO Men's Salon** (Converted)\n- Immediate Attention: **The Shave Club** (Visit scheduled today).`;
-      } else if (lower.includes('follow') || lower.includes('due today')) {
-        reply = `⏰ **Follow-Up Discipline (${scopeLabel})**:\n- Scheduled for Today: **${dueTodayFUs} interaction**\n- Overdue Follow-ups: **${overdueFUs} touchpoints**\n- Priority: Reach out to *The Shave Club* via WhatsApp/Phone for counter space inspection.`;
-      } else if (lower.includes('client') || lower.includes('convert')) {
-        reply = `🤝 **Clients Ledger**:\n- Converted Accounts: **${scopedClients.length} accounts**\n- Recent Win: *ARFO Men's Salon* (Enterprise POS Software Suite).\n- Active contracts are logged in the Clients Ledger.`;
-      } else if (lower.includes('pipeline') || lower.includes('val')) {
-        reply = `💰 **Authorized Pipeline Valuation**:\n- Total Scoped Pipeline: **${formatPKR(totalPipelineVal)}**\n- Yield Velocity: Win rate is healthy with zero revenue leakages.`;
-      } else if (lower.includes('proposal') || lower.includes('quote')) {
-        reply = `📝 **Commercial Proposals**:\n- Integrated Quotation Builder is active with customizable A4 Letterhead.\n- Grand Total payable calculation and milestone schedules are synchronized.`;
-      } else if (lower.includes('team') || lower.includes('report')) {
-        reply = `📈 **Departmental Performance**:\n- Scoped Authority: **${currentUser.role}**\n- Executive Excel & PDF reports are ready with branded blue tables.\n- Visit Reports > Team & Staff for detailed agent conversion rates.`;
-      } else {
-        reply = `🤖 **CRM Copilot Assistant**:\nI have analyzed your request within your authorized **${currentUser.role}** scope.\n\n- Active Leads: **${activeLeadsCount}**\n- Total Pipeline: **${formatPKR(totalPipelineVal)}**\n- Pending Follow-Ups: **${dueTodayFUs + overdueFUs}**\n\nHow else can I assist your sales operations today?`;
+      const mappedScope = ['leads', 'follow-ups', 'pipeline', 'staff', 'clients', 'dashboard', 'reports', 'calendar'].includes(currentPage)
+        ? currentPage
+        : 'general';
+
+      const res = await aiApi.askAssistant({
+        prompt: text,
+        contextScope: mappedScope,
+        history: historyPayload
+      });
+
+      let reply = res.answer;
+      if (res.insights && res.insights.length > 0) {
+        reply += '\n\n**Insights:**\n' + res.insights.map(i => `• ${i}`).join('\n');
       }
 
       const botMsg: AIMessage = {
@@ -220,8 +221,17 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
       };
 
       setMessages(prev => [...prev, botMsg]);
+    } catch (err: unknown) {
+      const errorMsg: AIMessage = {
+        id: `bot-err-${Date.now()}`,
+        role: 'assistant',
+        content: err instanceof Error ? err.message : 'Unable to connect to AI assistant service. Please check network and try again.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setIsSubmitting(false);
-    }, 400);
+    }
   };
 
   const handleClearChat = () => {

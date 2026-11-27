@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useCRM } from '../context/CRMContext';
 import { IncomingLead, User } from '../types';
+import { integrationsApi, MetaConnectionStatus, WhatsAppConnectionStatus } from '../api';
 import {
   Inbox,
   Sparkles,
@@ -50,11 +51,37 @@ export const IncomingLeadsView: React.FC = () => {
   const [sourceFilter, setSourceFilter] = useState<'all' | 'meta_ads' | 'whatsapp'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'new' | 'assigned'>('all');
 
-  // Integration modals state
+  // Integration modals state & real backend status
   const [activeModal, setActiveModal] = useState<'meta' | 'whatsapp' | null>(null);
   const [whatsAppMethod, setWhatsAppMethod] = useState<'qr' | 'pairing'>('qr');
   const [pairingPhone, setPairingPhone] = useState('');
   const [modalFeedback, setModalFeedback] = useState<string | null>(null);
+  const [metaStatus, setMetaStatus] = useState<MetaConnectionStatus | null>(null);
+  const [whatsAppStatus, setWhatsAppStatus] = useState<WhatsAppConnectionStatus | null>(null);
+  const [isInitializingWa, setIsInitializingWa] = useState(false);
+
+  useEffect(() => {
+    if (!canManageIntegrations) return;
+    let isMounted = true;
+    const fetchStatuses = async () => {
+      try {
+        const [mRes, wRes] = await Promise.allSettled([
+          integrationsApi.getMetaStatus(),
+          integrationsApi.getWhatsAppStatus()
+        ]);
+        if (isMounted) {
+          if (mRes.status === 'fulfilled') setMetaStatus(mRes.value);
+          if (wRes.status === 'fulfilled') setWhatsAppStatus(wRes.value);
+        }
+      } catch {
+        // preserve disconnected state
+      }
+    };
+    fetchStatuses();
+    return () => {
+      isMounted = false;
+    };
+  }, [canManageIntegrations]);
 
   // Operational Assign & Add dialog state
   const [assignModalLead, setAssignModalLead] = useState<IncomingLead | null>(null);
@@ -240,7 +267,13 @@ export const IncomingLeadsView: React.FC = () => {
                 <h4 className="text-sm font-bold text-[#0F172A] dark:text-white truncate">
                   Meta Lead Ads
                 </h4>
-                <Badge variant="neutral" size="sm">Disconnected</Badge>
+                {metaStatus?.status === 'connected' ? (
+                  <Badge variant="success" size="sm">Connected</Badge>
+                ) : metaStatus?.status === 'configured' ? (
+                  <Badge variant="primary" size="sm">Configured</Badge>
+                ) : (
+                  <Badge variant="neutral" size="sm">Disconnected</Badge>
+                )}
               </div>
               <p className="text-[11px] text-[#64748B] dark:text-slate-400 truncate mt-0.5">
                 Facebook &amp; Instagram Forms • Webhooks &amp; Lead Sync
@@ -274,7 +307,15 @@ export const IncomingLeadsView: React.FC = () => {
                 <h4 className="text-sm font-bold text-[#0F172A] dark:text-white truncate">
                   WhatsApp Business
                 </h4>
-                <Badge variant="neutral" size="sm">Disconnected</Badge>
+                {whatsAppStatus?.status === 'connected' ? (
+                  <Badge variant="success" size="sm">Connected</Badge>
+                ) : whatsAppStatus?.status === 'connecting' || whatsAppStatus?.status === 'qr_ready' ? (
+                  <Badge variant="warning" size="sm">
+                    {whatsAppStatus.status === 'qr_ready' ? 'Scan QR' : 'Connecting'}
+                  </Badge>
+                ) : (
+                  <Badge variant="neutral" size="sm">Disconnected</Badge>
+                )}
               </div>
               <p className="text-[11px] text-[#64748B] dark:text-slate-400 truncate mt-0.5">
                 Baileys / Node.js Engine • QR / Pairing Sync
@@ -674,10 +715,23 @@ export const IncomingLeadsView: React.FC = () => {
             <Button
               variant="primary"
               size="sm"
-              onClick={() => setModalFeedback('Backend integration required. Connection will be activated during server setup.')}
+              disabled={isInitializingWa}
+              onClick={async () => {
+                setIsInitializingWa(true);
+                try {
+                  const updated = await integrationsApi.initWhatsAppSession();
+                  setWhatsAppStatus(updated);
+                  setModalFeedback('WhatsApp session initialized on backend. Ready for device scan / code pairing.');
+                } catch (err: unknown) {
+                  const msg = err instanceof Error ? err.message : 'Failed to initialize WhatsApp session';
+                  setModalFeedback(`Error: ${msg}`);
+                } finally {
+                  setIsInitializingWa(false);
+                }
+              }}
               className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600"
             >
-              Start Connection
+              {isInitializingWa ? 'Initializing...' : 'Start Connection'}
             </Button>
           </>
         }
@@ -685,7 +739,13 @@ export const IncomingLeadsView: React.FC = () => {
         <div className="space-y-3.5 text-xs">
           <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-[#E5EAF1] dark:border-slate-700">
             <span className="font-semibold text-[#0F172A] dark:text-slate-300">Status</span>
-            <Badge variant="neutral" size="sm">Disconnected</Badge>
+            {whatsAppStatus?.status === 'connected' ? (
+              <Badge variant="success" size="sm">Connected</Badge>
+            ) : whatsAppStatus?.status === 'qr_ready' || whatsAppStatus?.status === 'pending' ? (
+              <Badge variant="warning" size="sm">QR Ready</Badge>
+            ) : (
+              <Badge variant="neutral" size="sm">Disconnected</Badge>
+            )}
           </div>
 
           <div>
@@ -756,7 +816,9 @@ export const IncomingLeadsView: React.FC = () => {
           )}
 
           <div className="px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-[#E5EAF1] dark:border-slate-700">
-            <span className="text-[11px] text-[#64748B]">No active WhatsApp session.</span>
+            <span className="text-[11px] text-[#64748B]">
+              {whatsAppStatus?.sessionName ? `Session: ${whatsAppStatus.sessionName}` : 'No active WhatsApp session.'}
+            </span>
           </div>
 
           {modalFeedback && (
@@ -800,7 +862,13 @@ export const IncomingLeadsView: React.FC = () => {
         <div className="space-y-3.5 text-xs">
           <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-[#E5EAF1] dark:border-slate-700">
             <span className="font-semibold text-[#0F172A] dark:text-slate-300">Status</span>
-            <Badge variant="neutral" size="sm">Disconnected</Badge>
+            {metaStatus?.status === 'connected' ? (
+              <Badge variant="success" size="sm">Connected</Badge>
+            ) : metaStatus?.status === 'configured' ? (
+              <Badge variant="primary" size="sm">Configured</Badge>
+            ) : (
+              <Badge variant="neutral" size="sm">Disconnected</Badge>
+            )}
           </div>
 
           <div className="p-3.5 rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
@@ -811,7 +879,9 @@ export const IncomingLeadsView: React.FC = () => {
           </div>
 
           <div className="px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-[#E5EAF1] dark:border-slate-700">
-            <span className="text-[11px] text-[#64748B]">No Meta account connected.</span>
+            <span className="text-[11px] text-[#64748B]">
+              {metaStatus?.pageName ? `Connected Page: ${metaStatus.pageName}` : 'No Meta account connected.'}
+            </span>
           </div>
 
           {modalFeedback && (

@@ -20,6 +20,8 @@ import {
   Check
 } from 'lucide-react';
 import { getRoleBadgeStyle, getLocalDateString, classifyFollowUp } from '../utils/formatters';
+import { notificationsApi, NotificationDto } from '../api';
+import { UserProfileModal } from './modals/UserProfileModal';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -32,7 +34,7 @@ interface NavbarProps {
 
 interface NotificationItem {
   id: string;
-  type: 'missed_followup' | 'today_followup' | 'lead_assigned' | 'system';
+  type: 'missed_followup' | 'today_followup' | 'lead_assigned' | 'system' | 'urgent_lead';
   title: string;
   message: string;
   time: string;
@@ -41,8 +43,6 @@ interface NotificationItem {
   isRead: boolean;
   priority: 'high' | 'medium' | 'low';
 }
-
-const NOTIF_READ_STORAGE_KEY = 'apex_crm_read_notifications';
 
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
@@ -54,30 +54,31 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const { currentUser, logout, scopedFollowUps, scopedLeads } = useCRM();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [dbNotifications, setDbNotifications] = useState<NotificationDto[]>([]);
   const [readNotifIds, setReadNotifIds] = useState<Set<string>>(() => new Set());
   const notifDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Fetch real database notifications from PostgreSQL
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(NOTIF_READ_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) setReadNotifIds(new Set(parsed));
+    let isMounted = true;
+    const fetchNotifications = async () => {
+      try {
+        const res = await notificationsApi.getNotifications({ limit: 30 });
+        if (isMounted && res?.items) {
+          setDbNotifications(res.items);
+        }
+      } catch {
+        // quiet error handle
       }
-    } catch (e) {
-      console.error('Failed to read notification storage:', e);
+    };
+    if (currentUser) {
+      fetchNotifications();
     }
-  }, []);
-
-  // Sync read notification IDs with LocalStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem(NOTIF_READ_STORAGE_KEY, JSON.stringify(Array.from(readNotifIds)));
-    } catch (e) {
-      console.error('Failed to save notification storage:', e);
-    }
-  }, [readNotifIds]);
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -162,8 +163,21 @@ export const Navbar: React.FC<NavbarProps> = ({
   );
   const urgentLeads = scopedLeads.filter(l => l.priority === 'Urgent' && l.status !== 'Converted');
 
-  // Build notifications array
+  // Build notifications array from real database items and real operational events
   const rawNotifications: NotificationItem[] = [
+    // Real PostgreSQL notifications
+    ...dbNotifications.map(n => ({
+      id: n.id,
+      type: n.type as NotificationItem['type'],
+      title: n.title,
+      message: n.message,
+      time: n.timeLabel || new Date(n.createdAt).toLocaleDateString(),
+      targetTab: (n.targetTab as ActiveTab) || undefined,
+      targetLeadId: n.targetId || undefined,
+      isRead: n.isRead || readNotifIds.has(n.id),
+      priority: n.priority
+    })),
+    // Dynamic operational overdue follow-ups
     ...missedFollowUps.slice(0, 4).map(f => ({
       id: `notif-missed-${f.id}`,
       type: 'missed_followup' as const,
@@ -175,6 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       isRead: readNotifIds.has(`notif-missed-${f.id}`),
       priority: 'high' as const
     })),
+    // Dynamic operational today follow-ups
     ...todayFollowUps.slice(0, 4).map(f => ({
       id: `notif-today-${f.id}`,
       type: 'today_followup' as const,
@@ -186,6 +201,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       isRead: readNotifIds.has(`notif-today-${f.id}`),
       priority: 'medium' as const
     })),
+    // Dynamic operational urgent leads
     ...urgentLeads.slice(0, 3).map(l => ({
       id: `notif-lead-${l.id}`,
       type: 'lead_assigned' as const,
@@ -199,33 +215,35 @@ export const Navbar: React.FC<NavbarProps> = ({
     }))
   ];
 
-  // If no dynamic alerts exist, provide a baseline system alert
-  if (rawNotifications.length === 0) {
-    rawNotifications.push({
-      id: 'notif-welcome',
-      type: 'system',
-      title: 'System Ready',
-      message: `Logged in as ${currentUser.name} (${currentUser.role}). All follow-ups are on schedule.`,
-      time: 'Just now',
-      isRead: readNotifIds.has('notif-welcome'),
-      priority: 'low'
-    });
-  }
-
   // Active unread notifications
   const activeUnreadNotifications = rawNotifications.filter(n => !n.isRead);
   const unreadCount = activeUnreadNotifications.length;
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationsApi.markAllAsRead();
+    } catch {
+      // quiet handle
+    }
     setReadNotifIds(prev => {
       const updated = new Set(prev);
       rawNotifications.forEach(n => updated.add(n.id));
       return updated;
     });
+    setDbNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
   };
 
-  const handleMarkSingleRead = (id: string) => {
+  const handleMarkSingleRead = async (id: string) => {
+    // If it's a real PostgreSQL notification UUID, persist read status to DB
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      try {
+        await notificationsApi.markAsRead(id);
+      } catch {
+        // quiet handle
+      }
+    }
     setReadNotifIds(prev => new Set(prev).add(id));
+    setDbNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
   };
 
   const handleNotificationClick = (item: NotificationItem) => {
@@ -426,25 +444,30 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
-        {/* Compact User Identity & Role Context */}
-        <div className="flex items-center gap-2 pl-1 sm:pl-2.5 border-l border-[#E5EAF1] dark:border-slate-800">
-          <div className="relative shrink-0" title={`${currentUser.name} (${currentUser.role})`}>
+        {/* Compact User Identity & Role Context - Clickable for Profile & Settings */}
+        <button
+          type="button"
+          onClick={() => setIsProfileModalOpen(true)}
+          title="Click to view and edit your profile, avatar, or credentials"
+          className="flex items-center gap-2 pl-1 sm:pl-2.5 border-l border-[#E5EAF1] dark:border-slate-800 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 p-1.5 rounded-xl transition-all cursor-pointer text-left group"
+        >
+          <div className="relative shrink-0">
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
-              className="w-8 h-8 rounded-full object-cover ring-1 ring-[#E5EAF1] dark:ring-slate-700"
+              className="w-8 h-8 rounded-full object-cover ring-1 ring-[#E5EAF1] dark:ring-slate-700 group-hover:ring-[#2563EB] transition-all"
             />
             <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ring-1 ring-white dark:ring-slate-900 ${roleStyle.dot}`} />
           </div>
           <div className="hidden md:block text-left min-w-0 max-w-[120px]">
-            <p className="text-xs font-semibold text-[#0F172A] dark:text-white truncate leading-tight">
+            <p className="text-xs font-semibold text-[#0F172A] dark:text-white truncate leading-tight group-hover:text-[#2563EB] transition-colors">
               {currentUser.name}
             </p>
             <p className="text-[10px] text-[#64748B] dark:text-slate-400 font-medium truncate mt-0.5">
               {currentUser.role}
             </p>
           </div>
-        </div>
+        </button>
 
         {/* Canonical Logout Action */}
         <button
@@ -456,6 +479,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span className="font-semibold hidden sm:inline">Logout</span>
         </button>
       </div>
+
+      {/* User Profile & Credentials Modal */}
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </header>
   );
 };

@@ -14,79 +14,51 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-const ROLE_PRESETS: {
+const PORTAL_OPTIONS: {
   role: UserRole;
-  email: string;
-  pass: string;
   title: string;
 }[] = [
-  {
-    role: 'Super Admin',
-    email: 'superadmin@crm.com',
-    pass: 'Admin@123',
-    title: 'Super Admin Portal'
-  },
-  {
-    role: 'Admin',
-    email: 'admin@crm.com',
-    pass: 'Admin@123',
-    title: 'Admin Portal'
-  },
-  {
-    role: 'Manager',
-    email: 'manager@crm.com',
-    pass: 'Manager@123',
-    title: 'Manager Portal'
-  },
-  {
-    role: 'Team Lead',
-    email: 'teamlead@crm.com',
-    pass: 'Lead@123',
-    title: 'Team Lead Portal'
-  },
-  {
-    role: 'Employee',
-    email: 'employee@crm.com',
-    pass: 'Emp@123',
-    title: 'Employee Portal'
-  }
+  { role: 'Super Admin', title: 'Super Admin Portal' },
+  { role: 'Admin', title: 'Admin Portal' },
+  { role: 'Manager', title: 'Manager Portal' },
+  { role: 'Team Lead', title: 'Team Lead Portal' },
+  { role: 'Employee', title: 'Employee Portal' }
 ];
 
 export const LoginPage: React.FC = () => {
   const { login, settings } = useCRM();
 
   const [selectedRole, setSelectedRole] = useState<UserRole>('Super Admin');
-  const [email, setEmail] = useState('superadmin@crm.com');
-  const [password, setPassword] = useState('Admin@123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  // Switch portal and populate credentials
+  // Switch portal
   const handleSelectRole = (role: UserRole) => {
     setSelectedRole(role);
-    const preset = ROLE_PRESETS.find(p => p.role === role);
-    if (preset) {
-      setEmail(preset.email);
-      setPassword(preset.pass);
-    }
     setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    setTimeout(() => {
-      const res = login(email, password, selectedRole);
+    try {
+      const res = await login(email, password, selectedRole);
       if (!res.success) {
         setError(res.error || 'Invalid credentials or role mismatch. Please try again.');
       }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed. Please verify credentials.';
+      setError(message);
+    } finally {
       setLoading(false);
-    }, 180);
+    }
   };
 
   return (
@@ -159,7 +131,7 @@ export const LoginPage: React.FC = () => {
                 onChange={e => handleSelectRole(e.target.value as UserRole)}
                 className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm font-semibold rounded-xl pl-3.5 pr-9 py-2.5 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563EB] cursor-pointer shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-750 transition-all"
               >
-                {ROLE_PRESETS.map(p => (
+                {PORTAL_OPTIONS.map(p => (
                   <option key={p.role} value={p.role}>
                     {p.title}
                   </option>
@@ -290,29 +262,10 @@ export const LoginPage: React.FC = () => {
             </p>
 
             <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
-              <p className="font-semibold text-slate-800 dark:text-slate-200">Default Demo Credentials Reference:</p>
-              <ul className="space-y-1.5 text-slate-600 dark:text-slate-400 font-mono text-[11px]">
-                <li className="flex items-center justify-between">
-                  <span>• Super Admin:</span>
-                  <span className="text-[#2563EB] font-semibold">superadmin@crm.com / Admin@123</span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span>• Admin:</span>
-                  <span className="text-[#2563EB] font-semibold">admin@crm.com / Admin@123</span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span>• Manager:</span>
-                  <span className="text-[#2563EB] font-semibold">manager@crm.com / Manager@123</span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span>• Team Lead:</span>
-                  <span className="text-[#2563EB] font-semibold">teamlead@crm.com / Lead@123</span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span>• Employee:</span>
-                  <span className="text-[#2563EB] font-semibold">employee@crm.com / Emp@123</span>
-                </li>
-              </ul>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">System Authentication Notice:</p>
+              <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+                All accounts are managed securely via the PostgreSQL directory. Default demo accounts have been permanently retired. Please log in using your authorized organizational credentials provided by your Administrator.
+              </p>
             </div>
 
             <button

@@ -215,8 +215,8 @@ export const UsersAdminView: React.FC = () => {
   };
 
   // Toggle user status
-  const handleToggleStatus = (targetUser: User) => {
-    const res = toggleUserStatus(targetUser.id);
+  const handleToggleStatus = async (targetUser: User) => {
+    const res = await toggleUserStatus(targetUser.id);
     if (!res.success && res.error) {
       setActionFeedback({ type: 'error', message: res.error });
     } else {
@@ -234,9 +234,9 @@ export const UsersAdminView: React.FC = () => {
     setDeleteConfirmUser(targetUser);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteConfirmUser) return;
-    const res = deleteUser(deleteConfirmUser.id);
+    const res = await deleteUser(deleteConfirmUser.id);
     if (!res.success && res.error) {
       setActionFeedback({ type: 'error', message: res.error });
     } else {
@@ -247,7 +247,7 @@ export const UsersAdminView: React.FC = () => {
   };
 
   // Save Modal
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -269,7 +269,7 @@ export const UsersAdminView: React.FC = () => {
         return;
       }
 
-      const res = updateUser({
+      const res = await updateUser({
         ...editingUser,
         name: name.trim(),
         email: email.trim().toLowerCase(),
@@ -298,7 +298,7 @@ export const UsersAdminView: React.FC = () => {
         return;
       }
 
-      const res = addUser({
+      const res = await addUser({
         name: name.trim(),
         email: email.trim().toLowerCase(),
         phone: phone.trim(),

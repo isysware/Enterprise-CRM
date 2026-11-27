@@ -236,10 +236,10 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
     setDeleteConfirmModel(model);
   };
 
-  const handleConfirmDeleteModel = () => {
+  const handleConfirmDeleteModel = async () => {
     if (!deleteConfirmModel) return;
     setTabActionError(null);
-    const res = deletePricingModel(deleteConfirmModel.id);
+    const res = await deletePricingModel(deleteConfirmModel.id);
     if (res.success) {
       onSaveSuccess(`Pricing model "${deleteConfirmModel.name}" deleted.`);
     } else {

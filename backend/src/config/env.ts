@@ -27,6 +27,9 @@ const envSchema = z.object({
     .string()
     .min(32, 'COOKIE_SECRET must be at least 32 characters long')
     .default('dev_cookie_signing_secret_32_characters_minimum'),
+
+  // PostgreSQL Database
+  DATABASE_URL: z.string().optional(),
 });
 
 const parseEnv = () => {

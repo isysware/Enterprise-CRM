@@ -8,7 +8,17 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "tsc --noEmit",
-    "test:auth": "tsx src/tests/auth.rbac.test.ts"
+    "test:auth": "tsx src/tests/auth.rbac.test.ts",
+    "test:db": "tsx src/tests/database.integration.test.ts",
+    "test:api": "tsx src/tests/core-api.integration.test.ts",
+    "test:smoke": "tsx src/tests/live-api.smoke.test.ts",
+    "test:phase2": "tsx src/tests/phase2-cutover.e2e.test.ts",
+    "test:phase3": "tsx src/tests/phase3-cutover.e2e.test.ts",
+    "migrate": "tsx src/database/migrator.ts",
+    "seed": "tsx src/database/seed.ts",
+    "seed:reference": "tsx src/database/seed-reference.ts",
+    "seed:fixtures": "tsx src/database/seed-dev-fixtures.ts",
+    "db:cleanup": "tsx src/database/cleanup-demo-data.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -20,6 +30,7 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",
+    "pg": "^8.23.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -30,6 +41,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.13.4",
+    "@types/pg": "^8.23.1",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }

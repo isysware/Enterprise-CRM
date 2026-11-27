@@ -1,18 +1,16 @@
-/**
- * Domain Modules Foundation
- * Holds domain logic, models, controllers, and services per business module:
- * - auth
- * - users
- * - leads
- * - clients
- * - follow-ups
- */
-export const DOMAIN_MODULES = [
-  'auth',
-  'users',
-  'leads',
-  'clients',
-  'follow-ups',
-] as const;
-
-export type DomainModule = (typeof DOMAIN_MODULES)[number];
+export * from './auth';
+export * from './users';
+export * from './roles';
+export * from './teams';
+export * from './services';
+export * from './lead-sources';
+export * from './pricing-models';
+export * from './leads';
+export * from './incoming-leads';
+export * from './follow-ups';
+export * from './clients';
+export * from './proposals';
+export * from './activity-logs';
+export * from './reports';
+export * from './ai';
+export * from './integrations';

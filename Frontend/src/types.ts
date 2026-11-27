@@ -28,6 +28,7 @@ export interface Team {
   managerName?: string;
   leaderId?: string;
   leaderName?: string;
+  status?: 'active' | 'inactive' | 'archived';
   memberIds: string[];
   createdAt: string;
 }

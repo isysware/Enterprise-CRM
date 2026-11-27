@@ -35,7 +35,7 @@ import { Lead, FollowUp, Proposal, SettingsSubTab } from './types';
 import { ReportId } from './components/reports/types';
 
 const MainLayout: React.FC = () => {
-  const { currentUser, canAccessAdmin, canViewIncomingLeads, setFilterState } = useCRM();
+  const { currentUser, canAccessAdmin, canViewIncomingLeads, setFilterState, isAuthLoading } = useCRM();
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [reportSubTab, setReportSubTab] = useState<ReportId>('sales-pipeline');
@@ -159,6 +159,16 @@ const MainLayout: React.FC = () => {
       }
     }
   }, [activeTab, currentUser, canAccessAdmin, canViewIncomingLeads]);
+
+  // While verifying active session on initial load or reload
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen w-full bg-[#F8FAFC] dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="w-10 h-10 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs text-[#64748B] dark:text-slate-400 font-medium mt-3">Connecting to Enterprise CRM session...</p>
+      </div>
+    );
+  }
 
   // If user is not authenticated, show unified login page
   if (!currentUser) {

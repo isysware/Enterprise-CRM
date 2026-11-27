@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
 import { AUTH_COOKIES } from '../../constants';
-import { runtimeUserRepository } from '../../repositories';
+import { defaultUserRepository } from '../../repositories';
 import { TokenService } from '../../services';
 import { sendSuccess, AppError } from '../../utils';
 import { AuthService } from './auth.service';
@@ -13,7 +13,7 @@ export class AuthController {
    */
   public static async login(req: Request, res: Response): Promise<void> {
     const credentials = req.body as LoginInput;
-    const { user, tokens } = await AuthService.login(credentials, runtimeUserRepository);
+    const { user, tokens } = await AuthService.login(credentials, defaultUserRepository);
 
     // Attach secure HttpOnly cookies
     TokenService.setAuthCookies(res, tokens);
@@ -42,7 +42,7 @@ export class AuthController {
       throw AppError.unauthorized('Refresh token is required');
     }
 
-    const { user, tokens } = await AuthService.refreshToken(token, runtimeUserRepository);
+    const { user, tokens } = await AuthService.refreshToken(token, defaultUserRepository);
 
     TokenService.setAuthCookies(res, tokens);
 
@@ -64,7 +64,7 @@ export class AuthController {
   public static async logout(req: Request, res: Response): Promise<void> {
     const authReq = req as unknown as AuthenticatedRequest;
     if (authReq.user?.id) {
-      await AuthService.logout(authReq.user.id, runtimeUserRepository);
+      await AuthService.logout(authReq.user.id, defaultUserRepository);
     }
 
     TokenService.clearAuthCookies(res);
@@ -77,10 +77,11 @@ export class AuthController {
    */
   public static async getMe(req: Request, res: Response): Promise<void> {
     const authReq = req as unknown as AuthenticatedRequest;
+    const freshUser = await defaultUserRepository.findById(authReq.user.id);
     sendSuccess(
       res,
       {
-        user: authReq.user,
+        user: freshUser || authReq.user,
         permissions: authReq.permissions,
         scope: authReq.scope,
       },
@@ -96,7 +97,7 @@ export class AuthController {
     const authReq = req as unknown as AuthenticatedRequest;
     const input = req.body as ChangePasswordInput;
 
-    await AuthService.changePassword(authReq.user.id, input, runtimeUserRepository);
+    await AuthService.changePassword(authReq.user.id, input, defaultUserRepository);
     TokenService.clearAuthCookies(res);
 
     sendSuccess(
@@ -114,7 +115,7 @@ export class AuthController {
     const authReq = req as unknown as AuthenticatedRequest;
     const input = req.body as ResetPasswordInput;
 
-    await AuthService.resetPassword(authReq.user, input, runtimeUserRepository);
+    await AuthService.resetPassword(authReq.user, input, defaultUserRepository);
 
     sendSuccess(
       res,

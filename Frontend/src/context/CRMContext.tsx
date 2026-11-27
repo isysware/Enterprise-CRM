@@ -30,14 +30,9 @@ import {
   DEFAULT_SOURCES,
   DEFAULT_ROLE_PERMISSIONS,
   DEFAULT_PRICING_MODELS,
-  DEFAULT_SETTINGS,
-  INITIAL_CLIENTS,
-  INITIAL_LEADS,
-  INITIAL_FOLLOW_UPS,
-  INITIAL_ACTIVITY_LOGS,
-  INITIAL_INCOMING_LEADS
+  DEFAULT_SETTINGS
 } from '../data/mockData';
-import { getClientRevenue, parseAmount, getLocalDateString, classifyFollowUp } from '../utils/formatters';
+import { getClientRevenue, getLocalDateString, classifyFollowUp } from '../utils/formatters';
 import {
   normalizeLeadSource,
   normalizeLeadStatus,
@@ -61,98 +56,145 @@ import {
   canTransitionUserRole as canTransitionUserRoleAuth,
   getAllowedTargetRoles as getAllowedTargetRolesAuth
 } from '../utils/authorization';
+import {
+  authApi,
+  usersApi,
+  teamsApi,
+  servicesApi,
+  sourcesApi,
+  rolesApi,
+  pricingModelsApi,
+  leadsApi,
+  incomingLeadsApi,
+  followUpsApi,
+  clientsApi,
+  proposalsApi,
+  activityLogsApi,
+  reportsApi,
+  settingsApi,
+  AuthUserDto,
+  TeamDto,
+  ServiceDto,
+  PricingModelDto,
+  RolePermissionMatrixDto,
+  LeadDbDto,
+  LeadActivityDto,
+  IncomingLeadDbDto,
+  FollowUpDbDto,
+  ClientDbDto,
+  ProposalDbDto,
+  ActivityLogDbDto,
+  CreateLeadPayload,
+  UpdateLeadPayload,
+  CreateFollowUpPayload,
+  ConvertLeadPayload,
+  CreateProposalPayload,
+  UpdateProposalPayload
+} from '../api';
 
 interface CRMContextType {
   // Authentication & Current User
   currentUser: User | null;
+  isAuthLoading: boolean;
+  isDataLoading: boolean;
   users: User[];
-  scopedUsers: User[]; // Filtered by current user hierarchy
-  assignableUsers: User[]; // Visible users available for assignment/reassignment
-  login: (email: string, pass: string, selectedRole?: UserRole) => { success: boolean; error?: string };
-  logout: () => void;
+  scopedUsers: User[];
+  assignableUsers: User[];
+  login: (email: string, pass: string, selectedRole?: UserRole) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
   switchUser: (userId: string) => void;
-  addUser: (user: Omit<User, 'id' | 'createdAt'>) => { success: boolean; error?: string; user?: User };
-  updateUser: (user: User) => { success: boolean; error?: string };
-  toggleUserStatus: (userId: string) => { success: boolean; error?: string };
-  deleteUser: (userId: string) => { success: boolean; error?: string };
 
-  // Teams & Services & Sources & Roles
+  // Users Admin
+  addUser: (userData: Omit<User, 'id' | 'createdAt'>) => Promise<{ success: boolean; error?: string; user?: User }>;
+  updateUser: (user: User) => Promise<{ success: boolean; error?: string }>;
+  changeMyPassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  resetUserPassword: (userId: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  toggleUserStatus: (userId: string) => Promise<{ success: boolean; error?: string }>;
+  deleteUser: (userId: string) => Promise<{ success: boolean; error?: string }>;
+
+  // Reference Catalogs
   teams: Team[];
   scopedTeams: Team[];
-  addTeam: (team: Omit<Team, 'id' | 'createdAt'>) => void;
-  updateTeam: (team: Team) => void;
-  deleteTeam: (teamId: string) => void;
+  addTeam: (teamData: Omit<Team, 'id' | 'createdAt'>) => Promise<Team | null>;
+  updateTeam: (team: Team) => Promise<Team | null>;
+  deleteTeam: (teamId: string) => Promise<void>;
 
   services: ServiceItem[];
-  addService: (service: Omit<ServiceItem, 'id'>) => void;
-  updateService: (service: ServiceItem) => void;
-  deleteService: (serviceId: string) => void;
+  addService: (serviceData: Omit<ServiceItem, 'id'>) => Promise<ServiceItem | null>;
+  updateService: (service: ServiceItem) => Promise<ServiceItem | null>;
+  deleteService: (serviceId: string) => Promise<void>;
 
   sources: string[];
-  addSource: (source: string) => void;
-  updateSource: (oldSource: string, newSource: string) => void;
-  deleteSource: (source: string) => void;
+  addSource: (source: string) => Promise<void> | void;
+  updateSource: (oldSource: string, newSource: string) => Promise<void> | void;
+  deleteSource: (source: string) => Promise<void> | void;
 
   rolePermissions: RolePermission[];
-  updateRolePermission: (permission: RolePermission) => void;
-  saveAllRolePermissions: (permissions: RolePermission[]) => void;
-  resetRolePermissionsToDefault: () => void;
+  updateRolePermission: (permission: RolePermission) => Promise<void> | void;
+  saveAllRolePermissions: (permissions: RolePermission[]) => Promise<void> | void;
+  resetRolePermissionsToDefault: () => Promise<void> | void;
 
   settings: SystemSettings;
-  updateSettings: (settings: Partial<SystemSettings>, moduleKey?: string, moduleTitle?: string) => void;
+  updateSettings: (settings: Partial<SystemSettings>, moduleKey?: string, moduleTitle?: string) => Promise<void> | void;
 
   // Pricing Models (Configurable)
   pricingModels: PricingModelItem[];
-  addPricingModel: (model: Omit<PricingModelItem, 'id'>) => void;
-  updatePricingModel: (model: PricingModelItem) => void;
-  deletePricingModel: (id: string) => { success: boolean; error?: string };
+  addPricingModel: (model: Omit<PricingModelItem, 'id'>) => Promise<PricingModelItem | null> | void;
+  updatePricingModel: (model: PricingModelItem) => Promise<PricingModelItem | null> | void;
+  deletePricingModel: (id: string) => Promise<{ success: boolean; error?: string }>;
 
   // Leads
   leads: Lead[];
-  scopedLeads: Lead[]; // Filtered by current user RBAC permissions
+  scopedLeads: Lead[];
   filterState: LeadFilterState;
   setFilterState: React.Dispatch<React.SetStateAction<LeadFilterState>>;
   filteredLeads: Lead[];
-  addLead: (lead: Omit<Lead, 'id' | 'createdAt' | 'lastContactDate' | 'activities'>) => void;
-  updateLead: (lead: Lead) => void;
-  deleteLead: (leadId: string) => boolean;
-  reassignLead: (leadId: string, newUserId: string) => void;
-  changeLeadStatus: (leadId: string, newStatus: LeadStatus) => void;
-  addLeadActivity: (leadId: string, activity: Omit<Activity, 'id' | 'timestamp' | 'author'>) => void;
+  addLead: (lead: Omit<Lead, 'id' | 'createdAt' | 'lastContactDate' | 'activities'>) => Promise<Lead | null> | void;
+  updateLead: (lead: Lead) => Promise<boolean> | void;
+  deleteLead: (leadId: string) => Promise<boolean> | boolean;
+  reassignLead: (leadId: string, newUserId: string) => Promise<boolean> | void;
+  changeLeadStatus: (leadId: string, newStatus: LeadStatus) => Promise<boolean> | void;
+  addLeadActivity: (leadId: string, activity: Omit<Activity, 'id' | 'timestamp' | 'author'>) => Promise<void> | void;
   importLeads: (leadsToImport: Partial<Lead>[]) => number;
 
   // Follow-ups
   followUps: FollowUp[];
   scopedFollowUps: FollowUp[];
-  addFollowUp: (followUp: Omit<FollowUp, 'id' | 'createdAt'>) => void;
-  completeFollowUp: (id: string, resultNotes?: string) => void;
-  rescheduleFollowUp: (id: string, newDate: string, newTime: string, notes?: string) => void;
-  deleteFollowUp: (id: string) => void;
+  addFollowUp: (followUp: Omit<FollowUp, 'id' | 'createdAt'>) => Promise<FollowUp | null> | void;
+  completeFollowUp: (id: string, resultNotes?: string) => Promise<boolean> | void;
+  rescheduleFollowUp: (id: string, newDate: string, newTime: string, notes?: string) => Promise<boolean> | void;
+  deleteFollowUp: (id: string) => Promise<boolean> | void;
 
   // Clients
   clients: Client[];
   scopedClients: Client[];
   addClient: (client: Omit<Client, 'id'>) => void;
-  updateClient: (client: Client) => void;
+  updateClient: (client: Client) => Promise<boolean> | void;
   convertLeadToClient: (leadId: string, clientData: Partial<Client>) => Client;
-  returnClientToLead: (clientId: string) => void;
+  returnClientToLead: (clientId: string) => Promise<boolean> | void;
 
   // Proposals
   proposals: Proposal[];
   addProposal: (proposal: Omit<Proposal, 'id' | 'createdAt'>) => Proposal;
-  updateProposal: (proposal: Proposal) => void;
+  updateProposal: (proposal: Proposal) => Promise<boolean> | void;
   deleteProposal: (id: string) => void;
   canGenerateProposals: boolean;
 
   // Incoming Leads
   incomingLeads: IncomingLead[];
-  assignIncomingLead: (incomingId: string, assignedUserId: string) => boolean;
+  assignIncomingLead: (incomingId: string, assignedUserId: string) => Promise<boolean> | boolean;
 
   // Activity Logs
   activityLogs: ActivityLog[];
-  logAction: (action: string, entityType: ActivityLog['entityType'], entityTitle: string, details: string, entityId?: string) => void;
+  logAction: (
+    action: string,
+    entityType: ActivityLog['entityType'],
+    entityTitle: string,
+    details: string,
+    entityId?: string
+  ) => void;
 
-  // KPI Metrics (Calculated for Dashboard)
+  // Dashboard Metrics
   metrics: {
     totalLeads: number;
     hotLeads: number;
@@ -180,9 +222,9 @@ interface CRMContextType {
   canAccessSettings: boolean;
   canBulkImportExport: boolean;
   canCreateLeads: boolean;
-  canViewAllLeads?: boolean;
+  canViewAllLeads: boolean;
+  canGenerateProposals: boolean;
   canManageFollowUps?: boolean;
-  // Phase F1.3 Canonical Capabilities
   canViewIncomingLeads: boolean;
   canAssignIncomingLeads: boolean;
   canManageIntegrations: boolean;
@@ -196,8 +238,12 @@ interface CRMContextType {
   canReassignLeadItem: (lead: Lead) => boolean;
   isUserAssignable: (targetUser: User) => boolean;
 
+  // Data Refresh
+  refetchReferenceData: () => Promise<void>;
+  refetchOperationalData?: () => Promise<void>;
+
   // Global reset
-  resetToFactoryDefaults: () => void;
+  resetToFactoryDefaults: () => Promise<void> | void;
 }
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
@@ -239,22 +285,465 @@ const safeLocalStorage = {
   },
 };
 
+// Known legacy keys from prior development/mock storage
+const OBSOLETE_LEGACY_KEYS = [
+  // Session & Authentication
+  'apex_crm_enterprise_current_user',
+  'apex_crm_current_user',
+  // Users & Roles
+  'apex_crm_enterprise_users',
+  'apex_crm_users',
+  'apex_crm_enterprise_roles',
+  'apex_crm_roles',
+  // Notifications
+  'apex_crm_read_notifications',
+  'crm_notifications_read',
+  // Reference Data
+  'apex_crm_enterprise_teams',
+  'apex_crm_teams',
+  'apex_crm_enterprise_services',
+  'apex_crm_services',
+  'apex_crm_enterprise_sources',
+  'apex_crm_sources',
+  'apex_crm_enterprise_pricing_models',
+  'apex_crm_pricing_models',
+  // Operational Collections
+  'apex_crm_enterprise_leads',
+  'apex_crm_leads',
+  'apex_crm_enterprise_follow_ups',
+  'apex_crm_follow_ups',
+  'apex_crm_enterprise_clients',
+  'apex_crm_clients',
+  'apex_crm_enterprise_proposals',
+  'apex_crm_proposals',
+  'apex_crm_enterprise_activity_logs',
+  'apex_crm_activity_logs',
+  'apex_crm_enterprise_incoming_leads',
+  'apex_crm_incoming_leads',
+  // Settings & Configuration
+  'apex_crm_enterprise_settings',
+  'apex_crm_settings',
+  'apex_crm_enterprise_settings_branding',
+  'apex_crm_enterprise_settings_letterhead',
+  'apex_crm_enterprise_settings_pricing_config',
+  'apex_crm_enterprise_settings_communication'
+];
+
+/**
+ * Permanently purge all obsolete business/authentication/reference/settings localStorage keys.
+ * Ensures PostgreSQL via REST API remains the single source of truth.
+ */
+export const purgeObsoleteLocalStorageKeys = (): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    // 1. Explicit targeted removal of known legacy keys
+    for (const key of OBSOLETE_LEGACY_KEYS) {
+      localStorage.removeItem(key);
+    }
+    // 2. Comprehensive sweep for any other apex_crm_ or crm_ keys that are NOT UI sidebar state
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('apex_crm_') || key.startsWith('crm_'))) {
+        if (key !== 'crm_sidebar_collapsed') {
+          toRemove.push(key);
+        }
+      }
+    }
+    for (const k of toRemove) {
+      localStorage.removeItem(k);
+    }
+  } catch {
+    // ignore
+  }
+};
+
+// Immediately invoke on script execution if in browser
+if (typeof window !== 'undefined') {
+  purgeObsoleteLocalStorageKeys();
+}
+
+// UUID / Email Validators & Normalizers
+const toValidUuidOrNull = (id?: string | null): string | null => {
+  if (!id) return null;
+  const trimmed = id.trim();
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed) ? trimmed : null;
+};
+
+const toValidEmailOrNull = (email?: string | null): string | null => {
+  if (!email) return null;
+  const trimmed = email.trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) ? trimmed : null;
+};
+
+const mapFrontendActivityTypeToBackend = (type: string): 'Call' | 'Meeting' | 'Note' | 'Email' | 'WhatsApp' | 'Status Change' | 'Assignment' => {
+  const lower = (type || '').toLowerCase();
+  if (lower === 'call') return 'Call';
+  if (lower === 'meeting') return 'Meeting';
+  if (lower === 'whatsapp') return 'WhatsApp';
+  if (lower === 'email') return 'Email';
+  if (lower === 'stage_change' || lower === 'status change') return 'Status Change';
+  if (lower === 'reassign' || lower === 'assignment') return 'Assignment';
+  return 'Note';
+};
+
+// Reference DTO Mappers
+const mapUserDto = (u: AuthUserDto): User => ({
+  id: u.id,
+  name: u.name,
+  email: u.email,
+  phone: u.phone || '+92 300 0000000',
+  role: u.role,
+  isActive: u.status === 'active' || u.isActive !== false,
+  teamId: u.teamId || undefined,
+  teamName: u.teamName || undefined,
+  managerId: u.managerId || undefined,
+  managerName: u.managerName || undefined,
+  teamLeadId: u.teamLeadId || undefined,
+  teamLeadName: u.teamLeadName || undefined,
+  avatar: u.avatarUrl || u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.name)}`,
+  createdAt: u.createdAt || new Date().toISOString(),
+  lastLogin: u.lastLogin
+});
+
+const mapTeamDto = (t: TeamDto): Team => ({
+  id: t.id,
+  name: t.name,
+  code: t.code,
+  description: t.description || '',
+  managerId: t.managerId || undefined,
+  managerName: t.managerName || undefined,
+  leaderId: t.teamLeadId || undefined,
+  leaderName: t.teamLeadName || undefined,
+  status: t.status,
+  memberIds: t.memberIds || [],
+  createdAt: t.createdAt || new Date().toISOString()
+});
+
+const mapServiceDto = (s: ServiceDto): ServiceItem => ({
+  id: s.id,
+  name: s.name,
+  category: s.category,
+  defaultPricePKR: Number(s.defaultPricePKR || 0),
+  basePricePKR: Number(s.defaultPricePKR || 0),
+  pricingModel: (s.pricingModelName || 'Monthly Subscription') as any,
+  description: s.description || '',
+  isActive: s.isActive !== false
+});
+
+const mapPricingModelDto = (pm: PricingModelDto): PricingModelItem => ({
+  id: pm.id,
+  name: pm.name,
+  billingType: pm.billingType as any,
+  description: pm.description || '',
+  isActive: pm.isActive !== false,
+  isSystemDefault: pm.isDefault,
+  createdAt: pm.createdAt,
+  fields: (pm.fieldSchema || []) as any
+});
+
+const mapRoleMatrices = (matrices: RolePermissionMatrixDto[]): RolePermission[] => {
+  return matrices.map(m => {
+    const def = DEFAULT_ROLE_PERMISSIONS.find(d => d.role === m.role);
+    return {
+      role: m.role,
+      description: m.description || def?.description || '',
+      canViewAllLeads: Boolean(m.capabilities.canViewAllLeads),
+      canViewTeamLeads: Boolean(m.capabilities.canViewTeamLeads),
+      canViewAssignedLeads: Boolean(m.capabilities.canViewAssignedLeads),
+      canEditAllLeads: Boolean(m.capabilities.canEditAllLeads),
+      canCreateLeads: Boolean(m.capabilities.canCreateLeads),
+      canDeleteLeads: Boolean(m.capabilities.canDeleteLeads),
+      canReassignLeads: Boolean(m.capabilities.canReassignLeads),
+      canGenerateProposals: Boolean(m.capabilities.canGenerateProposals),
+      canManageUsers: Boolean(m.capabilities.canManageUsers),
+      canManageSuperAdmin: Boolean(m.capabilities.canManageSuperAdmin),
+      canManageRoles: Boolean(m.capabilities.canManageRoles),
+      canManageTeams: Boolean(m.capabilities.canManageTeams),
+      canManageServices: Boolean(m.capabilities.canManageServices),
+      canViewReports: Boolean(m.capabilities.canViewReports),
+      canViewClients: Boolean(m.capabilities.canViewClients),
+      canViewAuditLogs: Boolean(m.capabilities.canViewAuditLogs),
+      canAccessSettings: Boolean(m.capabilities.canAccessSettings),
+      canBulkImportExport: Boolean(m.capabilities.canBulkImportExport),
+      canViewIncomingLeads: Boolean(m.capabilities.canViewIncomingLeads),
+      canAssignIncomingLeads: Boolean(m.capabilities.canAssignIncomingLeads),
+      canManageIntegrations: Boolean(m.capabilities.canManageIntegrations)
+    };
+  });
+};
+
+// Phase 2 Operational DTO Mappers
+const mapLeadDto = (l: LeadDbDto): Lead => {
+  const serviceList: string[] = [];
+  if (Array.isArray(l.service_snapshot) && l.service_snapshot.length > 0) {
+    for (const item of l.service_snapshot) {
+      if (typeof item === 'string') serviceList.push(item);
+      else if (item && typeof item === 'object' && 'name' in item) serviceList.push(String((item as any).name));
+    }
+  } else if (Array.isArray((l as any).services)) {
+    serviceList.push(...(l as any).services);
+  }
+
+  let quality: LeadQuality = 'Average';
+  if (l.quality === 'High' || (l.quality as string) === 'Good') quality = 'Good';
+  else if (l.quality === 'Low' || (l.quality as string) === 'Poor') quality = 'Poor';
+
+  const mappedActivities: Activity[] = (l.activities || []).map(act => ({
+    id: act.id,
+    type: (act.type?.toLowerCase() === 'status change' ? 'stage_change' : act.type?.toLowerCase() === 'assignment' ? 'reassign' : act.type?.toLowerCase() || 'note') as any,
+    title: act.title,
+    notes: act.notes || '',
+    timestamp: act.created_at || new Date().toISOString(),
+    author: act.actor_name || 'Staff',
+    outcome: act.outcome || undefined,
+    duration: act.duration_minutes ? `${act.duration_minutes}m` : undefined,
+  }));
+
+  const createdAtIso = typeof l.created_at === 'string' ? l.created_at : new Date(l.created_at).toISOString();
+
+  return {
+    id: l.id,
+    name: l.name,
+    businessName: l.business_name || l.name,
+    phone: l.phone,
+    email: l.email || '',
+    city: l.city || '',
+    services: serviceList,
+    valuePKR: Number(l.value_pkr || 0),
+    status: (l.status || 'New') as LeadStatus,
+    quality,
+    priority: (l.priority || 'Medium') as Priority,
+    source: normalizeLeadSource(l.source),
+    assignedToId: l.assigned_to_id || '',
+    assignedToName: l.assigned_to_name || '',
+    teamId: l.team_id || '',
+    teamName: l.team_name || '',
+    createdAt: createdAtIso,
+    lastContactDate: createdAtIso.split('T')[0],
+    nextFollowUpDate: l.next_follow_up_date || undefined,
+    nextFollowUpTime: l.next_follow_up_time || undefined,
+    nextFollowUpType: (l as any).next_follow_up_type || undefined,
+    tags: l.tags || [],
+    notes: l.notes || '',
+    pricingModel: undefined,
+    activities: mappedActivities
+  };
+};
+
+const mapIncomingLeadDto = (il: IncomingLeadDbDto): IncomingLead => {
+  const contact = (il.contact_data || {}) as Record<string, any>;
+  const campaign = (il.campaign_data || {}) as Record<string, any>;
+
+  const name = contact.name || contact.leadName || 'Incoming Lead';
+  const phone = contact.phone || '';
+  const message = contact.message || contact.notes || undefined;
+  const campaignName = campaign.campaignName || campaign.campaign_name || campaign.name || undefined;
+  const adName = campaign.adName || campaign.ad_name || undefined;
+
+  let source: 'meta_ads' | 'whatsapp' = 'meta_ads';
+  const srcLower = (il.source || '').toLowerCase();
+  if (srcLower.includes('whatsapp')) {
+    source = 'whatsapp';
+  }
+
+  let status: 'new' | 'assigned' = 'new';
+  const stLower = (il.status || '').toLowerCase();
+  if (stLower === 'assigned' || stLower === 'converted') {
+    status = 'assigned';
+  }
+
+  return {
+    id: il.id,
+    externalId: il.external_id,
+    source,
+    name,
+    phone,
+    receivedAt: il.received_at || il.created_at || new Date().toISOString(),
+    campaignName,
+    adName,
+    message,
+    status,
+    assignedToId: il.assigned_user_id || undefined,
+    assignedToUserId: il.assigned_user_id || undefined
+  };
+};
+
+const mapFollowUpDto = (f: FollowUpDbDto): FollowUp => {
+  const status: 'Pending' | 'Done' = f.status === 'Completed' ? 'Done' : 'Pending';
+  return {
+    id: f.id,
+    leadId: f.lead_id || '',
+    clientName: f.lead_name || f.client_business_snapshot || 'Lead Contact',
+    clientBusiness: f.client_business_snapshot || f.lead_name || 'Business',
+    phone: f.phone || '',
+    scheduledDate: f.scheduled_date,
+    scheduledTime: f.scheduled_time || '14:00',
+    type: (f.type || 'Call') as any,
+    source: 'Call',
+    status,
+    notes: f.notes || '',
+    resultNotes: f.result_outcome || undefined,
+    assignedToId: f.assigned_to_id,
+    assignedToName: f.assigned_to_name || undefined,
+    createdAt: f.created_at,
+    completedAt: f.completed_at || undefined
+  };
+};
+
+const mapClientDto = (c: ClientDbDto): Client => {
+  const serviceList: string[] = [];
+  if (Array.isArray(c.services_snapshot) && c.services_snapshot.length > 0) {
+    for (const item of c.services_snapshot) {
+      if (typeof item === 'string') serviceList.push(item);
+      else if (item && typeof item === 'object' && 'name' in item) serviceList.push(String((item as any).name));
+    }
+  }
+
+  const finalVal = Number(c.final_value_pkr || 0);
+  const clientStatus: 'Active' | 'Paused' | 'Cancelled' =
+    c.status === 'Active' ? 'Active' :
+    c.status === 'Suspended' ? 'Paused' : 'Cancelled';
+
+  return {
+    id: c.id,
+    leadId: c.originating_lead_id || undefined,
+    businessName: c.business_name,
+    clientName: c.contact_name,
+    phone: c.phone || '',
+    email: c.email || '',
+    city: c.city || 'Lahore',
+    services: serviceList,
+    source: normalizeLeadSource(c.source),
+    pricingModel: (c.pricing_model_name || 'Monthly Subscription Model') as any,
+    finalPrice: finalVal,
+    activeRevenuePKR: finalVal,
+    currency: 'PKR',
+    assignedToName: c.assigned_owner_name || 'Staff',
+    assignedToId: c.assigned_owner_id || '',
+    generatedByName: c.assigned_owner_name || 'Staff',
+    closedByName: c.closed_by_name || 'Super Admin',
+    convertedDate: c.converted_date || c.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+    startDate: c.converted_date || c.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+    status: clientStatus,
+    notes: c.terms_details || ''
+  };
+};
+
+const mapProposalDto = (p: ProposalDbDto): Proposal => {
+  const clientSnap = (p.client_snapshot || {}) as Record<string, any>;
+  const total = Number(p.total_pkr || 0);
+  const discount = Number(p.discount_pkr || 0);
+  const tax = Number(p.tax_pkr || 0);
+
+  let mappedStatus: 'Draft' | 'Sent' | 'Accepted' | 'Revised' | 'Declined' = 'Draft';
+  if (p.status === 'Sent') mappedStatus = 'Sent';
+  else if (p.status === 'Accepted') mappedStatus = 'Accepted';
+  else if (p.status === 'Rejected') mappedStatus = 'Declined';
+  else if (p.status === 'Expired') mappedStatus = 'Declined';
+
+  return {
+    id: p.id,
+    leadId: p.lead_id || '',
+    refNumber: p.proposal_number,
+    proposalNumber: p.proposal_number,
+    title: `Proposal ${p.proposal_number}`,
+    issueDate: p.issue_date,
+    expiryDate: p.expiry_date || undefined,
+    validityDays: 14,
+    clientName: clientSnap.clientName || clientSnap.contactName || 'Client',
+    businessName: clientSnap.businessName || 'Business',
+    clientPhone: clientSnap.phone || clientSnap.clientPhone || '',
+    clientEmail: clientSnap.email || clientSnap.clientEmail || '',
+    clientCity: clientSnap.city || clientSnap.clientCity || '',
+    assignedRepName: p.assigned_rep_name || 'Sales Representative',
+    assignedRepId: p.assigned_rep_id || undefined,
+    scopeOfWork: p.scope_deliverables || '',
+    items: ((p.line_items || []) as any[]).map((item, idx) => ({
+      id: item.id || `item-${idx}`,
+      title: item.name || item.title || 'Item',
+      name: item.name || item.title || 'Item',
+      description: item.description || '',
+      quantity: Number(item.quantity || 1),
+      unitPrice: Number(item.unitPricePKR || item.unitPrice || 0),
+      discount: Number(item.discount || 0),
+      total: Number(item.totalPKR || item.total || 0),
+    })),
+    subtotal: total + discount - tax,
+    taxAmount: tax,
+    totalDiscount: discount,
+    grandTotal: total,
+    grandTotalPKR: total,
+    currency: 'PKR',
+    currencySymbol: 'Rs.',
+    termsAndConditions: p.terms || '',
+    milestones: ((p.milestones || []) as any[]).map((m, idx) => ({
+      id: m.id || `ms-${idx}`,
+      title: m.title || 'Milestone',
+      percentage: Number(m.percentage || 0),
+      amount: Number(m.amountPKR || m.amount || 0),
+      dueDate: m.dueDate || undefined,
+    })),
+    status: mappedStatus,
+    createdAt: p.created_at,
+  };
+};
+
+const mapActivityLogDto = (a: ActivityLogDbDto): ActivityLog => {
+  let detailsStr = '';
+  if (typeof a.details === 'string') {
+    detailsStr = a.details;
+  } else if (a.details && typeof a.details === 'object') {
+    detailsStr = JSON.stringify(a.details);
+  }
+
+  let entityType: ActivityLog['entityType'] = 'Setting';
+  const etLower = (a.entity_type || '').toLowerCase();
+  if (etLower.includes('lead')) entityType = 'Lead';
+  else if (etLower.includes('follow')) entityType = 'FollowUp';
+  else if (etLower.includes('user')) entityType = 'User';
+  else if (etLower.includes('team')) entityType = 'Team';
+  else if (etLower.includes('service')) entityType = 'Service';
+  else if (etLower.includes('client')) entityType = 'Client';
+  else if (etLower.includes('auth')) entityType = 'Auth';
+  else if (etLower.includes('source')) entityType = 'Source';
+
+  return {
+    id: a.id,
+    timestamp: typeof a.timestamp === 'string' ? a.timestamp : new Date(a.timestamp).toISOString(),
+    userId: a.actor_id || '',
+    userName: a.actor_name || 'System',
+    userRole: (a.actor_role || 'Super Admin') as UserRole,
+    action: a.action,
+    entityType,
+    entityId: a.entity_id || undefined,
+    entityTitle: a.entity_title || '',
+    details: detailsStr
+  };
+};
+
 export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Deterministic initial state (identical between server SSR and client initial hydration)
-  const [currentUser, setCurrentUser] = useState<User | null>(DEFAULT_USERS[0]);
+  // Session & Authentication State
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(false);
+
+  // Core Reference Data States (Cut over to REST API)
   const [users, setUsers] = useState<User[]>(DEFAULT_USERS);
   const [teams, setTeams] = useState<Team[]>(DEFAULT_TEAMS);
   const [services, setServices] = useState<ServiceItem[]>(DEFAULT_SERVICES);
   const [sources, setSources] = useState<string[]>(DEFAULT_SOURCES);
   const [rolePermissions, setRolePermissions] = useState<RolePermission[]>(DEFAULT_ROLE_PERMISSIONS);
-  const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
   const [pricingModels, setPricingModels] = useState<PricingModelItem[]>(DEFAULT_PRICING_MODELS);
-  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
-  const [followUps, setFollowUps] = useState<FollowUp[]>(INITIAL_FOLLOW_UPS);
-  const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
+
+  // Phase 2 Operational States (Cut over to PostgreSQL REST APIs - Initialized to empty arrays)
+  const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(INITIAL_ACTIVITY_LOGS);
-  const [incomingLeads, setIncomingLeads] = useState<IncomingLead[]>(INITIAL_INCOMING_LEADS);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [incomingLeads, setIncomingLeads] = useState<IncomingLead[]>([]);
 
   // Filter State for Leads Table
   const [filterState, setFilterState] = useState<LeadFilterState>({
@@ -272,295 +761,134 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [isHydrated, setIsHydrated] = useState(false);
   const isHydratedRef = useRef(false);
-  const isFirstMountRef = useRef(true);
 
-  // Hydrate persisted state from localStorage only after client mount (prevents SSR hydration mismatch)
-  useEffect(() => {
+  // Centralized reference data fetcher from real backend APIs
+  const fetchReferenceData = async () => {
+    setIsDataLoading(true);
     try {
-      const isExplicitlyLoggedOut = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}logged_out`) === 'true';
-      if (isExplicitlyLoggedOut) {
-        setCurrentUser(null);
-      } else {
-        const savedUser = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}current_user`);
-        if (savedUser) {
-          try {
-            const parsed = JSON.parse(savedUser);
-            if (parsed && parsed.id) setCurrentUser(parsed);
-          } catch { /* ignore */ }
+      const [usersRes, teamsRes, srvRes, srcRes, pmRes, rolesRes, settingsRes] = await Promise.allSettled([
+        usersApi.listUsers({ limit: 200 }),
+        teamsApi.listTeams({ limit: 100 }),
+        servicesApi.listServices(),
+        sourcesApi.listSources(),
+        pricingModelsApi.listPricingModels(),
+        rolesApi.getAllMatrices(),
+        settingsApi.getSettings()
+      ]);
+
+      if (usersRes.status === 'fulfilled' && usersRes.value?.users) {
+        setUsers(usersRes.value.users.map(mapUserDto));
+      }
+      if (teamsRes.status === 'fulfilled' && teamsRes.value?.teams) {
+        setTeams(teamsRes.value.teams.map(mapTeamDto));
+      }
+      if (srvRes.status === 'fulfilled' && Array.isArray(srvRes.value)) {
+        setServices(srvRes.value.map(mapServiceDto));
+      }
+      if (srcRes.status === 'fulfilled' && Array.isArray(srcRes.value)) {
+        setSources(srcRes.value.map(s => s.name));
+      }
+      if (pmRes.status === 'fulfilled' && Array.isArray(pmRes.value)) {
+        setPricingModels(pmRes.value.map(mapPricingModelDto));
+      }
+      if (rolesRes.status === 'fulfilled' && Array.isArray(rolesRes.value) && rolesRes.value.length > 0) {
+        setRolePermissions(mapRoleMatrices(rolesRes.value));
+      }
+      if (settingsRes.status === 'fulfilled' && settingsRes.value) {
+        setSettings(settingsRes.value);
+      }
+    } catch (err) {
+      console.warn('Reference data API fetch completed with warnings:', err);
+    } finally {
+      setIsDataLoading(false);
+    }
+  };
+
+  // Centralized operational data fetcher from real backend APIs
+  const fetchOperationalData = async (userRole?: string) => {
+    try {
+      const promises: Promise<any>[] = [
+        leadsApi.listLeads({ limit: 1000 }),
+        followUpsApi.listFollowUps(),
+        clientsApi.listClients({ limit: 1000 }),
+        proposalsApi.listProposals(),
+        activityLogsApi.listLogs({ limit: 200 })
+      ];
+
+      const canViewInc = userRole !== 'Employee';
+      if (canViewInc) {
+        promises.push(incomingLeadsApi.listIncomingLeads());
+      }
+
+      const results = await Promise.allSettled(promises);
+      const [leadsRes, fuRes, clientsRes, propRes, logsRes, incRes] = results;
+
+      if (leadsRes.status === 'fulfilled' && leadsRes.value) {
+        const items = (leadsRes.value as any).items || (leadsRes.value as any).leads || [];
+        setLeads(items.map(mapLeadDto));
+      }
+      if (fuRes.status === 'fulfilled' && Array.isArray(fuRes.value)) {
+        setFollowUps(fuRes.value.map(mapFollowUpDto));
+      }
+      if (clientsRes.status === 'fulfilled' && clientsRes.value) {
+        const items = (clientsRes.value as any).items || (clientsRes.value as any).clients || [];
+        setClients(items.map(mapClientDto));
+      }
+      if (propRes.status === 'fulfilled' && Array.isArray(propRes.value)) {
+        setProposals(propRes.value.map(mapProposalDto));
+      }
+      if (logsRes.status === 'fulfilled' && logsRes.value) {
+        const items = (logsRes.value as any).items || (logsRes.value as any).logs || [];
+        setActivityLogs(items.map(mapActivityLogDto));
+      }
+      if (incRes && incRes.status === 'fulfilled' && Array.isArray(incRes.value)) {
+        setIncomingLeads(incRes.value.map(mapIncomingLeadDto));
+      }
+    } catch (err) {
+      console.warn('Operational data API fetch completed with warnings:', err);
+    }
+  };
+
+  // Restore authenticated session on mount via /api/v1/auth/me
+  useEffect(() => {
+    let isMounted = true;
+    const restoreSession = async () => {
+      try {
+        setIsAuthLoading(true);
+        const meRes = await authApi.getMe();
+        if (meRes?.user && isMounted) {
+          const mapped = mapUserDto(meRes.user);
+          setCurrentUser(mapped);
+          await Promise.allSettled([
+            fetchReferenceData(),
+            fetchOperationalData(mapped.role)
+          ]);
+        } else if (isMounted) {
+          setCurrentUser(null);
+        }
+      } catch {
+        if (isMounted) {
+          setCurrentUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsAuthLoading(false);
         }
       }
+    };
 
-      const savedUsers = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}users`);
-      if (savedUsers) {
-        try {
-          const parsed: User[] = JSON.parse(savedUsers);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const userMap = new Map<string, User>();
-            const emailMap = new Map<string, string>();
-            parsed.forEach(u => {
-              if (u && u.id) {
-                const emailKey = (u.email || '').toLowerCase().trim();
-                if (emailKey && emailMap.has(emailKey)) return;
-                if (!userMap.has(u.id)) {
-                  userMap.set(u.id, u);
-                  if (emailKey) emailMap.set(emailKey, u.id);
-                }
-              }
-            });
-            DEFAULT_USERS.forEach(defU => {
-              const emailKey = (defU.email || '').toLowerCase().trim();
-              const hasId = userMap.has(defU.id);
-              const hasEmail = emailKey ? emailMap.has(emailKey) : false;
-              if (!hasId && !hasEmail) {
-                userMap.set(defU.id, defU);
-                if (emailKey) emailMap.set(emailKey, defU.id);
-              }
-            });
-            setUsers(Array.from(userMap.values()));
-          }
-        } catch { /* ignore */ }
-      }
-
-      const savedTeams = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}teams`);
-      if (savedTeams) {
-        try {
-          const parsed = JSON.parse(savedTeams);
-          if (Array.isArray(parsed) && parsed.length > 0) setTeams(parsed);
-        } catch { /* ignore */ }
-      }
-
-      const savedServices = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}services`);
-      if (savedServices) {
-        try {
-          const parsed = JSON.parse(savedServices);
-          if (Array.isArray(parsed) && parsed.length > 0) setServices(parsed);
-        } catch { /* ignore */ }
-      }
-
-      const savedSources = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}sources`);
-      if (savedSources) {
-        try {
-          const parsed = JSON.parse(savedSources);
-          if (Array.isArray(parsed) && parsed.length > 0) setSources(parsed);
-        } catch { /* ignore */ }
-      }
-
-      const savedRoles = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}roles`);
-      if (savedRoles) {
-        try {
-          const parsed: RolePermission[] = JSON.parse(savedRoles);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const roleMap = new Map<string, RolePermission>();
-            parsed.forEach(savedRole => {
-              if (savedRole && savedRole.role) {
-                const def = DEFAULT_ROLE_PERMISSIONS.find(d => d.role === savedRole.role);
-                if (def) {
-                  const merged: RolePermission = { ...def };
-                  (Object.keys(savedRole) as (keyof RolePermission)[]).forEach(key => {
-                    const val = savedRole[key];
-                    if (val !== undefined) (merged as any)[key] = val;
-                  });
-                  roleMap.set(savedRole.role, merged);
-                } else {
-                  roleMap.set(savedRole.role, savedRole);
-                }
-              }
-            });
-            DEFAULT_ROLE_PERMISSIONS.forEach(def => {
-              if (!roleMap.has(def.role)) roleMap.set(def.role, { ...def });
-            });
-            const canonicalRoles = DEFAULT_ROLE_PERMISSIONS.map(d => roleMap.get(d.role)!);
-            const customRoles = Array.from(roleMap.values()).filter(
-              r => !DEFAULT_ROLE_PERMISSIONS.some(d => d.role === r.role)
-            );
-            const allRoles = [...canonicalRoles, ...customRoles];
-            allRoles.forEach(r => {
-              if (r.role === 'Super Admin') {
-                r.canManageSuperAdmin = true;
-                r.canManageRoles = true;
-              } else {
-                r.canManageSuperAdmin = false;
-              }
-              if (r.role === 'Manager' || r.role === 'Team Lead' || r.role === 'Employee') {
-                r.canManageRoles = false;
-              }
-              if (r.role === 'Employee') {
-                r.canViewIncomingLeads = false;
-                r.canAssignIncomingLeads = false;
-                r.canManageIntegrations = false;
-              }
-            });
-            setRolePermissions(allRoles);
-          }
-        } catch { /* ignore */ }
-      }
-
-      const savedMaster = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}settings`);
-      const savedBranding = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}settings_branding`);
-      const savedLetterhead = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}settings_letterhead`);
-      const savedPricing = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}settings_pricing_config`);
-      const savedComm = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}settings_communication`);
-
-      if (savedMaster || savedBranding || savedLetterhead || savedPricing || savedComm) {
-        let combined = { ...DEFAULT_SETTINGS };
-        if (savedMaster) { try { combined = { ...combined, ...JSON.parse(savedMaster) }; } catch { /* ignore */ } }
-        if (savedBranding) { try { combined = { ...combined, ...JSON.parse(savedBranding) }; } catch { /* ignore */ } }
-        if (savedLetterhead) { try { combined = { ...combined, ...JSON.parse(savedLetterhead) }; } catch { /* ignore */ } }
-        if (savedPricing) { try { combined = { ...combined, ...JSON.parse(savedPricing) }; } catch { /* ignore */ } }
-        if (savedComm) { try { combined = { ...combined, ...JSON.parse(savedComm) }; } catch { /* ignore */ } }
-        if (!combined.companyLogo) { combined.companyLogo = '/isysware-logo.png'; }
-        setSettings(combined);
-      }
-
-      const savedPricingModels = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}pricing_models`);
-      if (savedPricingModels) {
-        try {
-          const parsed: PricingModelItem[] = JSON.parse(savedPricingModels);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setPricingModels(parsed.map(pm => {
-              if (!pm.fields || pm.fields.length === 0) {
-                const def = DEFAULT_PRICING_MODELS.find(d => d.id === pm.id || d.name.toLowerCase() === pm.name.toLowerCase());
-                if (def && def.fields) return { ...pm, fields: def.fields };
-              }
-              return pm;
-            }));
-          }
-        } catch { /* ignore */ }
-      }
-
-      const savedLeads = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}leads`);
-      if (savedLeads) {
-        try {
-          const parsed = JSON.parse(savedLeads);
-          if (Array.isArray(parsed)) setLeads(parsed);
-        } catch { /* ignore */ }
-      }
-
-      const savedFollowUps = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}follow_ups`);
-      if (savedFollowUps) {
-        try {
-          const parsed = JSON.parse(savedFollowUps);
-          if (Array.isArray(parsed)) setFollowUps(parsed);
-        } catch { /* ignore */ }
-      }
-
-      const savedClients = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}clients`);
-      if (savedClients) {
-        try {
-          const parsed = JSON.parse(savedClients);
-          if (Array.isArray(parsed)) setClients(parsed);
-        } catch { /* ignore */ }
-      }
-
-      const savedProposals = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}proposals`);
-      if (savedProposals) {
-        try {
-          const parsed = JSON.parse(savedProposals);
-          if (Array.isArray(parsed)) setProposals(parsed);
-        } catch { /* ignore */ }
-      }
-
-      const savedLogs = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}activity_logs`);
-      if (savedLogs) {
-        try {
-          const parsed = JSON.parse(savedLogs);
-          if (Array.isArray(parsed)) setActivityLogs(parsed);
-        } catch { /* ignore */ }
-      }
-
-      const savedIncoming = safeLocalStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}incoming_leads`);
-      if (savedIncoming) {
-        try {
-          const parsed = JSON.parse(savedIncoming);
-          if (Array.isArray(parsed)) setIncomingLeads(parsed);
-        } catch { /* ignore */ }
-      }
-    } finally {
-      isHydratedRef.current = true;
-      setIsHydrated(true);
-    }
+    restoreSession();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Save to localStorage on changes (guarded after hydration and skipped on initial mount)
+  // Permanently purge legacy keys on hydration; settings are loaded from PostgreSQL
   useEffect(() => {
-    if (isFirstMountRef.current) {
-      isFirstMountRef.current = false;
-      return;
-    }
-    if (!isHydrated) return;
-    if (currentUser) {
-      safeLocalStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}logged_out`);
-      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}current_user`, JSON.stringify(currentUser));
-    } else {
-      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}logged_out`, 'true');
-      safeLocalStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}current_user`);
-    }
-  }, [currentUser, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}users`, JSON.stringify(users));
-  }, [users, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}teams`, JSON.stringify(teams));
-  }, [teams, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}services`, JSON.stringify(services));
-  }, [services, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}sources`, JSON.stringify(sources));
-  }, [sources, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}roles`, JSON.stringify(rolePermissions));
-  }, [rolePermissions, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}settings`, JSON.stringify(settings));
-  }, [settings, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}pricing_models`, JSON.stringify(pricingModels));
-  }, [pricingModels, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}leads`, JSON.stringify(leads));
-  }, [leads, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}follow_ups`, JSON.stringify(followUps));
-  }, [followUps, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}clients`, JSON.stringify(clients));
-  }, [clients, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}proposals`, JSON.stringify(proposals));
-  }, [proposals, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}activity_logs`, JSON.stringify(activityLogs));
-  }, [activityLogs, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}incoming_leads`, JSON.stringify(incomingLeads));
-  }, [incomingLeads, isHydrated]);
+    purgeObsoleteLocalStorageKeys();
+    isHydratedRef.current = true;
+    setIsHydrated(true);
+  }, []);
 
   // Logger helper
   const logAction = (
@@ -583,68 +911,91 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       entityTitle,
       details
     };
-    setActivityLogs(prev => [newLog, ...prev.slice(0, 199)]); // keep max 200 logs
+    setActivityLogs(prev => [newLog, ...prev.slice(0, 199)]);
   };
 
-  // Auth methods
-  const login = (email: string, pass: string, selectedRole?: UserRole) => {
-    const user = users.find(u => u.email.toLowerCase().trim() === email.toLowerCase().trim());
-    if (!user) {
-      return { success: false, error: 'No account found with this email address.' };
-    }
-    if (!user.isActive) {
-      return { success: false, error: 'This user account is currently deactivated. Please contact Super Admin.' };
-    }
-    if (selectedRole && user.role !== selectedRole) {
-      return {
-        success: false,
-        error: `Role mismatch: This account belongs to "${user.role}", not "${selectedRole}". Please switch to the "${user.role}" tab or select the corresponding account.`
+  // Real API Authentication methods
+  const login = async (email: string, pass: string, selectedRole?: UserRole): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await authApi.login({
+        email: email.trim().toLowerCase(),
+        password: pass
+      });
+
+      if (!res.user) {
+        return { success: false, error: 'Login failed: no user data returned.' };
+      }
+
+      if (res.user.status === 'inactive' || !res.user.isActive) {
+        return { success: false, error: 'This user account is currently deactivated. Please contact Super Admin.' };
+      }
+
+      if (selectedRole && res.user.role !== selectedRole) {
+        return {
+          success: false,
+          error: `Role mismatch: This account belongs to "${res.user.role}", not "${selectedRole}". Please switch to the "${res.user.role}" tab or select the corresponding account.`
+        };
+      }
+
+      const mappedUser = mapUserDto(res.user);
+      mappedUser.lastLogin = new Date().toISOString();
+      setCurrentUser(mappedUser);
+
+      // Invalidate and refetch all reference and operational data for authenticated user's scope
+      await Promise.allSettled([
+        fetchReferenceData(),
+        fetchOperationalData(mappedUser.role)
+      ]);
+
+      // Log auth action
+      const authLog: ActivityLog = {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        userId: mappedUser.id,
+        userName: mappedUser.name,
+        userRole: mappedUser.role,
+        action: 'User Logged In',
+        entityType: 'Auth',
+        entityTitle: `${mappedUser.role} Portal Session`,
+        details: `Signed in as ${mappedUser.email}`
       };
-    }
-    if (user.password && user.password !== pass) {
-      return { success: false, error: 'Invalid password. Please check your credentials.' };
-    }
+      setActivityLogs(prev => [authLog, ...prev]);
 
-    const updatedUser = {
-      ...user,
-      lastLogin: new Date().toISOString()
-    };
-    safeLocalStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}logged_out`);
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}current_user`, JSON.stringify(updatedUser));
-    setCurrentUser(updatedUser);
-    setUsers(prev => prev.map(u => u.id === user.id ? updatedUser : u));
-    
-    // Log auth
-    const authLog: ActivityLog = {
-      id: `log-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      userId: user.id,
-      userName: user.name,
-      userRole: user.role,
-      action: 'User Logged In',
-      entityType: 'Auth',
-      entityTitle: `${user.role} Portal Session`,
-      details: `Signed in as ${user.email}`
-    };
-    setActivityLogs(prev => [authLog, ...prev]);
-
-    return { success: true };
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid credentials. Please verify email and password.';
+      return { success: false, error: message };
+    }
   };
 
-  const logout = () => {
-    if (currentUser) {
-      logAction('User Logged Out', 'Auth', `${currentUser.role} Session`, `Signed out`);
+  const logout = async () => {
+    try {
+      if (currentUser) {
+        logAction('User Logged Out', 'Auth', `${currentUser.role} Session`, 'Signed out');
+      }
+      await authApi.logout();
+    } catch {
+      // ignore
+    } finally {
+      purgeObsoleteLocalStorageKeys();
+      setCurrentUser(null);
+      setLeads([]);
+      setFollowUps([]);
+      setClients([]);
+      setProposals([]);
+      setActivityLogs([]);
+      setIncomingLeads([]);
+      setServices([]);
+      setSources([]);
+      setPricingModels([]);
+      setUsers([]);
+      setTeams([]);
     }
-    safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}logged_out`, 'true');
-    safeLocalStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}current_user`);
-    setCurrentUser(null);
   };
 
   const switchUser = (userId: string) => {
     const target = users.find(u => u.id === userId);
     if (target) {
-      safeLocalStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}logged_out`);
-      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}current_user`, JSON.stringify(target));
       setCurrentUser(target);
       logAction('Switched Role Portal', 'Auth', target.role, `Switched view to ${target.name} (${target.role})`);
     }
@@ -665,7 +1016,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const scopedTeams = hierarchyScope.scopedTeamsList;
   const assignableUsers = hierarchyScope.assignableUsersList;
 
-  // Scoped Pipeline & Business Records (Evaluates dynamic visibility capabilities against hierarchy)
+  // Scoped Pipeline & Business Records
   const scopedLeads = useMemo(() => {
     return getScopedLeads(leads, currentUser, currentRolePerms, hierarchyScope);
   }, [leads, currentUser, currentRolePerms, hierarchyScope]);
@@ -678,7 +1029,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return getScopedClients(clients, currentUser, currentRolePerms, hierarchyScope);
   }, [clients, currentUser, currentRolePerms, hierarchyScope]);
 
-  // Dynamic RBAC Permission Checks (Evaluating Capability)
+  // Dynamic RBAC Permission Checks
   const canAccessAdmin = useMemo(() => {
     if (!currentUser) return false;
     return (
@@ -731,10 +1082,12 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return !!currentUser && currentRolePerms.canCreateLeads;
   }, [currentUser, currentRolePerms]);
 
-  // Phase F1.3 Canonical Capabilities
+  const canViewAllLeads = useMemo(() => {
+    return !!currentUser && Boolean(currentRolePerms.canViewAllLeads);
+  }, [currentUser, currentRolePerms]);
+
   const canViewIncomingLeads = useMemo(() => {
     if (!currentUser) return false;
-    // Hard structural eligibility + dynamic capability
     const isEligibleRole = ['Super Admin', 'Admin', 'Manager', 'Team Lead'].includes(currentUser.role);
     return isEligibleRole && !!currentRolePerms.canViewIncomingLeads;
   }, [currentUser, currentRolePerms]);
@@ -755,7 +1108,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return !!currentUser && !!currentRolePerms.canGenerateProposals;
   }, [currentUser, currentRolePerms]);
 
-  // Centralized Action-Level Authorization Guards (Capability + Scope + Target + Safeguards)
+  // Centralized Action-Level Authorization Guards
   const canManageSuperAdminAccount = (targetUser: User): boolean => {
     return canManageSuperAdminAccountAuth(targetUser, currentUser, currentRolePerms);
   };
@@ -798,7 +1151,6 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Filtered leads calculation for Leads table
   const filteredLeads = useMemo(() => {
     return scopedLeads.filter(lead => {
-      // Search
       if (filterState.search.trim()) {
         const query = filterState.search.toLowerCase().trim();
         const matchesName = lead.name.toLowerCase().includes(query);
@@ -810,45 +1162,13 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return false;
         }
       }
-
-      // Status
-      if (filterState.status !== 'All' && lead.status !== filterState.status) {
-        return false;
-      }
-
-      // Assigned Agent
-      if (filterState.assignedToId !== 'All' && lead.assignedToId !== filterState.assignedToId) {
-        return false;
-      }
-
-      // Team
-      if (filterState.teamId !== 'All' && lead.teamId !== filterState.teamId) {
-        return false;
-      }
-
-      // Service
-      if (filterState.service !== 'All') {
-        if (!lead.services.includes(filterState.service)) {
-          return false;
-        }
-      }
-
-      // Source
-      if (filterState.source !== 'All' && lead.source !== filterState.source) {
-        return false;
-      }
-
-      // Quality
-      if (filterState.quality !== 'All' && lead.quality !== filterState.quality) {
-        return false;
-      }
-
-      // Priority
-      if (filterState.priority !== 'All' && lead.priority !== filterState.priority) {
-        return false;
-      }
-
-      // Date Range
+      if (filterState.status !== 'All' && lead.status !== filterState.status) return false;
+      if (filterState.assignedToId !== 'All' && lead.assignedToId !== filterState.assignedToId) return false;
+      if (filterState.teamId !== 'All' && lead.teamId !== filterState.teamId) return false;
+      if (filterState.service !== 'All' && !lead.services.includes(filterState.service)) return false;
+      if (filterState.source !== 'All' && lead.source !== filterState.source) return false;
+      if (filterState.quality !== 'All' && lead.quality !== filterState.quality) return false;
+      if (filterState.priority !== 'All' && lead.priority !== filterState.priority) return false;
       if (filterState.fromDate) {
         const leadDate = new Date(lead.createdAt).toISOString().split('T')[0];
         if (leadDate < filterState.fromDate) return false;
@@ -857,7 +1177,6 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const leadDate = new Date(lead.createdAt).toISOString().split('T')[0];
         if (leadDate > filterState.toDate) return false;
       }
-
       return true;
     });
   }, [scopedLeads, filterState]);
@@ -870,13 +1189,11 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const lostLeads = scopedLeads.filter(l => l.status === 'Lost').length;
     const newLeads = scopedLeads.filter(l => l.status === 'New').length;
 
-    // Follow-ups breakdown
     const todayStr = getLocalDateString();
     const todayFollowUps = scopedFollowUps.filter(f => classifyFollowUp(f, todayStr) === 'today').length;
     const missedFollowUps = scopedFollowUps.filter(f => classifyFollowUp(f, todayStr) === 'missed').length;
     const pendingFollowUps = scopedFollowUps.filter(f => f.status === 'Pending').length;
 
-    // Stale leads: leads created or contacted > settings.staleLeadDays ago without resolution
     const staleThreshold = new Date();
     staleThreshold.setDate(staleThreshold.getDate() - (settings.staleLeadDays || 7));
     const staleThresholdStr = staleThreshold.toISOString().split('T')[0];
@@ -886,35 +1203,17 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       (l.lastContactDate <= staleThresholdStr || l.createdAt.split('T')[0] <= staleThresholdStr)
     ).length;
 
-    // Status breakdown
     const statusBreakdown: Record<LeadStatus, number> = {
-      'New': 0,
-      'Contacted': 0,
-      'Follow-Up Required': 0,
-      'Qualified': 0,
-      'Won': 0,
-      'Hold': 0,
-      'Cold': 0,
-      'Returned': 0,
-      'Converted': 0,
-      'Lost': 0
+      'New': 0, 'Contacted': 0, 'Follow-Up Required': 0, 'Qualified': 0,
+      'Won': 0, 'Hold': 0, 'Cold': 0, 'Returned': 0, 'Converted': 0, 'Lost': 0
     };
     scopedLeads.forEach(l => {
-      if (statusBreakdown[l.status] !== undefined) {
-        statusBreakdown[l.status]++;
-      }
+      if (statusBreakdown[l.status] !== undefined) statusBreakdown[l.status]++;
     });
 
-    // Quality breakdown
-    const qualityBreakdown: Record<LeadQuality, number> = {
-      'Good': 0,
-      'Average': 0,
-      'Poor': 0
-    };
+    const qualityBreakdown: Record<LeadQuality, number> = { 'Good': 0, 'Average': 0, 'Poor': 0 };
     scopedLeads.forEach(l => {
-      if (qualityBreakdown[l.quality] !== undefined) {
-        qualityBreakdown[l.quality]++;
-      }
+      if (qualityBreakdown[l.quality] !== undefined) qualityBreakdown[l.quality]++;
     });
 
     const totalRevenuePKR = scopedClients.reduce((sum, c) => sum + getClientRevenue(c), 0);
@@ -935,632 +1234,573 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
   }, [scopedLeads, scopedFollowUps, scopedClients, settings.staleLeadDays]);
 
-  // Lead CRUD Operations
-  const addLead = (newLeadData: Omit<Lead, 'id' | 'createdAt' | 'lastContactDate' | 'activities'>) => {
-    const newId = `lead-${Date.now()}`;
-    const nowIso = new Date().toISOString();
-    const todayStr = nowIso.split('T')[0];
-
-    const newLead: Lead = {
-      ...newLeadData,
-      id: newId,
-      createdAt: nowIso,
-      lastContactDate: todayStr,
-      activities: [
-        {
-          id: `act-${Date.now()}`,
-          type: 'note',
-          title: 'Lead Created',
-          notes: `Added to CRM pipeline by ${currentUser?.name || 'User'}.`,
-          timestamp: nowIso,
-          author: currentUser?.name || 'System'
-        }
-      ]
-    };
-
-    setLeads(prev => {
-      const updated = [newLead, ...prev];
-      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}leads`, JSON.stringify(updated));
-      return updated;
-    });
-    logAction('Lead Created', 'Lead', newLead.businessName || newLead.name, `New lead added with value Rs. ${(newLead.valuePKR || 0).toLocaleString()}`, newId);
-
-    // If follow-up date specified, automatically create a follow-up record
-    if (newLead.nextFollowUpDate) {
-      const newFollowUp: FollowUp = {
-        id: `fu-${Date.now()}`,
-        leadId: newId,
-        clientName: newLead.name,
-        clientBusiness: newLead.businessName || newLead.name,
-        phone: newLead.phone,
-        scheduledDate: newLead.nextFollowUpDate,
-        scheduledTime: newLead.nextFollowUpTime || '14:00',
-        type: newLead.nextFollowUpType || 'Call',
-        source: newLead.source,
-        status: 'Pending',
-        notes: newLead.notes ? `Initial Note: ${newLead.notes}` : `Initial follow-up for ${newLead.businessName || newLead.name}`,
-        assignedToId: newLead.assignedToId,
-        assignedToName: newLead.assignedToName,
-        createdAt: nowIso
+  // Lead CRUD Operations Connected to Express REST API
+  const addLead = async (newLeadData: Omit<Lead, 'id' | 'createdAt' | 'lastContactDate' | 'activities'>): Promise<Lead | null> => {
+    try {
+      const qualityBackend = newLeadData.quality === 'Good' ? 'High' : newLeadData.quality === 'Poor' ? 'Low' : 'Normal';
+      const payload: CreateLeadPayload = {
+        name: newLeadData.name.trim(),
+        businessName: newLeadData.businessName?.trim() || null,
+        phone: newLeadData.phone.trim(),
+        email: toValidEmailOrNull(newLeadData.email),
+        city: newLeadData.city?.trim() || null,
+        serviceSnapshot: newLeadData.services || [],
+        valuePKR: Number(newLeadData.valuePKR || 0),
+        status: newLeadData.status || 'New',
+        quality: qualityBackend,
+        priority: newLeadData.priority || 'Medium',
+        source: newLeadData.source || 'Direct',
+        assignedToId: toValidUuidOrNull(newLeadData.assignedToId),
+        teamId: toValidUuidOrNull(newLeadData.teamId),
+        notes: newLeadData.notes?.trim() || null,
+        tags: newLeadData.tags || [],
+        nextFollowUpDate: newLeadData.nextFollowUpDate || null,
+        nextFollowUpTime: newLeadData.nextFollowUpTime || null
       };
-      setFollowUps(prev => {
-        const updatedFu = [newFollowUp, ...prev];
-        safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}follow_ups`, JSON.stringify(updatedFu));
-        return updatedFu;
-      });
+
+      const createdDto = await leadsApi.createLead(payload);
+      const newLead = mapLeadDto(createdDto);
+      setLeads(prev => [newLead, ...prev.filter(l => l.id !== newLead.id)]);
+
+      if (newLeadData.nextFollowUpDate) {
+        try {
+          const freshFu = await followUpsApi.listFollowUps();
+          if (Array.isArray(freshFu)) setFollowUps(freshFu.map(mapFollowUpDto));
+        } catch { /* ignore */ }
+      }
+
+      logAction('Lead Created', 'Lead', newLead.businessName || newLead.name, `New lead added with value Rs. ${(newLead.valuePKR || 0).toLocaleString()}`, newLead.id);
+      return newLead;
+    } catch (err) {
+      console.error('Failed to create lead via API:', err);
+      return null;
     }
   };
 
-  const updateLead = (updatedLead: Lead) => {
-    setLeads(prev => {
-      const updated = prev.map(l => l.id === updatedLead.id ? updatedLead : l);
-      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}leads`, JSON.stringify(updated));
-      return updated;
-    });
-    logAction('Lead Updated', 'Lead', updatedLead.businessName || updatedLead.name, `Details updated by ${currentUser?.name}`, updatedLead.id);
+  const updateLead = async (updatedLead: Lead): Promise<boolean> => {
+    try {
+      const qualityBackend = updatedLead.quality === 'Good' ? 'High' : updatedLead.quality === 'Poor' ? 'Low' : 'Normal';
+      const payload: UpdateLeadPayload = {
+        name: updatedLead.name.trim(),
+        businessName: updatedLead.businessName?.trim() || null,
+        phone: updatedLead.phone.trim(),
+        email: toValidEmailOrNull(updatedLead.email),
+        city: updatedLead.city?.trim() || null,
+        serviceSnapshot: updatedLead.services || [],
+        valuePKR: Number(updatedLead.valuePKR || 0),
+        status: updatedLead.status,
+        quality: qualityBackend,
+        priority: updatedLead.priority,
+        source: updatedLead.source,
+        assignedToId: toValidUuidOrNull(updatedLead.assignedToId),
+        teamId: toValidUuidOrNull(updatedLead.teamId),
+        notes: updatedLead.notes?.trim() || null,
+        tags: updatedLead.tags || [],
+        nextFollowUpDate: updatedLead.nextFollowUpDate || null,
+        nextFollowUpTime: updatedLead.nextFollowUpTime || null
+      };
+
+      const updatedDto = await leadsApi.updateLead(updatedLead.id, payload);
+      const mapped = mapLeadDto(updatedDto);
+      setLeads(prev => prev.map(l => (l.id === updatedLead.id ? mapped : l)));
+      logAction('Lead Updated', 'Lead', updatedLead.businessName || updatedLead.name, `Details updated by ${currentUser?.name}`, updatedLead.id);
+      return true;
+    } catch (err) {
+      console.error('Failed to update lead via API:', err);
+      return false;
+    }
   };
 
-  const deleteLead = (leadId: string): boolean => {
+  const deleteLead = async (leadId: string): Promise<boolean> => {
     const lead = leads.find(l => l.id === leadId);
-    if (!lead) return false;
-    if (!canDeleteLeadItem(lead)) return false;
+    if (!lead || !canDeleteLeadItem(lead)) return false;
 
-    setLeads(prev => {
-      const updated = prev.filter(l => l.id !== leadId);
-      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}leads`, JSON.stringify(updated));
-      return updated;
-    });
-    setFollowUps(prev => {
-      const updatedFu = prev.filter(f => f.leadId !== leadId);
-      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}follow_ups`, JSON.stringify(updatedFu));
-      return updatedFu;
-    });
-    logAction('Lead Deleted', 'Lead', lead.businessName || lead.name, `Removed from pipeline`, leadId);
-    return true;
+    try {
+      await leadsApi.deleteLead(leadId);
+      setLeads(prev => prev.filter(l => l.id !== leadId));
+      setFollowUps(prev => prev.filter(f => f.leadId !== leadId));
+      logAction('Lead Deleted', 'Lead', lead.businessName || lead.name, 'Removed from pipeline', leadId);
+      return true;
+    } catch (err) {
+      console.error('Failed to delete lead via API:', err);
+      return false;
+    }
   };
 
-  const reassignLead = (leadId: string, newUserId: string) => {
+  const reassignLead = async (leadId: string, newUserId: string): Promise<boolean> => {
     const targetUser = users.find(u => u.id === newUserId);
-    if (!targetUser) return;
+    if (!targetUser) return false;
 
-    setLeads(prev => prev.map(l => {
-      if (l.id === leadId) {
-        const updatedActivities: Activity[] = [
-          ...l.activities,
-          {
-            id: `act-${Date.now()}`,
-            type: 'reassign',
-            title: `Reassigned to ${targetUser.name}`,
-            notes: `Transferred ownership from ${l.assignedToName} to ${targetUser.name}.`,
-            timestamp: new Date().toISOString(),
-            author: currentUser?.name || 'System'
-          }
-        ];
-        return {
-          ...l,
-          assignedToId: targetUser.id,
-          assignedToName: targetUser.name,
-          teamId: targetUser.teamId || l.teamId,
-          teamName: targetUser.teamName || l.teamName,
-          activities: updatedActivities
-        };
-      }
-      return l;
-    }));
+    try {
+      const updatedDto = await leadsApi.reassignLead(
+        leadId,
+        newUserId,
+        toValidUuidOrNull(targetUser.teamId),
+        `Reassigned to ${targetUser.name}`
+      );
+      const mapped = mapLeadDto(updatedDto);
+      setLeads(prev => prev.map(l => (l.id === leadId ? mapped : l)));
 
-    // Update assigned follow-ups
-    setFollowUps(prev => prev.map(f => {
-      if (f.leadId === leadId && f.status === 'Pending') {
-        return {
-          ...f,
-          assignedToId: targetUser.id,
-          assignedToName: targetUser.name
-        };
-      }
-      return f;
-    }));
+      try {
+        const freshFu = await followUpsApi.listFollowUps();
+        if (Array.isArray(freshFu)) setFollowUps(freshFu.map(mapFollowUpDto));
+      } catch { /* ignore */ }
 
-    logAction('Lead Reassigned', 'Lead', `Lead ID ${leadId}`, `Assigned to ${targetUser.name}`, leadId);
+      logAction('Lead Reassigned', 'Lead', `Lead ID ${leadId}`, `Assigned to ${targetUser.name}`, leadId);
+      return true;
+    } catch (err) {
+      console.error('Failed to reassign lead via API:', err);
+      return false;
+    }
   };
 
-  const changeLeadStatus = (leadId: string, newStatus: LeadStatus) => {
-    setLeads(prev => prev.map(l => {
-      if (l.id === leadId) {
-        const oldStatus = l.status;
-        const updatedActivities: Activity[] = [
-          ...l.activities,
-          {
-            id: `act-${Date.now()}`,
-            type: 'stage_change',
-            title: `Status changed to ${newStatus}`,
-            notes: `Pipeline status moved from "${oldStatus}" to "${newStatus}".`,
-            timestamp: new Date().toISOString(),
-            author: currentUser?.name || 'System'
-          }
-        ];
+  const changeLeadStatus = async (leadId: string, newStatus: LeadStatus): Promise<boolean> => {
+    try {
+      const updatedDto = await leadsApi.changeStatus(
+        leadId,
+        newStatus,
+        `Pipeline status moved to "${newStatus}"`
+      );
+      const mapped = mapLeadDto(updatedDto);
+      setLeads(prev => prev.map(l => (l.id === leadId ? mapped : l)));
 
-        // If converted, automatically offer/add to clients list if not present
-        if (newStatus === 'Converted' && oldStatus !== 'Converted') {
-          const clientExists = clients.some(c => c.leadId === leadId || c.businessName === l.businessName);
-          if (!clientExists) {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const newClient: Client = {
-              id: `client-${Date.now()}`,
-              leadId: l.id,
-              businessName: l.businessName,
-              clientName: l.name,
-              phone: l.phone,
-              email: l.email,
-              city: l.city,
-              services: l.services,
-              source: l.source,
-              pricingModel: l.pricingModel || 'Monthly Subscription Model',
-              finalPrice: l.valuePKR || 85000,
-              activeRevenuePKR: l.valuePKR || 85000,
-              currency: 'PKR',
-              assignedToName: l.assignedToName,
-              assignedToId: l.assignedToId,
-              generatedByName: l.assignedToName,
-              closedByName: currentUser?.name || 'Super Admin',
-              convertedDate: todayStr,
-              startDate: todayStr,
-              status: 'Active',
-              notes: `Converted lead from ${l.source}.`
-            };
-            setClients(cPrev => [newClient, ...cPrev]);
-          }
+      if (newStatus === 'Converted') {
+        try {
+          const freshClients = await clientsApi.listClients({ limit: 1000 });
+          const items = (freshClients as any).items || (freshClients as any).clients || [];
+          setClients(items.map(mapClientDto));
+        } catch { /* ignore */ }
+      }
+
+      logAction('Lead Status Updated', 'Lead', `Status changed to ${newStatus}`, 'Stage updated', leadId);
+      return true;
+    } catch (err) {
+      console.error('Failed to change lead status via API:', err);
+      return false;
+    }
+  };
+
+  const addLeadActivity = async (leadId: string, activity: Omit<Activity, 'id' | 'timestamp' | 'author'>): Promise<void> => {
+    try {
+      const backendType = mapFrontendActivityTypeToBackend(activity.type);
+      await leadsApi.addActivity(leadId, {
+        type: backendType,
+        title: activity.title,
+        notes: activity.notes || null,
+        outcome: activity.outcome || null
+      });
+
+      const nowIso = new Date().toISOString();
+      const newAct: Activity = {
+        ...activity,
+        id: `act-${Date.now()}`,
+        timestamp: nowIso,
+        author: currentUser?.name || 'Staff'
+      };
+
+      setLeads(prev => prev.map(l => {
+        if (l.id === leadId) {
+          return {
+            ...l,
+            lastContactDate: nowIso.split('T')[0],
+            activities: [newAct, ...l.activities]
+          };
         }
+        return l;
+      }));
 
-        return {
-          ...l,
-          status: newStatus,
-          lastContactDate: new Date().toISOString().split('T')[0],
-          activities: updatedActivities
-        };
-      }
-      return l;
-    }));
-
-    logAction('Lead Status Updated', 'Lead', `Status changed to ${newStatus}`, `Stage updated`, leadId);
-  };
-
-  const addLeadActivity = (leadId: string, activity: Omit<Activity, 'id' | 'timestamp' | 'author'>) => {
-    const newAct: Activity = {
-      ...activity,
-      id: `act-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      author: currentUser?.name || 'Staff'
-    };
-
-    setLeads(prev => prev.map(l => {
-      if (l.id === leadId) {
-        return {
-          ...l,
-          lastContactDate: new Date().toISOString().split('T')[0],
-          activities: [newAct, ...l.activities]
-        };
-      }
-      return l;
-    }));
-
-    logAction('Activity Logged', 'Lead', newAct.title, `${newAct.type.toUpperCase()}: ${newAct.notes}`, leadId);
+      logAction('Activity Logged', 'Lead', newAct.title, `${newAct.type.toUpperCase()}: ${newAct.notes}`, leadId);
+    } catch (err) {
+      console.error('Failed to add activity via API:', err);
+    }
   };
 
   const importLeads = (leadsToImport: Partial<Lead>[]): number => {
-    // 8. Bulk import permission must fail closed
-    if (!currentUser || !canBulkImportExport) {
-      return 0;
-    }
-
-    const nowIso = new Date().toISOString();
-    const formatted: Lead[] = [];
+    if (!currentUser || !canBulkImportExport) return 0;
+    let importedCount = 0;
 
     for (let idx = 0; idx < leadsToImport.length; idx++) {
       const raw = leadsToImport[idx];
       const name = (raw.name || '').trim();
       const phone = (raw.phone || '').trim();
+      if (!name || !phone) continue;
 
-      // 3. A row without valid Name + Phone must be rejected
-      if (!name || !phone) {
-        continue;
-      }
-
-      // 7. Resolve ONE assignee only
       let resolvedAssignee: User | undefined;
       if (raw.assignedToId) {
         const candidate = users.find(u => u.id === raw.assignedToId && u.isActive);
-        if (candidate) {
-          resolvedAssignee = candidate;
-        }
+        if (candidate) resolvedAssignee = candidate;
       }
-
-      // Otherwise use currentUser if active
       if (!resolvedAssignee && currentUser && currentUser.isActive) {
         resolvedAssignee = currentUser;
       }
+      if (!resolvedAssignee) continue;
 
-      // If currentUser is missing/inactive and no valid assignee exists: do not import row / fail safely
-      if (!resolvedAssignee) {
-        continue;
-      }
-
-      // Derive ALL of assignedToId, assignedToName, teamId, teamName from THAT SAME User object
-      const assignedToId = resolvedAssignee.id;
-      const assignedToName = resolvedAssignee.name;
-      const teamId = resolvedAssignee.teamId || '';
-      const teamName = resolvedAssignee.teamName || '';
-
-      // 3. Do not invent optional customer data
-      const businessName = (raw.businessName || '').trim() || name;
-      const email = (raw.email || '').trim();
-      const city = (raw.city || '').trim();
-      const services = Array.isArray(raw.services)
+      const servicesArr = Array.isArray(raw.services)
         ? raw.services.map(s => String(s).trim()).filter(Boolean)
-        : raw.services
-        ? [String(raw.services).trim()].filter(Boolean)
-        : [];
-      const valuePKR = normalizeValuePKR(raw.valuePKR);
+        : raw.services ? [String(raw.services).trim()].filter(Boolean) : [];
 
-      // 9 & 10. Normalize enums safely
-      const status = normalizeLeadStatus(raw.status);
-      const priority = normalizePriority(raw.priority);
-      const quality = normalizeLeadQuality(raw.quality);
-      const source = normalizeLeadSource(raw.source);
-
-      // 4. Do not invent follow-up data
-      const nextFollowUpDate = raw.nextFollowUpDate || undefined;
-      const nextFollowUpTime = raw.nextFollowUpTime || undefined;
-      const nextFollowUpType = raw.nextFollowUpType || undefined;
-
-      // 5. Do not invent pricing model (preserve only if genuinely supplied, otherwise undefined)
-      const pricingModel = raw.pricingModel ? (raw.pricingModel as PricingModel) : undefined;
-
-      formatted.push({
-        id: `lead-import-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+      addLead({
         name,
-        businessName,
+        businessName: (raw.businessName || '').trim() || name,
         phone,
-        email,
-        city,
-        services,
-        valuePKR,
-        status,
-        quality,
-        priority,
-        source,
-        assignedToId,
-        assignedToName,
-        teamId,
-        teamName,
-        createdAt: nowIso,
-        lastContactDate: nowIso.split('T')[0],
-        nextFollowUpDate,
-        nextFollowUpTime,
-        nextFollowUpType,
+        email: (raw.email || '').trim(),
+        city: (raw.city || '').trim(),
+        services: servicesArr,
+        valuePKR: normalizeValuePKR(raw.valuePKR),
+        status: normalizeLeadStatus(raw.status),
+        quality: normalizeLeadQuality(raw.quality),
+        priority: normalizePriority(raw.priority),
+        source: normalizeLeadSource(raw.source),
+        assignedToId: resolvedAssignee.id,
+        assignedToName: resolvedAssignee.name,
+        teamId: resolvedAssignee.teamId || '',
+        teamName: resolvedAssignee.teamName || '',
+        nextFollowUpDate: raw.nextFollowUpDate,
+        nextFollowUpTime: raw.nextFollowUpTime,
+        nextFollowUpType: raw.nextFollowUpType,
         tags: Array.isArray(raw.tags) && raw.tags.length > 0 ? raw.tags : ['CSV Import'],
         notes: raw.notes || 'Imported via bulk CSV',
-        pricingModel,
-        activities: [
-          {
-            id: `act-imp-${Date.now()}-${idx}`,
-            type: 'note',
-            title: 'Lead Imported via CSV',
-            notes: 'Bulk imported by ' + currentUser.name,
-            timestamp: nowIso,
-            author: currentUser.name
-          }
-        ]
+        pricingModel: raw.pricingModel as PricingModel | undefined
       });
+      importedCount++;
     }
 
-    if (formatted.length === 0) {
-      return 0;
+    if (importedCount > 0) {
+      logAction('Bulk Leads Imported', 'Lead', `${importedCount} Leads`, 'Successfully processed CSV batch');
     }
-
-    setLeads(prev => [...formatted, ...prev]);
-    logAction('Bulk Leads Imported', 'Lead', `${formatted.length} Leads`, `Successfully imported CSV batch`);
-    return formatted.length;
+    return importedCount;
   };
 
-  const assignIncomingLead = (incomingId: string, assignedUserId: string): boolean => {
-    // 1. Enforce dynamic capabilities independently: canViewIncomingLeads, canAssignIncomingLeads, canCreateLeads
-    if (!canViewIncomingLeads || !canAssignIncomingLeads || !canCreateLeads) {
-      return false;
-    }
+  const assignIncomingLead = async (incomingId: string, assignedUserId: string): Promise<boolean> => {
+    if (!canViewIncomingLeads || !canAssignIncomingLeads || !canCreateLeads) return false;
 
     const inc = incomingLeads.find(i => i.id === incomingId);
-    if (!inc) return false;
-
-    // 2. Reject if current incoming row is already assigned
-    if (inc.status === 'assigned') {
-      return false;
-    }
-
-    // 3. Reject if another assigned incoming record already has the same non-empty externalId (DO NOT use phone)
-    if (inc.externalId && inc.externalId.trim()) {
-      const isDuplicateExternalId = incomingLeads.some(
-        other => other.id !== inc.id && other.status === 'assigned' && other.externalId && other.externalId.trim() === inc.externalId.trim()
-      );
-      if (isDuplicateExternalId) {
-        return false;
-      }
-    }
+    if (!inc || inc.status === 'assigned') return false;
 
     const targetUser = users.find(u => u.id === assignedUserId);
-    if (!targetUser || !targetUser.isActive) return false;
+    if (!targetUser || !targetUser.isActive || !isUserAssignable(targetUser)) return false;
 
-    // Check scope assignment permission
-    if (!isUserAssignable(targetUser)) {
-      return false;
-    }
-
-    const leadSource: LeadSource = inc.source === 'meta_ads' ? 'Meta Ads' : 'WhatsApp';
-
-    const newLeadData: Omit<Lead, 'id' | 'createdAt' | 'lastContactDate' | 'activities'> = {
-      name: inc.name.trim(),
-      businessName: inc.name.trim(),
-      phone: inc.phone.trim(),
-      email: '',
-      city: '',
-      services: [],
-      valuePKR: 0,
-      status: 'New',
-      quality: 'Average',
-      priority: 'Medium',
-      source: leadSource,
-      assignedToId: targetUser.id,
-      assignedToName: targetUser.name,
-      teamId: targetUser.teamId || '',
-      teamName: targetUser.teamName || '',
-      tags: ['Incoming', leadSource],
-      notes: inc.campaignName
-        ? `Incoming lead from ${leadSource} [Campaign: ${inc.campaignName}${inc.adName ? ` / Ad: ${inc.adName}` : ''}].${inc.message ? ` Message: ${inc.message}` : ''}`
-        : `Incoming lead from ${leadSource}.${inc.message ? ` Message: ${inc.message}` : ''}`
-    };
-
-    addLead(newLeadData);
-
-    const nowIso = new Date().toISOString();
-    setIncomingLeads(prev => prev.map(item => {
-      if (item.id === incomingId) {
-        return {
-          ...item,
-          status: 'assigned',
-          assignedToId: targetUser.id,
-          assignedAt: nowIso
-        };
-      }
-      return item;
-    }));
-
-    logAction('Incoming Lead Assigned', 'Lead', inc.name, `Assigned to ${targetUser.name} (${leadSource})`, inc.id);
-    return true;
-  };
-
-  // Follow-up actions
-  const addFollowUp = (followUpData: Omit<FollowUp, 'id' | 'createdAt'>) => {
-    const newFu: FollowUp = {
-      ...followUpData,
-      id: `fu-${Date.now()}`,
-      createdAt: new Date().toISOString()
-    };
-    setFollowUps(prev => [newFu, ...prev]);
-    logAction('Follow-Up Scheduled', 'FollowUp', newFu.clientBusiness || newFu.clientName, `Date: ${newFu.scheduledDate} ${newFu.scheduledTime}`, newFu.id);
-  };
-
-  const completeFollowUp = (id: string, resultNotes?: string) => {
-    const fu = followUps.find(f => f.id === id);
-    if (!fu) return;
-
-    setFollowUps(prev => prev.map(f => {
-      if (f.id === id) {
-        return {
-          ...f,
-          status: 'Done',
-          completedAt: new Date().toISOString(),
-          resultNotes: resultNotes || 'Follow-up marked completed'
-        };
-      }
-      return f;
-    }));
-
-    // Also add to lead's activities
-    if (fu.leadId) {
-      addLeadActivity(fu.leadId, {
-        type: fu.type.toLowerCase() === 'call' ? 'call' : fu.type.toLowerCase() === 'whatsapp' ? 'whatsapp' : 'meeting',
-        title: `Follow-Up Completed (${fu.type})`,
-        notes: resultNotes || fu.notes,
-        outcome: 'Completed'
+    try {
+      await incomingLeadsApi.assignAndConvert(incomingId, {
+        assignedUserId: targetUser.id,
+        teamId: toValidUuidOrNull(targetUser.teamId),
+        leadName: inc.name.trim() || 'Incoming Lead',
+        phone: inc.phone.trim() || '+92 300 0000000',
+        valuePKR: 0,
+        notes: inc.campaignName
+          ? `Incoming lead from ${inc.source} [Campaign: ${inc.campaignName}${inc.adName ? ` / Ad: ${inc.adName}` : ''}].${inc.message ? ` Message: ${inc.message}` : ''}`
+          : `Incoming lead from ${inc.source}.${inc.message ? ` Message: ${inc.message}` : ''}`
       });
-    }
 
-    logAction('Follow-Up Completed', 'FollowUp', fu.clientBusiness || fu.clientName, resultNotes || 'Done', id);
-  };
-
-  const rescheduleFollowUp = (id: string, newDate: string, newTime: string, notes?: string) => {
-    const fu = followUps.find(f => f.id === id);
-    if (!fu) return;
-
-    setFollowUps(prev => prev.map(f => {
-      if (f.id === id) {
-        return {
-          ...f,
-          scheduledDate: newDate,
-          scheduledTime: newTime,
-          status: 'Pending',
-          notes: notes ? `${f.notes}\n[Rescheduled: ${notes}]` : f.notes
-        };
-      }
-      return f;
-    }));
-
-    // Update lead's next follow up date as well
-    if (fu.leadId) {
-      setLeads(prev => prev.map(l => {
-        if (l.id === fu.leadId) {
+      setIncomingLeads(prev => prev.map(item => {
+        if (item.id === incomingId) {
           return {
-            ...l,
-            nextFollowUpDate: newDate,
-            nextFollowUpTime: newTime
+            ...item,
+            status: 'assigned',
+            assignedToId: targetUser.id,
+            assignedToUserId: targetUser.id
           };
         }
-        return l;
+        return item;
       }));
+
+      try {
+        const freshLeads = await leadsApi.listLeads({ limit: 1000 });
+        const items = (freshLeads as any).items || (freshLeads as any).leads || [];
+        setLeads(items.map(mapLeadDto));
+      } catch { /* ignore */ }
+
+      logAction('Incoming Lead Assigned', 'Lead', inc.name, `Assigned to ${targetUser.name} (${inc.source})`, inc.id);
+      return true;
+    } catch (err) {
+      console.error('Failed to assign incoming lead via API:', err);
+      return false;
     }
-
-    logAction('Follow-Up Rescheduled', 'FollowUp', fu.clientBusiness || fu.clientName, `Moved to ${newDate} at ${newTime}`, id);
   };
 
-  const deleteFollowUp = (id: string) => {
-    setFollowUps(prev => prev.filter(f => f.id !== id));
+  // Follow-up actions connected to Express REST API
+  const addFollowUp = async (followUpData: Omit<FollowUp, 'id' | 'createdAt'>): Promise<FollowUp | null> => {
+    try {
+      const validLeadId = toValidUuidOrNull(followUpData.leadId);
+      if (!validLeadId) {
+        console.warn('Cannot schedule follow-up without valid UUID leadId');
+        return null;
+      }
+
+      const payload: CreateFollowUpPayload = {
+        leadId: validLeadId,
+        clientBusinessSnapshot: followUpData.clientBusiness || followUpData.clientName || null,
+        phone: followUpData.phone || null,
+        scheduledDate: followUpData.scheduledDate,
+        scheduledTime: followUpData.scheduledTime || '14:00',
+        type: (followUpData.type || 'Call') as any,
+        assignedToId: toValidUuidOrNull(followUpData.assignedToId) || undefined,
+        notes: followUpData.notes || null
+      };
+
+      const createdDto = await followUpsApi.createFollowUp(payload);
+      const newFu = mapFollowUpDto(createdDto);
+      setFollowUps(prev => [newFu, ...prev.filter(f => f.id !== newFu.id)]);
+      logAction('Follow-Up Scheduled', 'FollowUp', newFu.clientBusiness || newFu.clientName, `Date: ${newFu.scheduledDate} ${newFu.scheduledTime}`, newFu.id);
+      return newFu;
+    } catch (err) {
+      console.error('Failed to schedule follow-up via API:', err);
+      return null;
+    }
   };
 
-  // Client actions
+  const completeFollowUp = async (id: string, resultNotes?: string): Promise<boolean> => {
+    try {
+      const updatedDto = await followUpsApi.completeFollowUp(id, {
+        resultOutcome: resultNotes || 'Follow-up marked completed'
+      });
+      const mapped = mapFollowUpDto(updatedDto);
+      setFollowUps(prev => prev.map(f => (f.id === id ? mapped : f)));
+
+      if (mapped.leadId) {
+        addLeadActivity(mapped.leadId, {
+          type: mapped.type.toLowerCase() === 'call' ? 'call' : mapped.type.toLowerCase() === 'whatsapp' ? 'whatsapp' : 'meeting',
+          title: `Follow-Up Completed (${mapped.type})`,
+          notes: resultNotes || mapped.notes,
+          outcome: 'Completed'
+        });
+      }
+
+      logAction('Follow-Up Completed', 'FollowUp', mapped.clientBusiness || mapped.clientName, resultNotes || 'Done', id);
+      return true;
+    } catch (err) {
+      console.error('Failed to complete follow-up via API:', err);
+      return false;
+    }
+  };
+
+  const rescheduleFollowUp = async (id: string, newDate: string, newTime: string, notes?: string): Promise<boolean> => {
+    try {
+      const updatedDto = await followUpsApi.rescheduleFollowUp(id, {
+        scheduledDate: newDate,
+        scheduledTime: newTime || '14:00',
+        reason: notes || undefined
+      });
+      const mapped = mapFollowUpDto(updatedDto);
+      setFollowUps(prev => prev.map(f => (f.id === id ? mapped : f)));
+
+      if (mapped.leadId) {
+        setLeads(prev => prev.map(l => {
+          if (l.id === mapped.leadId) {
+            return { ...l, nextFollowUpDate: newDate, nextFollowUpTime: newTime };
+          }
+          return l;
+        }));
+      }
+
+      logAction('Follow-Up Rescheduled', 'FollowUp', mapped.clientBusiness || mapped.clientName, `Moved to ${newDate} at ${newTime}`, id);
+      return true;
+    } catch (err) {
+      console.error('Failed to reschedule follow-up via API:', err);
+      return false;
+    }
+  };
+
+  const deleteFollowUp = async (id: string): Promise<boolean> => {
+    try {
+      await followUpsApi.deleteFollowUp(id);
+      setFollowUps(prev => prev.filter(f => f.id !== id));
+      return true;
+    } catch (err) {
+      console.error('Failed to delete follow-up via API:', err);
+      return false;
+    }
+  };
+
+  // Client actions connected to Express REST API
   const addClient = (clientData: Omit<Client, 'id'>) => {
-    const newClient: Client = {
-      ...clientData,
-      id: `client-${Date.now()}`
-    };
-    setClients(prev => [newClient, ...prev]);
-    logAction('Client Added', 'Client', newClient.businessName, `Active Revenue: Rs. ${(newClient.finalPrice || newClient.activeRevenuePKR || 0).toLocaleString()}`, newClient.id);
+    if (clientData.leadId && toValidUuidOrNull(clientData.leadId)) {
+      convertLeadToClient(clientData.leadId, clientData);
+    } else {
+      const localClient: Client = {
+        ...clientData,
+        id: `client-${Date.now()}`
+      };
+      setClients(prev => [localClient, ...prev]);
+    }
   };
 
-  const updateClient = (client: Client) => {
-    setClients(prev => prev.map(c => c.id === client.id ? client : c));
-    logAction('Client Updated', 'Client', client.businessName, `Status: ${client.status}`, client.id);
+  const updateClient = async (client: Client): Promise<boolean> => {
+    try {
+      const backendStatus: 'Active' | 'Inactive' | 'Suspended' | 'Completed' =
+        client.status === 'Active' ? 'Active' :
+        client.status === 'Paused' ? 'Suspended' : 'Inactive';
+
+      const updatedDto = await clientsApi.updateClient(client.id, {
+        businessName: client.businessName,
+        contactName: client.clientName,
+        email: toValidEmailOrNull(client.email),
+        phone: client.phone,
+        city: client.city,
+        finalValuePKR: Number(client.finalPrice || client.activeRevenuePKR || 0),
+        status: backendStatus,
+        termsDetails: client.notes
+      });
+      const mapped = mapClientDto(updatedDto);
+      setClients(prev => prev.map(c => (c.id === client.id ? mapped : c)));
+      logAction('Client Updated', 'Client', client.businessName, `Status: ${client.status}`, client.id);
+      return true;
+    } catch (err) {
+      console.error('Failed to update client via API:', err);
+      return false;
+    }
   };
 
   const convertLeadToClient = (leadId: string, clientData: Partial<Client>): Client => {
     const lead = leads.find(l => l.id === leadId);
     const todayStr = getLocalDateString();
-    const nowIso = new Date().toISOString();
 
     const newClient: Client = {
       id: `client-${Date.now()}`,
       leadId: leadId,
       businessName: clientData.businessName || lead?.businessName || 'Business Client',
       clientName: clientData.clientName || lead?.name || 'Contact Person',
-      phone: clientData.phone || lead?.phone || '',
+      phone: (clientData.phone || lead?.phone || '+92 300 0000000').trim(),
       email: clientData.email || lead?.email || '',
       city: clientData.city || lead?.city || 'Lahore',
-      services: clientData.services || lead?.services || ['Salon Management System'],
-      source: clientData.source || lead?.source || 'Call',
-      pricingModel: clientData.pricingModel || lead?.pricingModel || 'One-Time Project Model',
-      finalPrice: clientData.finalPrice !== undefined ? clientData.finalPrice : (lead?.valuePKR || 80000),
-      activeRevenuePKR: clientData.finalPrice !== undefined ? clientData.finalPrice : (lead?.valuePKR || 80000),
-      currency: clientData.currency || 'PKR',
-      generatedById: clientData.generatedById || lead?.assignedToId,
-      generatedByName: clientData.generatedByName || lead?.assignedToName || 'Super Admin',
-      assignedToId: clientData.assignedToId || lead?.assignedToId,
-      assignedToName: clientData.assignedToName || lead?.assignedToName || 'Abdur Rehman Arain',
-      closedById: clientData.closedById || currentUser?.id,
-      closedByName: clientData.closedByName || currentUser?.name || 'Super Admin',
-      paymentTerms: clientData.paymentTerms,
-      packageDetails: clientData.packageDetails,
-      conversionNotes: clientData.conversionNotes,
-      notes: clientData.notes || `Converted on ${todayStr}`,
+      services: clientData.services || lead?.services || [],
+      source: (clientData.source || lead?.source || 'Call') as LeadSource,
+      pricingModel: clientData.pricingModel || lead?.pricingModel || 'Monthly Subscription Model',
+      finalPrice: Number(clientData.finalPrice ?? lead?.valuePKR ?? 80000),
+      activeRevenuePKR: Number(clientData.finalPrice ?? lead?.valuePKR ?? 80000),
+      currency: 'PKR',
+      assignedToName: clientData.assignedToName || lead?.assignedToName || 'Super Admin',
+      assignedToId: clientData.assignedToId || lead?.assignedToId || 'u-1',
+      generatedByName: lead?.assignedToName || 'Super Admin',
+      closedByName: currentUser?.name || 'Super Admin',
       convertedDate: todayStr,
       startDate: todayStr,
       status: 'Active',
-      pricingDetails: clientData.pricingDetails
+      notes: clientData.notes || `Converted from ${lead?.source || 'Call'} lead on ${todayStr}.`
     };
 
-    // 1. Add to clients table (avoid duplicates)
-    setClients(prev => {
-      const filtered = prev.filter(c => c.leadId !== leadId);
-      return [newClient, ...filtered];
-    });
+    setClients(prev => [newClient, ...prev]);
 
-    // 2. Mark lead status as Converted / Won
-    setLeads(prev => prev.map(l => {
-      if (l.id === leadId) {
-        const updatedActivities: Activity[] = [
-          ...l.activities,
-          {
-            id: `act-${Date.now()}`,
-            type: 'stage_change',
-            title: `Lead Converted to Client`,
-            notes: `Successfully closed deal for PKR ${(newClient.finalPrice || 0).toLocaleString()} (${newClient.pricingModel}). Closed by ${newClient.closedByName}.`,
-            timestamp: nowIso,
-            author: currentUser?.name || 'System'
-          }
-        ];
-        return {
-          ...l,
-          status: 'Converted',
-          valuePKR: newClient.finalPrice,
-          pricingModel: newClient.pricingModel as any,
-          lastContactDate: todayStr,
-          activities: updatedActivities
-        };
-      }
-      return l;
-    }));
+    if (toValidUuidOrNull(leadId)) {
+      const payload: ConvertLeadPayload = {
+        leadId: leadId,
+        businessName: newClient.businessName,
+        contactName: newClient.clientName,
+        email: toValidEmailOrNull(newClient.email),
+        phone: newClient.phone,
+        city: newClient.city,
+        servicesSnapshot: newClient.services,
+        source: newClient.source,
+        finalValuePKR: newClient.finalPrice,
+        assignedOwnerId: toValidUuidOrNull(newClient.assignedToId),
+        termsDetails: newClient.notes
+      };
 
-    // 3. Mark any pending follow-ups for this lead as Done
-    setFollowUps(prev => prev.map(f => {
-      if (f.leadId === leadId && f.status === 'Pending') {
-        return {
-          ...f,
-          status: 'Done',
-          completedAt: nowIso,
-          resultNotes: 'Completed automatically upon lead conversion to client.'
-        };
-      }
-      return f;
-    }));
+      clientsApi.convertLead(payload).then(createdDto => {
+        const mapped = mapClientDto(createdDto);
+        setClients(prev => prev.map(c => c.id === newClient.id ? mapped : c));
+        leadsApi.listLeads({ limit: 1000 }).then(res => {
+          const items = (res as any).items || (res as any).leads || [];
+          setLeads(items.map(mapLeadDto));
+        }).catch(() => {
+          setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: 'Converted' } : l));
+        });
+      }).catch(err => {
+        console.error('Failed to convert lead to client via API:', err);
+      });
+    }
 
-    logAction('Lead Converted to Client', 'Client', newClient.businessName, `Closed for PKR ${(newClient.finalPrice || 0).toLocaleString()} by ${newClient.closedByName}`, newClient.id);
-
+    logAction('Lead Converted to Client', 'Client', newClient.businessName, `Converted by ${currentUser?.name} with contract value PKR ${(newClient.finalPrice || 0).toLocaleString()}`, newClient.id);
     return newClient;
   };
 
-  const returnClientToLead = (clientId: string) => {
+  const returnClientToLead = async (clientId: string): Promise<boolean> => {
     const client = clients.find(c => c.id === clientId);
-    if (!client) return;
+    if (!client) return false;
 
-    // 1. Remove from clients table
-    setClients(prev => prev.filter(c => c.id !== clientId));
+    try {
+      await clientsApi.revertClient(clientId, {
+        reason: `Client account "${client.businessName}" reversed to active pipeline stage by ${currentUser?.name}.`,
+        revertLeadStatusTo: 'Follow-Up Required'
+      });
 
-    // 2. If lead exists, revert status back to Follow-Up Required or Contacted
-    if (client.leadId) {
-      setLeads(prev => prev.map(l => {
-        if (l.id === client.leadId) {
-          const updatedActivities: Activity[] = [
-            ...l.activities,
-            {
-              id: `act-${Date.now()}`,
-              type: 'stage_change',
-              title: `Returned from Client to Active Lead`,
-              notes: `Conversion reversed by ${currentUser?.name || 'Admin'}. Moved back to Follow-Up Required.`,
-              timestamp: new Date().toISOString(),
-              author: currentUser?.name || 'System'
-            }
-          ];
-          return {
-            ...l,
-            status: 'Follow-Up Required',
-            activities: updatedActivities
-          };
+      setClients(prev => prev.filter(c => c.id !== clientId));
+
+      try {
+        const freshLeads = await leadsApi.listLeads({ limit: 1000 });
+        const items = (freshLeads as any).items || (freshLeads as any).leads || [];
+        setLeads(items.map(mapLeadDto));
+      } catch {
+        if (client.leadId) {
+          setLeads(prev => prev.map(l => l.id === client.leadId ? { ...l, status: 'Follow-Up Required' } : l));
         }
-        return l;
-      }));
-    }
+      }
 
-    logAction('Client Returned to Lead', 'Client', client.businessName, `Reversed conversion back to active lead status`, clientId);
+      logAction('Client Returned to Lead', 'Client', client.businessName, 'Reversed conversion back to active lead status', clientId);
+      return true;
+    } catch (err) {
+      console.error('Failed to revert client via API:', err);
+      return false;
+    }
   };
 
-  // Proposals CRUD
+  // Proposals CRUD Connected to Express REST API
   const addProposal = (propData: Omit<Proposal, 'id' | 'createdAt'>): Proposal => {
+    const newId = `prop-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const nowIso = new Date().toISOString();
+    const propTotal = Number(propData.grandTotal ?? propData.grandTotalPKR ?? 0);
+
     const newProposal: Proposal = {
       ...propData,
-      id: `prop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      createdAt: new Date().toISOString()
+      id: newId,
+      createdAt: nowIso
     };
+
     setProposals(prev => [newProposal, ...prev]);
 
-    // Automatically log into lead's activity history
-    const propTotal = newProposal.grandTotal ?? newProposal.grandTotalPKR ?? 0;
+    const validLeadId = toValidUuidOrNull(propData.leadId);
+    const payload: CreateProposalPayload = {
+      leadId: validLeadId,
+      proposalNumber: propData.refNumber || propData.proposalNumber || `PROP-${Date.now().toString().slice(-4)}`,
+      issueDate: propData.issueDate || nowIso.split('T')[0],
+      expiryDate: propData.expiryDate || null,
+      clientSnapshot: {
+        clientName: propData.clientName,
+        businessName: propData.businessName,
+        phone: propData.clientPhone,
+        email: propData.clientEmail,
+        city: propData.clientCity
+      },
+      assignedRepId: toValidUuidOrNull(propData.assignedRepId),
+      scopeDeliverables: propData.scopeOfWork || null,
+      lineItems: (propData.items || []).map(i => ({
+        id: i.id,
+        name: i.title || i.name || 'Item',
+        description: i.description,
+        quantity: i.quantity,
+        unitPricePKR: i.unitPrice,
+        totalPKR: i.total
+      })),
+      discountPKR: Number(propData.totalDiscount || propData.overallDiscountPKR || 0),
+      taxPKR: Number(propData.taxAmount || 0),
+      totalPKR: propTotal,
+      milestones: (propData.milestones || propData.paymentMilestones || []).map(m => ({
+        title: m.title,
+        percentage: m.percentage,
+        amountPKR: m.amount,
+        dueDate: m.dueDate || null
+      })),
+      terms: propData.termsAndConditions || null,
+      status: (propData.status === 'Declined' ? 'Rejected' : propData.status) as any
+    };
+
+    proposalsApi.createProposal(payload).then(createdDto => {
+      const mapped = mapProposalDto(createdDto);
+      setProposals(prev => prev.map(p => p.id === newId ? mapped : p));
+    }).catch(err => {
+      console.error('Failed to persist proposal to API:', err);
+    });
+
     if (newProposal.leadId) {
       addLeadActivity(newProposal.leadId, {
         type: 'meeting',
@@ -1571,35 +1811,62 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
     }
 
-    logAction(
-      'Generated Proposal',
-      'Lead',
-      newProposal.businessName || newProposal.clientName,
-      `Generated proposal ${newProposal.refNumber} for PKR ${propTotal.toLocaleString()}`,
-      newProposal.id
-    );
-
+    logAction('Generated Proposal', 'Lead', newProposal.businessName || newProposal.clientName, `Generated proposal ${newProposal.refNumber} for PKR ${propTotal.toLocaleString()}`, newProposal.id);
     return newProposal;
   };
 
-  const updateProposal = (updated: Proposal) => {
-    setProposals(prev => prev.map(p => p.id === updated.id ? updated : p));
-    const propTotal = updated.grandTotal ?? updated.grandTotalPKR ?? 0;
-    logAction(
-      'Updated Proposal',
-      'Lead',
-      updated.businessName || updated.clientName,
-      `Updated proposal ${updated.refNumber} (PKR ${propTotal.toLocaleString()})`,
-      updated.id
-    );
+  const updateProposal = async (updated: Proposal): Promise<boolean> => {
+    try {
+      const propTotal = Number(updated.grandTotal ?? updated.grandTotalPKR ?? 0);
+      const payload: UpdateProposalPayload = {
+        expiryDate: updated.expiryDate || null,
+        clientSnapshot: {
+          clientName: updated.clientName,
+          businessName: updated.businessName,
+          phone: updated.clientPhone,
+          email: updated.clientEmail,
+          city: updated.clientCity
+        },
+        assignedRepId: toValidUuidOrNull(updated.assignedRepId),
+        scopeDeliverables: updated.scopeOfWork || null,
+        lineItems: (updated.items || []).map(i => ({
+          id: i.id,
+          name: i.title || i.name || 'Item',
+          description: i.description,
+          quantity: i.quantity,
+          unitPricePKR: i.unitPrice,
+          totalPKR: i.total
+        })),
+        discountPKR: Number(updated.totalDiscount || updated.overallDiscountPKR || 0),
+        taxPKR: Number(updated.taxAmount || 0),
+        totalPKR: propTotal,
+        milestones: (updated.milestones || updated.paymentMilestones || []).map(m => ({
+          title: m.title,
+          percentage: m.percentage,
+          amountPKR: m.amount,
+          dueDate: m.dueDate || null
+        })),
+        terms: updated.termsAndConditions || null,
+        status: (updated.status === 'Declined' ? 'Rejected' : updated.status) as any
+      };
+
+      const updatedDto = await proposalsApi.updateProposal(updated.id, payload);
+      const mapped = mapProposalDto(updatedDto);
+      setProposals(prev => prev.map(p => (p.id === updated.id ? mapped : p)));
+      logAction('Updated Proposal', 'Lead', updated.businessName || updated.clientName, `Updated proposal ${updated.refNumber} (PKR ${propTotal.toLocaleString()})`, updated.id);
+      return true;
+    } catch (err) {
+      console.error('Failed to update proposal via API:', err);
+      return false;
+    }
   };
 
   const deleteProposal = (id: string) => {
     setProposals(prev => prev.filter(p => p.id !== id));
   };
 
-  // Administration CRUD (Users, Teams, Services, Sources, Settings)
-  const addUser = (userData: Omit<User, 'id' | 'createdAt'>): { success: boolean; error?: string; user?: User } => {
+  // Administration CRUD (Connected to Express REST APIs)
+  const addUser = async (userData: Omit<User, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string; user?: User }> => {
     if (!currentUser || !currentRolePerms?.canManageUsers) {
       return { success: false, error: 'Unauthorized: You do not have permissions to manage or create users.' };
     }
@@ -1611,36 +1878,47 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
     }
 
-    const newUser: User = {
-      ...userData,
-      id: `user-${Date.now()}`,
-      createdAt: new Date().toISOString()
-    };
-    setUsers(prev => [...prev, newUser]);
-    logAction('User Created', 'User', newUser.name, `Role: ${newUser.role}, Email: ${newUser.email}`, newUser.id);
-    return { success: true, user: newUser };
+    try {
+      const createdDto = await usersApi.createUser({
+        name: userData.name.trim(),
+        email: userData.email.trim().toLowerCase(),
+        phone: userData.phone?.trim(),
+        role: userData.role,
+        teamId: userData.teamId || null,
+        managerId: userData.managerId || null,
+        teamLeadId: userData.teamLeadId || null,
+        password: userData.password || 'Emp@1234!'
+      });
+
+      const newUser = mapUserDto(createdDto);
+      setUsers(prev => [...prev.filter(u => u.id !== newUser.id), newUser]);
+      logAction('User Created', 'User', newUser.name, `Role: ${newUser.role}, Email: ${newUser.email}`, newUser.id);
+      return { success: true, user: newUser };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create user on server.';
+      return { success: false, error: message };
+    }
   };
 
-  const updateUser = (user: User): { success: boolean; error?: string } => {
-    const existing = users.find(u => u.id === user.id);
+  const updateUser = async (user: User): Promise<{ success: boolean; error?: string }> => {
+    const existing = users.find(u => u.id === user.id) || (currentUser?.id === user.id ? currentUser : null);
     if (!existing) {
       return { success: false, error: 'User not found.' };
     }
 
-    // Must have authority to manage the target user
-    if (!canManageUserAuth(existing, currentUser, currentRolePerms, hierarchyScope)) {
+    const isSelf = currentUser?.id === user.id;
+
+    if (!isSelf && !canManageUserAuth(existing, currentUser, currentRolePerms, hierarchyScope)) {
       return {
         success: false,
         error: `Security Policy: You are not authorized to modify this protected ${existing.role} account.`
       };
     }
 
-    // Explicit Guard: Prevent self-role modification / promotion
-    if (currentUser?.id === user.id && existing.role !== user.role && currentUser.role !== 'Super Admin') {
+    if (isSelf && existing.role !== user.role && currentUser.role !== 'Super Admin') {
       return { success: false, error: 'Security Policy: Self-role escalation and role change are strictly prohibited.' };
     }
 
-    // If role is changing, check role transition authority
     if (existing.role !== user.role) {
       if (!canTransitionUserRoleAuth(existing, user.role, currentUser, currentRolePerms, hierarchyScope)) {
         return {
@@ -1650,15 +1928,54 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     }
 
-    setUsers(prev => prev.map(u => u.id === user.id ? user : u));
-    if (currentUser?.id === user.id) {
-      setCurrentUser(user);
+    try {
+      const updatedDto = await usersApi.updateUser(user.id, {
+        name: user.name.trim(),
+        email: user.email.trim().toLowerCase(),
+        phone: user.phone?.trim() || null,
+        role: user.role,
+        teamId: user.teamId || null,
+        managerId: user.managerId || null,
+        teamLeadId: user.teamLeadId || null,
+        avatarUrl: user.avatar || null
+      });
+
+      const mapped = mapUserDto(updatedDto);
+      setUsers(prev => prev.map(u => (u.id === user.id ? mapped : u)));
+      if (currentUser?.id === user.id) {
+        setCurrentUser(mapped);
+      }
+      logAction('User Updated', 'User', user.name, `Role: ${user.role}`, user.id);
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update user on server.';
+      return { success: false, error: message };
     }
-    logAction('User Updated', 'User', user.name, `Role: ${user.role}`, user.id);
-    return { success: true };
   };
 
-  const toggleUserStatus = (userId: string): { success: boolean; error?: string } => {
+  const changeMyPassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await authApi.changePassword({ currentPassword, newPassword });
+      logAction('Password Changed', 'Auth', currentUser?.name || 'Self', 'User changed their account password', currentUser?.id);
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to change password.';
+      return { success: false, error: message };
+    }
+  };
+
+  const resetUserPassword = async (userId: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await usersApi.resetPassword(userId, newPassword);
+      logAction('Password Reset', 'Auth', 'User Account', `Password reset for user ${userId}`, userId);
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to reset password.';
+      return { success: false, error: message };
+    }
+  };
+
+  const toggleUserStatus = async (userId: string): Promise<{ success: boolean; error?: string }> => {
     const existing = users.find(u => u.id === userId);
     if (!existing) return { success: false, error: 'User not found.' };
 
@@ -1669,22 +1986,29 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
     }
 
-    const updatedUser = { ...existing, isActive: !existing.isActive };
-    setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
-    if (currentUser?.id === userId) {
-      setCurrentUser(updatedUser);
+    try {
+      const newStatus = existing.isActive ? 'inactive' : 'active';
+      const updatedDto = await usersApi.updateStatus(userId, newStatus);
+      const updatedUser = mapUserDto(updatedDto);
+      setUsers(prev => prev.map(u => (u.id === userId ? updatedUser : u)));
+      if (currentUser?.id === userId) {
+        setCurrentUser(updatedUser);
+      }
+      logAction(
+        updatedUser.isActive ? 'User Activated' : 'User Deactivated',
+        'User',
+        existing.name,
+        `Status changed to ${updatedUser.isActive ? 'Active' : 'Inactive'}`,
+        userId
+      );
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to toggle user status on server.';
+      return { success: false, error: message };
     }
-    logAction(
-      updatedUser.isActive ? 'User Activated' : 'User Deactivated',
-      'User',
-      existing.name,
-      `Status changed to ${updatedUser.isActive ? 'Active' : 'Inactive'}`,
-      userId
-    );
-    return { success: true };
   };
 
-  const deleteUser = (userId: string): { success: boolean; error?: string } => {
+  const deleteUser = async (userId: string): Promise<{ success: boolean; error?: string }> => {
     const existing = users.find(u => u.id === userId);
     if (!existing) return { success: false, error: 'User not found.' };
 
@@ -1699,232 +2023,320 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return { success: false, error: 'You cannot delete your own active user account.' };
     }
 
-    setUsers(prev => prev.filter(u => u.id !== userId));
-    logAction('User Deleted', 'User', existing.name, `Account deleted by ${currentUser?.name}`, userId);
-    return { success: true };
-  };
-
-  const addTeam = (teamData: Omit<Team, 'id' | 'createdAt'>) => {
-    const newTeam: Team = {
-      ...teamData,
-      id: `team-${Date.now()}`,
-      createdAt: new Date().toISOString()
-    };
-    setTeams(prev => [...prev, newTeam]);
-    
-    // Sync assigned members' teamId, teamName, managerName, teamLeadName
-    if (newTeam.memberIds && newTeam.memberIds.length > 0) {
-      setUsers(prevUsers => prevUsers.map(u => {
-        if (newTeam.memberIds.includes(u.id)) {
-          return {
-            ...u,
-            teamId: newTeam.id,
-            teamName: newTeam.name,
-            managerName: newTeam.managerName || u.managerName,
-            teamLeadName: newTeam.leaderName || u.teamLeadName
-          };
-        }
-        return u;
-      }));
-    }
-    logAction('Team Created', 'Team', newTeam.name, `Manager: ${newTeam.managerName || '-'}, Lead: ${newTeam.leaderName || '-'}, Members: ${newTeam.memberIds.length}`, newTeam.id);
-    return newTeam;
-  };
-
-  const updateTeam = (team: Team) => {
-    setTeams(prev => prev.map(t => t.id === team.id ? team : t));
-    
-    // Sync users
-    setUsers(prevUsers => prevUsers.map(u => {
-      if (team.memberIds.includes(u.id)) {
-        return {
-          ...u,
-          teamId: team.id,
-          teamName: team.name,
-          managerName: team.managerName || u.managerName,
-          teamLeadName: team.leaderName || u.teamLeadName
-        };
-      }
-      if (u.teamId === team.id && !team.memberIds.includes(u.id)) {
-        return {
-          ...u,
-          teamId: undefined,
-          teamName: undefined
-        };
-      }
-      return u;
-    }));
-    logAction('Team Updated', 'Team', team.name, `Details and members updated`, team.id);
-  };
-
-  const deleteTeam = (teamId: string) => {
-    const team = teams.find(t => t.id === teamId);
-    setTeams(prev => prev.filter(t => t.id !== teamId));
-    setUsers(prevUsers => prevUsers.map(u => {
-      if (u.teamId === teamId) {
-        return {
-          ...u,
-          teamId: undefined,
-          teamName: undefined
-        };
-      }
-      return u;
-    }));
-    if (team) {
-      logAction('Team Deleted', 'Team', team.name, `Team removed`, teamId);
+    try {
+      await usersApi.updateStatus(userId, 'inactive');
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      logAction('User Deleted', 'User', existing.name, `Account deactivated by ${currentUser?.name}`, userId);
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete user on server.';
+      return { success: false, error: message };
     }
   };
 
-  const addService = (serviceData: Omit<ServiceItem, 'id'>) => {
-    const newSrv: ServiceItem = {
-      ...serviceData,
-      id: `srv-${Date.now()}`
-    };
-    setServices(prev => [...prev, newSrv]);
-    const price = newSrv.defaultPricePKR ?? newSrv.basePricePKR ?? 0;
-    logAction('Service Added', 'Service', newSrv.name, `Price: Rs. ${price.toLocaleString()}`, newSrv.id);
-  };
-
-  const updateService = (service: ServiceItem) => {
-    setServices(prev => prev.map(s => s.id === service.id ? service : s));
-    const price = service.defaultPricePKR ?? service.basePricePKR ?? 0;
-    logAction('Service Updated', 'Service', service.name, `Price: Rs. ${price.toLocaleString()}`, service.id);
-  };
-
-  const deleteService = (serviceId: string) => {
-    setServices(prev => prev.filter(s => s.id !== serviceId));
-  };
-
-  const addSource = (source: string) => {
-    if (!sources.includes(source)) {
-      setSources(prev => [...prev, source]);
-      logAction('Lead Source Added', 'Source', source, `New lead source added`);
-    }
-  };
-
-  const updateSource = (oldSource: string, newSource: string) => {
-    setSources(prev => prev.map(s => s === oldSource ? newSource : s));
-    // Also update any leads with old source
-    setLeads(prev => prev.map(l => l.source === oldSource ? { ...l, source: newSource as any } : l));
-    logAction('Lead Source Updated', 'Source', newSource, `Renamed from ${oldSource}`);
-  };
-
-  const deleteSource = (source: string) => {
-    setSources(prev => prev.filter(s => s !== source));
-  };
-
-  const updateRolePermission = (perm: RolePermission) => {
-    // Only Super Admin may update role permissions matrix
-    if (!currentUser || currentUser.role !== 'Super Admin' || !canManageRoles) return;
-    saveAllRolePermissions(rolePermissions.map(r => r.role === perm.role ? perm : r));
-  };
-
-  const saveAllRolePermissions = (newPermissions: RolePermission[]) => {
-    // Context-level Actor Safeguards: Strictly Super Admin Only (Phase RBAC-FINAL-1A)
-    if (!currentUser || currentUser.role !== 'Super Admin' || !canManageRoles) return;
-
-    setRolePermissions(prev => {
-      const sanitized: RolePermission[] = newPermissions.map(item => {
-        const copy = { ...item };
-
-        // SUPER ADMIN save: may update all roles but must force critical master controls
-        if (copy.role === 'Super Admin') {
-          copy.canManageSuperAdmin = true;
-          copy.canManageRoles = true;
-        }
-
-        // Non-Super Admin: permanently enforce lock-off
-        if (copy.role !== 'Super Admin') {
-          copy.canManageSuperAdmin = false;
-          copy.canManageRoles = false;
-        }
-
-        // Employee is structurally excluded from Incoming Leads integrations
-        if (copy.role === 'Employee') {
-          copy.canViewIncomingLeads = false;
-          copy.canAssignIncomingLeads = false;
-          copy.canManageIntegrations = false;
-        }
-
-        return copy;
+  const addTeam = async (teamData: Omit<Team, 'id' | 'createdAt'>): Promise<Team | null> => {
+    try {
+      const createdDto = await teamsApi.createTeam({
+        name: teamData.name.trim(),
+        code: teamData.code?.trim().toUpperCase() || teamData.name.trim().substring(0, 3).toUpperCase(),
+        description: teamData.description?.trim(),
+        managerId: teamData.managerId || null,
+        teamLeadId: teamData.leaderId || null
       });
+      const newTeam = mapTeamDto(createdDto);
 
-      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}roles`, JSON.stringify(sanitized));
-      return sanitized;
-    });
+      if (teamData.memberIds && teamData.memberIds.length > 0) {
+        for (const mId of teamData.memberIds) {
+          try {
+            await teamsApi.addMember(newTeam.id, mId, false);
+          } catch { /* ignore individual duplicates */ }
+        }
+        newTeam.memberIds = teamData.memberIds;
+      }
 
-    logAction('Role Permissions Matrix Saved', 'Setting', 'Role Capabilities', 'Updated capability matrix across all system roles');
+      setTeams(prev => [...prev.filter(t => t.id !== newTeam.id), newTeam]);
+      logAction('Team Created', 'Team', newTeam.name, `Manager: ${newTeam.managerName || '-'}, Lead: ${newTeam.leaderName || '-'}, Members: ${newTeam.memberIds.length}`, newTeam.id);
+      return newTeam;
+    } catch (err) {
+      console.error('Failed to create team via API:', err);
+      return null;
+    }
   };
 
-  const resetRolePermissionsToDefault = () => {
-    // Context-level Reset Safeguards: Strictly Super Admin Only (Phase RBAC-FINAL-1A)
+  const updateTeam = async (team: Team): Promise<Team | null> => {
+    try {
+      const updatedDto = await teamsApi.updateTeam(team.id, {
+        name: team.name.trim(),
+        code: team.code?.trim().toUpperCase(),
+        description: team.description?.trim(),
+        managerId: team.managerId || null,
+        teamLeadId: team.leaderId || null,
+        status: (team.status as 'active' | 'inactive' | 'archived') || 'active'
+      });
+      const updatedTeam = mapTeamDto(updatedDto);
+      updatedTeam.memberIds = team.memberIds || [];
+
+      setTeams(prev => prev.map(t => (t.id === team.id ? updatedTeam : t)));
+      logAction('Team Updated', 'Team', team.name, 'Details and members updated', team.id);
+      return updatedTeam;
+    } catch (err) {
+      console.error('Failed to update team via API:', err);
+      return null;
+    }
+  };
+
+  const deleteTeam = async (teamId: string): Promise<void> => {
+    try {
+      await teamsApi.deleteTeam(teamId);
+      setTeams(prev => prev.filter(t => t.id !== teamId));
+      logAction('Team Deleted', 'Team', `Team ID ${teamId}`, 'Team removed from system', teamId);
+    } catch (err) {
+      console.error('Failed to delete team via API:', err);
+    }
+  };
+
+  const addService = async (serviceData: Omit<ServiceItem, 'id'>): Promise<ServiceItem | null> => {
+    try {
+      const createdDto = await servicesApi.createService({
+        name: serviceData.name.trim(),
+        category: serviceData.category.trim(),
+        defaultPricePKR: serviceData.defaultPricePKR ?? serviceData.basePricePKR ?? 0,
+        description: serviceData.description?.trim(),
+        isActive: serviceData.isActive !== false
+      });
+      const newService = mapServiceDto(createdDto);
+      setServices(prev => [...prev.filter(s => s.id !== newService.id), newService]);
+      const price = newService.defaultPricePKR;
+      logAction('Service Added', 'Service', newService.name, `Price: Rs. ${price.toLocaleString()}`, newService.id);
+      return newService;
+    } catch (err) {
+      console.error('Failed to add service via API:', err);
+      return null;
+    }
+  };
+
+  const updateService = async (service: ServiceItem): Promise<ServiceItem | null> => {
+    try {
+      const updatedDto = await servicesApi.updateService(service.id, {
+        name: service.name.trim(),
+        category: service.category.trim(),
+        defaultPricePKR: service.defaultPricePKR ?? service.basePricePKR ?? 0,
+        description: service.description?.trim(),
+        isActive: service.isActive !== false
+      });
+      const updatedService = mapServiceDto(updatedDto);
+      setServices(prev => prev.map(s => (s.id === service.id ? updatedService : s)));
+      const price = updatedService.defaultPricePKR;
+      logAction('Service Updated', 'Service', service.name, `Price: Rs. ${price.toLocaleString()}`, service.id);
+      return updatedService;
+    } catch (err) {
+      console.error('Failed to update service via API:', err);
+      return null;
+    }
+  };
+
+  const deleteService = async (serviceId: string): Promise<void> => {
+    try {
+      await servicesApi.deleteService(serviceId);
+      setServices(prev => prev.filter(s => s.id !== serviceId));
+      logAction('Service Deleted', 'Service', `Service ID ${serviceId}`, 'Service removed', serviceId);
+    } catch (err) {
+      console.error('Failed to delete service via API:', err);
+    }
+  };
+
+  const addSource = async (source: string): Promise<void> => {
+    const trimmed = source.trim();
+    if (!trimmed || sources.includes(trimmed)) return;
+    try {
+      await sourcesApi.createSource({ name: trimmed, isActive: true });
+      setSources(prev => [...prev.filter(s => s !== trimmed), trimmed]);
+      logAction('Lead Source Added', 'Source', trimmed, 'New lead source added');
+    } catch (err) {
+      console.error('Failed to add source via API:', err);
+    }
+  };
+
+  const updateSource = async (oldSource: string, newSource: string): Promise<void> => {
+    const trimmedNew = newSource.trim();
+    if (!trimmedNew) return;
+    try {
+      const list = await sourcesApi.listSources();
+      const existingDto = list.find(s => s.name === oldSource);
+      if (existingDto) {
+        await sourcesApi.updateSource(existingDto.id, { name: trimmedNew });
+      }
+      setSources(prev => prev.map(s => (s === oldSource ? trimmedNew : s)));
+      setLeads(prev => prev.map(l => (l.source === oldSource ? { ...l, source: normalizeLeadSource(trimmedNew) } : l)));
+      logAction('Lead Source Updated', 'Source', trimmedNew, `Renamed from ${oldSource}`);
+    } catch (err) {
+      console.error('Failed to update source via API:', err);
+    }
+  };
+
+  const deleteSource = async (source: string): Promise<void> => {
+    try {
+      const list = await sourcesApi.listSources();
+      const existingDto = list.find(s => s.name === source);
+      if (existingDto) {
+        await sourcesApi.deleteSource(existingDto.id);
+      }
+      setSources(prev => prev.filter(s => s !== source));
+      logAction('Lead Source Deleted', 'Source', source, 'Source removed from system');
+    } catch (err) {
+      console.error('Failed to delete source via API:', err);
+    }
+  };
+
+  const updateRolePermission = async (perm: RolePermission): Promise<void> => {
     if (!currentUser || currentUser.role !== 'Super Admin' || !canManageRoles) return;
-
-    setRolePermissions(DEFAULT_ROLE_PERMISSIONS);
-    safeLocalStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}roles`);
-    logAction('Role Permissions Reset', 'Setting', 'Default Matrix', 'Restored default capability matrix for roles');
+    try {
+      const currentDef = rolePermissions.find(r => r.role === perm.role);
+      if (currentDef) {
+        const keys = Object.keys(perm) as (keyof RolePermission)[];
+        for (const k of keys) {
+          if (k !== 'role' && k !== 'description' && perm[k] !== currentDef[k]) {
+            await rolesApi.updateCapability(perm.role, k, Boolean(perm[k]));
+          }
+        }
+      }
+      const freshMatrices = await rolesApi.getAllMatrices();
+      setRolePermissions(mapRoleMatrices(freshMatrices));
+      logAction('Role Permissions Updated', 'Setting', perm.role, `Updated capabilities for ${perm.role}`);
+    } catch (err) {
+      console.error('Failed to update role permissions via API:', err);
+    }
   };
 
-  const updateSettings = (
+  const saveAllRolePermissions = async (newPermissions: RolePermission[]): Promise<void> => {
+    if (!currentUser || currentUser.role !== 'Super Admin' || !canManageRoles) return;
+    try {
+      for (const newPerm of newPermissions) {
+        const currentDef = rolePermissions.find(r => r.role === newPerm.role);
+        if (currentDef) {
+          const keys = Object.keys(newPerm) as (keyof RolePermission)[];
+          for (const k of keys) {
+            if (k !== 'role' && k !== 'description' && newPerm[k] !== currentDef[k]) {
+              await rolesApi.updateCapability(newPerm.role, k, Boolean(newPerm[k]));
+            }
+          }
+        }
+      }
+      const freshMatrices = await rolesApi.getAllMatrices();
+      setRolePermissions(mapRoleMatrices(freshMatrices));
+      logAction('Role Permissions Matrix Saved', 'Setting', 'Role Capabilities', 'Updated capability matrix across all system roles');
+    } catch (err) {
+      console.error('Failed to save role permissions matrix via API:', err);
+    }
+  };
+
+  const resetRolePermissionsToDefault = async (): Promise<void> => {
+    if (!currentUser || currentUser.role !== 'Super Admin' || !canManageRoles) return;
+    try {
+      const freshMatrices = await rolesApi.resetDefaults();
+      setRolePermissions(mapRoleMatrices(freshMatrices));
+      logAction('Role Permissions Reset', 'Setting', 'Default Matrix', 'Restored default capability matrix for roles');
+    } catch (err) {
+      console.error('Failed to reset role permissions via API:', err);
+    }
+  };
+
+  const updateSettings = async (
     newSettings: Partial<SystemSettings>,
     moduleKey?: string,
     moduleTitle?: string
-  ) => {
-    setSettings(prev => {
-      const merged = { ...prev, ...newSettings };
-      safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}settings`, JSON.stringify(merged));
-      if (moduleKey) {
-        safeLocalStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}settings_${moduleKey}`, JSON.stringify(newSettings));
+  ): Promise<void> => {
+    // Optimistic UI update
+    setSettings(prev => ({ ...prev, ...newSettings }));
+    try {
+      const category = moduleKey || 'general';
+      const updated = await settingsApi.updateCategory(category, newSettings);
+      if (updated) {
+        setSettings(updated);
       }
-      return merged;
-    });
+    } catch (err) {
+      console.error('Failed to update settings in PostgreSQL:', err);
+    }
     logAction(
       moduleTitle ? `${moduleTitle} Saved` : 'System Settings Saved',
       'Setting',
       moduleTitle || 'Company Config',
-      `Updated settings configuration`
+      'Updated settings configuration'
     );
   };
 
-  const addPricingModel = (modelData: Omit<PricingModelItem, 'id'>) => {
-    const newModel: PricingModelItem = {
-      ...modelData,
-      id: `pm-${Date.now()}`,
-      createdAt: new Date().toISOString()
-    };
-    setPricingModels(prev => [...prev, newModel]);
-    logAction('Pricing Model Added', 'Setting', newModel.name, `Billing: ${newModel.billingType}`, newModel.id);
+  const addPricingModel = async (modelData: Omit<PricingModelItem, 'id'>): Promise<PricingModelItem | null> => {
+    try {
+      const createdDto = await pricingModelsApi.createPricingModel({
+        name: modelData.name.trim(),
+        billingType: modelData.billingType,
+        description: modelData.description?.trim(),
+        isActive: modelData.isActive !== false,
+        isDefault: Boolean(modelData.isSystemDefault),
+        fieldSchema: (modelData.fields || []) as any
+      });
+      const newPm = mapPricingModelDto(createdDto);
+      setPricingModels(prev => [...prev.filter(m => m.id !== newPm.id), newPm]);
+      logAction('Pricing Model Added', 'Setting', newPm.name, `Billing: ${newPm.billingType}`, newPm.id);
+      return newPm;
+    } catch (err) {
+      console.error('Failed to add pricing model via API:', err);
+      return null;
+    }
   };
 
-  const updatePricingModel = (model: PricingModelItem) => {
-    setPricingModels(prev => prev.map(m => m.id === model.id ? model : m));
-    logAction('Pricing Model Updated', 'Setting', model.name, `Billing: ${model.billingType}`, model.id);
+  const updatePricingModel = async (model: PricingModelItem): Promise<PricingModelItem | null> => {
+    try {
+      const updatedDto = await pricingModelsApi.updatePricingModel(model.id, {
+        name: model.name.trim(),
+        billingType: model.billingType,
+        description: model.description?.trim(),
+        isActive: model.isActive !== false,
+        isDefault: Boolean(model.isSystemDefault),
+        fieldSchema: (model.fields || []) as any
+      });
+      const updatedPm = mapPricingModelDto(updatedDto);
+      setPricingModels(prev => prev.map(m => (m.id === model.id ? updatedPm : m)));
+      logAction('Pricing Model Updated', 'Setting', model.name, `Billing: ${model.billingType}`, model.id);
+      return updatedPm;
+    } catch (err) {
+      console.error('Failed to update pricing model via API:', err);
+      return null;
+    }
   };
 
-  const deletePricingModel = (id: string) => {
-    const target = pricingModels.find(m => m.id === id);
-    if (!target) return { success: false, error: 'Pricing model not found' };
-
-    setPricingModels(prev => prev.filter(m => m.id !== id));
-    logAction('Pricing Model Deleted', 'Setting', target.name, `Pricing model removed`, id);
-    return { success: true };
+  const deletePricingModel = async (id: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await pricingModelsApi.deletePricingModel(id);
+      setPricingModels(prev => prev.filter(m => m.id !== id));
+      logAction('Pricing Model Deleted', 'Setting', `Model ID ${id}`, 'Pricing model removed', id);
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete pricing model via API.';
+      return { success: false, error: message };
+    }
   };
 
-  const resetToFactoryDefaults = () => {
+  const resetToFactoryDefaults = async (): Promise<void> => {
     safeLocalStorage.clear();
-    setUsers(DEFAULT_USERS);
-    setCurrentUser(DEFAULT_USERS[0]);
-    setTeams(DEFAULT_TEAMS);
-    setServices(DEFAULT_SERVICES);
-    setSources(DEFAULT_SOURCES);
-    setRolePermissions(DEFAULT_ROLE_PERMISSIONS);
-    setPricingModels(DEFAULT_PRICING_MODELS);
-    setSettings(DEFAULT_SETTINGS);
-    setLeads(INITIAL_LEADS);
-    setFollowUps(INITIAL_FOLLOW_UPS);
-    setClients(INITIAL_CLIENTS);
-    setActivityLogs(INITIAL_ACTIVITY_LOGS);
-    setIncomingLeads(INITIAL_INCOMING_LEADS);
+    purgeObsoleteLocalStorageKeys();
+    try {
+      const defaults = await settingsApi.resetToDefaults();
+      setSettings(defaults || DEFAULT_SETTINGS);
+    } catch {
+      setSettings(DEFAULT_SETTINGS);
+    }
+    setUsers([]);
+    setTeams([]);
+    setServices([]);
+    setSources([]);
+    setPricingModels([]);
+    setLeads([]);
+    setFollowUps([]);
+    setClients([]);
+    setProposals([]);
+    setActivityLogs([]);
+    setIncomingLeads([]);
     setFilterState({
       search: '',
       status: 'All',
@@ -1937,12 +2349,18 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       quality: 'All',
       priority: 'All'
     });
+    fetchReferenceData();
+    if (currentUser) {
+      fetchOperationalData(currentUser.role);
+    }
   };
 
   return (
     <CRMContext.Provider
       value={{
         currentUser,
+        isAuthLoading,
+        isDataLoading,
         users,
         scopedUsers,
         assignableUsers,
@@ -1951,6 +2369,8 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         switchUser,
         addUser,
         updateUser,
+        changeMyPassword,
+        resetUserPassword,
         toggleUserStatus,
         deleteUser,
         teams,
@@ -2021,7 +2441,8 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         canAccessSettings,
         canBulkImportExport,
         canCreateLeads,
-        canViewAllLeads: canAccessAdmin,
+        canViewAllLeads,
+        canGenerateProposals,
         canManageFollowUps: true,
         canViewIncomingLeads,
         canAssignIncomingLeads,
@@ -2035,6 +2456,8 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         canDeleteLeadItem,
         canReassignLeadItem,
         isUserAssignable,
+        refetchReferenceData: fetchReferenceData,
+        refetchOperationalData: () => fetchOperationalData(currentUser?.role),
         resetToFactoryDefaults
       }}
     >

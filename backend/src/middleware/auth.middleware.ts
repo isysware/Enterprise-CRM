@@ -1,24 +1,25 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { AuthenticatedRequest, CapabilityKey, UserRole } from '../types';
 import { AUTH_COOKIES } from '../constants';
 import { TokenService, RbacService } from '../services';
 import { AppError } from '../utils';
 
-export const authenticate = async (
-  req: AuthenticatedRequest,
+export const authenticate: RequestHandler = async (
+  req: Request,
   _res: Response,
   next: NextFunction
 ): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
   try {
     let token: string | undefined;
 
     // 1. Check HttpOnly Cookie first
-    if (req.cookies && req.cookies[AUTH_COOKIES.ACCESS_TOKEN]) {
-      token = req.cookies[AUTH_COOKIES.ACCESS_TOKEN];
+    if (authReq.cookies && authReq.cookies[AUTH_COOKIES.ACCESS_TOKEN]) {
+      token = authReq.cookies[AUTH_COOKIES.ACCESS_TOKEN];
     }
     // 2. Check Authorization Header fallback (Bearer token)
-    else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-      token = req.headers.authorization.split(' ')[1];
+    else if (authReq.headers.authorization && authReq.headers.authorization.startsWith('Bearer ')) {
+      token = authReq.headers.authorization.split(' ')[1];
     }
 
     if (!token) {
@@ -34,7 +35,7 @@ export const authenticate = async (
     }
 
     // 5. Populate Auth Context
-    req.user = {
+    authReq.user = {
       id: decoded.userId,
       email: decoded.email,
       name: decoded.email.split('@')[0], // Base name, resolved by repository in full cycle
@@ -46,8 +47,8 @@ export const authenticate = async (
     };
 
     // 6. Compute Effective RBAC Permissions & Organizational Hierarchy Scope
-    req.permissions = RbacService.getEffectivePermissions(decoded.role);
-    req.scope = RbacService.getHierarchyScope(req.user, [req.user], []);
+    authReq.permissions = RbacService.getEffectivePermissions(decoded.role);
+    authReq.scope = RbacService.getHierarchyScope(authReq.user, [authReq.user], []);
 
     next();
   } catch (err) {
@@ -58,16 +59,17 @@ export const authenticate = async (
 /**
  * Enforces dynamic capability check against current actor's effective matrix
  */
-export const requirePermission = (capability: CapabilityKey) => {
-  return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
-    if (!req.user) {
+export const requirePermission = (capability: CapabilityKey): RequestHandler => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    const authReq = req as AuthenticatedRequest;
+    if (!authReq.user) {
       return next(AppError.unauthorized('Authentication required'));
     }
 
-    if (!req.permissions || !req.permissions[capability]) {
+    if (!authReq.permissions || !authReq.permissions[capability]) {
       return next(
         AppError.forbidden(
-          `Forbidden: Role '${req.user.role}' lacks required capability '${capability}'`
+          `Forbidden: Role '${authReq.user.role}' lacks required capability '${capability}'`
         )
       );
     }
@@ -79,16 +81,17 @@ export const requirePermission = (capability: CapabilityKey) => {
 /**
  * Enforces strict role boundary check
  */
-export const requireRole = (...allowedRoles: UserRole[]) => {
-  return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
-    if (!req.user) {
+export const requireRole = (...allowedRoles: UserRole[]): RequestHandler => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    const authReq = req as AuthenticatedRequest;
+    if (!authReq.user) {
       return next(AppError.unauthorized('Authentication required'));
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    if (!allowedRoles.includes(authReq.user.role)) {
       return next(
         AppError.forbidden(
-          `Forbidden: Access restricted to roles: [${allowedRoles.join(', ')}]. Current role: '${req.user.role}'`
+          `Forbidden: Access restricted to roles: [${allowedRoles.join(', ')}]. Current role: '${authReq.user.role}'`
         )
       );
     }
@@ -100,19 +103,20 @@ export const requireRole = (...allowedRoles: UserRole[]) => {
 /**
  * Enforces active account status (rejects restricted or inactive)
  */
-export const requireActiveAccount = (
-  req: AuthenticatedRequest,
+export const requireActiveAccount: RequestHandler = (
+  req: Request,
   _res: Response,
   next: NextFunction
 ): void => {
-  if (!req.user) {
+  const authReq = req as AuthenticatedRequest;
+  if (!authReq.user) {
     return next(AppError.unauthorized('Authentication required'));
   }
 
-  if (req.user.status !== 'active') {
+  if (authReq.user.status !== 'active') {
     return next(
       AppError.forbidden(
-        `Forbidden: Action requires an active account. Current status: '${req.user.status}'`
+        `Forbidden: Action requires an active account. Current status: '${authReq.user.status}'`
       )
     );
   }
@@ -123,16 +127,17 @@ export const requireActiveAccount = (
 /**
  * Strict Super Admin check
  */
-export const requireSuperAdmin = (
-  req: AuthenticatedRequest,
+export const requireSuperAdmin: RequestHandler = (
+  req: Request,
   _res: Response,
   next: NextFunction
 ): void => {
-  if (!req.user) {
+  const authReq = req as AuthenticatedRequest;
+  if (!authReq.user) {
     return next(AppError.unauthorized('Authentication required'));
   }
 
-  if (req.user.role !== 'Super Admin') {
+  if (authReq.user.role !== 'Super Admin') {
     return next(AppError.forbidden('Forbidden: Action is strictly reserved for Super Admin'));
   }
 
