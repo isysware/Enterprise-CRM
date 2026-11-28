@@ -17,6 +17,23 @@ async function ensureDatabaseInitialized(): Promise<void> {
 }
 
 export default async function handler(req: any, res: any) {
-  await ensureDatabaseInitialized();
-  return app(req, res);
+  try {
+    await ensureDatabaseInitialized();
+    return app(req, res);
+  } catch (err: any) {
+    console.error('Fatal unhandled error in serverless handler:', err);
+    if (!res.headersSent) {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(
+        JSON.stringify({
+          success: false,
+          error: {
+            code: 'SERVER_HANDLER_ERROR',
+            message: err?.message || 'Server error during execution',
+          },
+        })
+      );
+    }
+  }
 }

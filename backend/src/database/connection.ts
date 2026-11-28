@@ -13,11 +13,16 @@ export const getDatabasePool = (): Pool => {
       throw new Error('DATABASE_URL is not configured in environment variables');
     }
 
+    // Clean connection string and ensure SSL for cloud databases (Neon)
+    const connStr = env.DATABASE_URL.replace(/&channel_binding=[^&]*/g, '');
+    const isLocalhost = connStr.includes('localhost') || connStr.includes('127.0.0.1');
+
     pool = new Pool({
-      connectionString: env.DATABASE_URL,
-      max: 20, // Max clients in pool
+      connectionString: connStr,
+      ssl: isLocalhost ? false : { rejectUnauthorized: false },
+      max: 10, // Max clients in pool
       idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-      connectionTimeoutMillis: 5000, // Return an error after 5 seconds if connection cannot be established
+      connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection cannot be established
     });
 
     pool.on('error', (err: Error) => {

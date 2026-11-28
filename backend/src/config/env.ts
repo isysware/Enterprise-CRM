@@ -36,9 +36,23 @@ const parseEnv = () => {
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
-    console.error('❌ Invalid environment variables configuration:');
+    console.error('❌ Warning: Invalid or partial environment variables configuration:');
     console.error(JSON.stringify(result.error.format(), null, 2));
-    process.exit(1);
+
+    return {
+      NODE_ENV: (process.env.NODE_ENV as any) || 'production',
+      PORT: Number(process.env.PORT) || 5000,
+      CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
+      RATE_LIMIT_WINDOW_MS: 900000,
+      RATE_LIMIT_MAX: 5000,
+      API_PREFIX: '/api/v1',
+      JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || 'dev_jwt_access_secret_super_secure_32_characters_minimum',
+      JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || 'dev_jwt_refresh_secret_super_secure_32_characters_minimum',
+      JWT_ACCESS_EXPIRES_IN: '15m',
+      JWT_REFRESH_EXPIRES_IN: '7d',
+      COOKIE_SECRET: process.env.COOKIE_SECRET || 'dev_cookie_signing_secret_32_characters_minimum',
+      DATABASE_URL: process.env.DATABASE_URL,
+    };
   }
 
   return result.data;

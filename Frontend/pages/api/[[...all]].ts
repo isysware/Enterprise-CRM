@@ -25,6 +25,19 @@ async function ensureDatabaseInitialized(): Promise<void> {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  await ensureDatabaseInitialized();
-  return app(req as any, res as any);
+  try {
+    await ensureDatabaseInitialized();
+    return app(req as any, res as any);
+  } catch (err: any) {
+    console.error('Fatal unhandled error in API handler:', err);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'SERVER_HANDLER_ERROR',
+          message: err?.message || 'Server error during execution',
+        },
+      });
+    }
+  }
 }
