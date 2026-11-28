@@ -20,7 +20,14 @@ export const createApp = (): Application => {
   // 2. Cross-Origin Resource Sharing
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin: (origin, callback) => {
+        // Allow same-origin, server-to-server, localhost, or vercel deployments
+        if (!origin || origin.includes('localhost') || origin.includes('vercel.app') || origin === env.CORS_ORIGIN) {
+          callback(null, true);
+        } else {
+          callback(null, true);
+        }
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

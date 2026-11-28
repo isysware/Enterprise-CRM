@@ -74,3 +74,6 @@ process.on('uncaughtException', (error: Error) => {
 });
 
 startServer();
+
+export default app;
+export { app, server };

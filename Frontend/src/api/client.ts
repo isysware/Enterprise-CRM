@@ -1,8 +1,30 @@
 import { ApiResponse, ApiErrorResponse, AppApiError } from './types';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.trim() ||
-  (typeof window !== 'undefined' ? '/api/v1' : (process.env.NODE_ENV === 'production' ? '/api/v1' : 'http://localhost:5000/api/v1'));
+/**
+ * Resolves API Base URL dynamically:
+ * - Server runtime: uses internal bound service URL process.env.BACKEND_URL if available
+ * - Client runtime: uses process.env.NEXT_PUBLIC_API_URL or relative public path '/api/v1'
+ * - Local development fallback: 'http://localhost:5000/api/v1'
+ */
+export function getApiBaseUrl(): string {
+  if (typeof window === 'undefined') {
+    if (process.env.BACKEND_URL) {
+      const base = process.env.BACKEND_URL.endsWith('/')
+        ? process.env.BACKEND_URL
+        : `${process.env.BACKEND_URL}/`;
+      return new URL('api/v1', base).toString().replace(/\/$/, '');
+    }
+    if (process.env.NEXT_PUBLIC_API_URL?.trim()) {
+      return process.env.NEXT_PUBLIC_API_URL.trim();
+    }
+    return process.env.NODE_ENV === 'production' ? '/api/v1' : 'http://localhost:5000/api/v1';
+  }
+
+  if (process.env.NEXT_PUBLIC_API_URL?.trim()) {
+    return process.env.NEXT_PUBLIC_API_URL.trim();
+  }
+  return '/api/v1';
+}
 
 let inMemoryAccessToken: string | null = null;
 
@@ -56,7 +78,9 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const { params, body, headers, ...customConfig } = options;
 
-  let url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+  const baseUrl = getApiBaseUrl();
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  let url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${cleanEndpoint}`;
 
   if (params) {
     const searchParams = new URLSearchParams();
@@ -98,7 +122,7 @@ export async function apiRequest<T>(
     // If 401 Unauthorized, transparently attempt a refresh and replay once
     if (response.status === 401 && !url.includes('/auth/login') && !url.includes('/auth/refresh')) {
       try {
-        const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        const refreshRes = await fetch(`${baseUrl}/auth/refresh`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
