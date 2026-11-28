@@ -118,7 +118,7 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
         );
       } else {
         await addFollowUp({
-          leadId: leadId || undefined,
+          leadId: leadId || '',
           clientName: clientName.trim(),
           clientBusiness: clientBusiness.trim(),
           phone: phone.trim(),

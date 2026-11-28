@@ -2,9 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
-  experimental: {
-    agentUpgrade: 'security',
-  },
+  serverExternalPackages: ['pg', 'bcryptjs'],
   async headers() {
     return [
       {

@@ -203,7 +203,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
         ...currentUser,
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        phone: phone.trim() || undefined,
+        phone: phone.trim() || '',
         avatar: avatar.trim() || displayAvatar,
         teamId: teamId || undefined,
         teamName: assignedTeam?.name || undefined

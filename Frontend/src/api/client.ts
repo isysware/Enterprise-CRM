@@ -1,7 +1,8 @@
 import { ApiResponse, ApiErrorResponse, AppApiError } from './types';
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:5000/api/v1';
+  process.env.NEXT_PUBLIC_API_URL?.trim() ||
+  (typeof window !== 'undefined' ? '/api/v1' : (process.env.NODE_ENV === 'production' ? '/api/v1' : 'http://localhost:5000/api/v1'));
 
 let inMemoryAccessToken: string | null = null;
 

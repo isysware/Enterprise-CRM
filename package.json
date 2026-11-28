@@ -1,0 +1,10 @@
+{
+  "name": "enterprise-crm-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run --prefix Frontend dev",
+    "build": "npm run --prefix Frontend build",
+    "start": "npm run --prefix Frontend start"
+  }
+}

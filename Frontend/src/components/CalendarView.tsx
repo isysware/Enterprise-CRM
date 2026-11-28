@@ -93,7 +93,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   // Generate calendar grid cells
   const calendarCells = useMemo(() => {
-    const cells = [];
+    const cells: Array<{
+      dayNumber: number;
+      dateStr: string;
+      isToday: boolean;
+      isSelected: boolean;
+      events: FollowUp[];
+    } | null> = [];
     // Empty padding cells for start of month
     for (let i = 0; i < firstDayOfMonth; i++) {
       cells.push(null);

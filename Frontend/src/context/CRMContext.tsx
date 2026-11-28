@@ -636,7 +636,7 @@ const mapFollowUpDto = (f: FollowUpDbDto): FollowUp => {
     notes: f.notes || '',
     resultNotes: f.result_outcome || undefined,
     assignedToId: f.assigned_to_id,
-    assignedToName: f.assigned_to_name || undefined,
+    assignedToName: f.assigned_to_name || '',
     createdAt: f.created_at,
     completedAt: f.completed_at || undefined
   };
@@ -665,7 +665,7 @@ const mapClientDto = (c: ClientDbDto): Client => {
     email: c.email || '',
     city: c.city || 'Lahore',
     services: serviceList,
-    source: normalizeLeadSource(c.source),
+    source: normalizeLeadSource(c.source || undefined),
     pricingModelId: c.pricing_model_id || undefined,
     pricingModelName: c.pricing_model_name || undefined,
     pricingModel: (c.pricing_model_name || 'Monthly Subscription Model') as any,
