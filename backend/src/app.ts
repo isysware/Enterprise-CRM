@@ -45,6 +45,10 @@ export const createApp = (): Application => {
   // 5. Rate Limiting Foundation
   app.use('/api', apiRateLimiter);
 
+  // Health checks
+  app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+  app.get('/api/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
   // 6. API Version 1 Mounting
   app.use(env.API_PREFIX, apiV1Router);
 
@@ -59,3 +63,10 @@ export const createApp = (): Application => {
 
 export const app = createApp();
 export default app;
+
+// Ensure CommonJS module compatibility for Vercel
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = app;
+  module.exports.default = app;
+  module.exports.app = app;
+}
