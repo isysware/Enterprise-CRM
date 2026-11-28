@@ -73,7 +73,9 @@ process.on('uncaughtException', (error: Error) => {
   process.exit(1);
 });
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
 
 export default app;
 export { app, server };
