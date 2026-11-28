@@ -11,7 +11,6 @@
     "test:auth": "tsx -e \"import { runAuthorizationTests } from './src/utils/authorization.test'; const res = runAuthorizationTests(); console.log('Passed:', res.passed, 'Total:', res.results.length); if (!res.passed) { console.error(res.results.filter(r => r.includes('FAIL'))); process.exit(1); }\""
   },
   "dependencies": {
-    "@tailwindcss/oxide-win32-x64-msvc": "^4.3.3",
     "@tailwindcss/postcss": "^4.3.3",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
@@ -24,7 +23,6 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "lightningcss": "^1.32.0",
-    "lightningcss-win32-x64-msvc": "^1.32.0",
     "lucide-react": "^0.546.0",
     "morgan": "^1.12.1",
     "motion": "^12.23.24",
