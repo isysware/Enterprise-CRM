@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCRM } from '../../../context/CRMContext';
+import { formatDate, getLocalDateString } from '../../../utils/formatters';
 import {
   FileSignature,
   FileText,
@@ -386,7 +387,7 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
                       Click to upload A4 Background Template
                     </span>
                     <span className="text-[10px] text-[#64748B] mt-0.5">
-                      Local Preview — In-memory browser preview (cloud storage not connected)
+                      JPEG, PNG or WEBP background template
                     </span>
                   </label>
                 </div>
@@ -666,7 +667,7 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
                   <div className="flex items-start justify-between border-b pb-3 border-slate-200">
                     <div>
                       <h2 className="text-base font-medium text-slate-900 uppercase tracking-tight">
-                        {settings.companyName || 'iSysware Solutions'}
+                        {settings.companyName || 'Enterprise CRM'}
                       </h2>
                       <p className="text-[9px] text-slate-500 max-w-[240px] leading-tight mt-0.5">
                         {companyAddress}
@@ -698,7 +699,7 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
                     </div>
                     <div className="text-right">
                       <span className="text-slate-400 font-bold block">DATE &amp; CURRENCY:</span>
-                      <span className="font-bold text-slate-800">{new Date().toLocaleDateString()}</span>
+                      <span className="font-bold text-slate-800">{formatDate(getLocalDateString())}</span>
                       <span className="text-[#2563EB] font-bold block">PKR (Pakistani Rupee)</span>
                     </div>
                   </div>
@@ -760,7 +761,7 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
       <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl shadow-xs">
         <div className="text-xs text-[#64748B] dark:text-slate-400 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-          <span>Settings Configuration: Local Browser Session (Cloud storage not connected)</span>
+          <span>Configuration: Connected to PostgreSQL Database</span>
         </div>
 
         <button

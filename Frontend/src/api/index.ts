@@ -18,3 +18,4 @@ export * from './notifications.api';
 export * from './settings.api';
 export * from './ai.api';
 export * from './integrations.api';
+export * from './deleteManagement.api';

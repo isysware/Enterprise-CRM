@@ -28,6 +28,7 @@ import {
   Inbox,
   TrendingUp,
   DollarSign,
+  Trash2,
   X
 } from 'lucide-react';
 import { getRoleBadgeStyle, getLocalDateString, classifyFollowUp } from '../utils/formatters';
@@ -209,7 +210,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'branding', label: 'Organization Identity', icon: Building2 },
     { id: 'letterhead', label: 'Letterhead & PDF', icon: FileSignature },
     { id: 'pricing', label: 'Pricing Models', icon: Layers },
-    { id: 'communication', label: 'Communication & Alerts', icon: MessageCircle }
+    { id: 'communication', label: 'Communication & Alerts', icon: MessageCircle },
+    ...(currentUser?.role === 'Super Admin'
+      ? [{ id: 'delete-management' as SettingsSubTab, label: 'Delete Management', icon: Trash2 }]
+      : [])
   ];
 
   const handleSelectTab = (tabId: ActiveTab) => {
@@ -265,14 +269,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold text-[#0F172A] dark:text-white text-sm tracking-tight truncate">
-                        {settings.applicationName || 'Apex CRM'}
+                        {settings.applicationName || 'CRM'}
                       </span>
                       <span className="text-[9px] uppercase font-bold tracking-wider text-[#2563EB] bg-[#EFF6FF] dark:bg-blue-950/60 dark:text-blue-400 px-1 py-0.2 rounded shrink-0">
                         v2.5
                       </span>
                     </div>
                     <p className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium truncate">
-                      {settings.companyName || 'iSysware'}
+                      {settings.companyName || 'Enterprise CRM'}
                     </p>
                   </div>
                 </div>
@@ -468,7 +472,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="flex items-center gap-1.5 truncate">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-100 dark:ring-emerald-950/60 shrink-0" />
                     <span className="font-semibold text-slate-700 dark:text-slate-300 text-xs truncate">
-                      {settings.companyName || 'iSysware'}
+                      {settings.companyName || 'Enterprise CRM'}
                     </span>
                   </div>
                   <span className="text-[11px] font-mono text-slate-400">v2.5</span>
@@ -530,14 +534,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className="min-w-0 overflow-hidden whitespace-nowrap">
                   <div className="flex items-center gap-1.5">
                     <span className="font-bold text-[#0F172A] dark:text-white text-sm tracking-tight truncate">
-                      {settings.applicationName || 'Apex CRM'}
+                      {settings.applicationName || 'CRM'}
                     </span>
                     <span className="text-[9px] uppercase font-bold tracking-wider text-[#2563EB] bg-[#EFF6FF] dark:bg-blue-950/60 dark:text-blue-400 px-1 py-0.2 rounded shrink-0">
                       v2.5
                     </span>
                   </div>
                   <p className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium truncate">
-                    {settings.companyName || 'iSysware'}
+                    {settings.companyName || 'Enterprise CRM'}
                   </p>
                 </div>
               </div>
@@ -864,7 +868,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="flex items-center gap-1.5 truncate">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 <span className="font-semibold text-[#0F172A] dark:text-white truncate">
-                  {settings.companyName || 'iSysware CRM'}
+                  {settings.companyName || 'Enterprise CRM'}
                 </span>
               </div>
               <span className="text-[10px] font-mono text-slate-400">v2.5</span>

@@ -9,16 +9,18 @@ import {
   ArrowUpRight,
   Filter
 } from 'lucide-react';
-import { Lead } from '../../types';
+import { Lead, User, Team } from '../../types';
 import { formatPKR, parseAmount } from '../../utils/formatters';
 import { DataTableScrollFrame } from '../ui';
 
 interface SalesPipelineReportProps {
   leads: Lead[];
+  users?: User[];
+  teams?: Team[];
   filterBar?: React.ReactNode;
 }
 
-export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads, filterBar }) => {
+export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads, users, teams, filterBar }) => {
   // Calculations strictly from authorized filtered leads
   const totalLeads = leads.length;
 
@@ -30,9 +32,9 @@ export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads,
   );
   const lostLeads = leads.filter(l => l.status === 'Lost');
 
-  const totalPipelineValue = leads.reduce((sum, l) => sum + parseAmount(l.value), 0);
-  const openPipelineValue = openLeads.reduce((sum, l) => sum + parseAmount(l.value), 0);
-  const convertedValue = convertedLeads.reduce((sum, l) => sum + parseAmount(l.value), 0);
+  const totalPipelineValue = leads.reduce((sum, l) => sum + parseAmount(l.valuePKR ?? (l as any).value), 0);
+  const openPipelineValue = openLeads.reduce((sum, l) => sum + parseAmount(l.valuePKR ?? (l as any).value), 0);
+  const convertedValue = convertedLeads.reduce((sum, l) => sum + parseAmount(l.valuePKR ?? (l as any).value), 0);
 
   const conversionRate = totalLeads > 0
     ? Math.round((convertedLeads.length / totalLeads) * 100)
@@ -126,7 +128,7 @@ export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads,
         <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Pipeline Value
+              Total Lead Value
             </span>
           </div>
           <div>
@@ -134,7 +136,7 @@ export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads,
               {formatPKR(totalPipelineValue)}
             </div>
             <p className="text-[11px] text-slate-500 mt-1 truncate">
-              Open: {formatPKR(openPipelineValue)}
+              Active Pipeline: {formatPKR(openPipelineValue)}
             </p>
           </div>
         </div>
@@ -181,7 +183,7 @@ export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads,
                 </tr>
               ) : (
                 leads.map(lead => {
-                  const val = parseAmount(lead.value);
+                  const val = parseAmount(lead.valuePKR ?? (lead as any).value);
                   const isWon = ['Converted', 'Won'].includes(lead.status);
                   const isLost = lead.status === 'Lost';
 
@@ -273,7 +275,16 @@ export const SalesPipelineReport: React.FC<SalesPipelineReportProps> = ({ leads,
 
                       {/* Team */}
                       <td className="p-3.5 text-slate-500">
-                        {lead.teamName || '-'}
+                        {(() => {
+                          const assignedUser = users?.find(u => u.id === lead.assignedToId);
+                          return (
+                            lead.teamName ||
+                            (lead.teamId ? teams?.find(t => t.id === lead.teamId)?.name : '') ||
+                            assignedUser?.teamName ||
+                            (assignedUser?.teamId ? teams?.find(t => t.id === assignedUser.teamId)?.name : '') ||
+                            '-'
+                          );
+                        })()}
                       </td>
 
                       {/* Value */}

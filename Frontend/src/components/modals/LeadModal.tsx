@@ -35,59 +35,31 @@ interface LeadModalProps {
   leadToEdit?: Lead | null;
 }
 
-const DEFAULT_SERVICE_OPTIONS = [
-  'Education Management System (premium)',
-  'Education Management System (Lite)',
-  'Salon Management System',
-  'Custom Website Development',
-  'Custom Software Development'
-];
-
 export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdit }) => {
   const { addLead, updateLead, users, assignableUsers, services, sources, currentUser, pricingModels, settings } = useCRM();
-  const availableReps = assignableUsers && assignableUsers.length > 0 ? assignableUsers : (currentUser ? [currentUser] : users);
   const isEmployeeRole = currentUser?.role === 'Employee';
+  const availableReps = useMemo(() => {
+    if (isEmployeeRole) return currentUser ? [currentUser] : [];
+    return assignableUsers && assignableUsers.length > 0 ? assignableUsers : users;
+  }, [assignableUsers, currentUser, isEmployeeRole, users]);
 
   // Basic Details
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('+92 300 ');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [company, setCompany] = useState('');
-  const [city, setCity] = useState('Lahore');
-  const [source, setSource] = useState<LeadSource>('Call');
-  const [priority, setPriority] = useState<Priority>('Medium');
-  const [quality, setQuality] = useState<LeadQuality>('Average');
-  const [status, setStatus] = useState<LeadStatus>('New');
+  const [city, setCity] = useState('');
+  const [source, setSource] = useState<LeadSource | ''>('');
+  const [priority, setPriority] = useState<Priority | ''>('');
+  const [quality, setQuality] = useState<LeadQuality | ''>('');
+  const [status, setStatus] = useState<LeadStatus | ''>('');
 
   // Services
-  const [selectedServices, setSelectedServices] = useState<string[]>([
-    'Salon Management System'
-  ]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
 
   // Dynamic Budget Details
-  const [budgetType, setBudgetType] = useState<BudgetType>('No Budget Discussed');
+  const [budgetType, setBudgetType] = useState<BudgetType | ''>('');
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
-  
-  // Monthly Subscription fields (legacy / fallback)
-  const [monthlySubscriptionFee, setMonthlySubscriptionFee] = useState<number | ''>(5000);
-  const [oneTimeSetupFee, setOneTimeSetupFee] = useState<number | ''>(10000);
-  const [monthlySupportFee, setMonthlySupportFee] = useState<number | ''>(2000);
-  const [monthlyOtherFeeAmount, setMonthlyOtherFeeAmount] = useState<number | ''>('');
-  const [monthlyOtherFeeDescription, setMonthlyOtherFeeDescription] = useState('');
-  const [monthlyTotalInitialPayment, setMonthlyTotalInitialPayment] = useState<number | ''>(17000);
-
-  // Ownership Model fields (legacy / fallback)
-  const [ownershipPrice, setOwnershipPrice] = useState<number | ''>(150000);
-  const [ownershipSetupFee, setOwnershipSetupFee] = useState<number | ''>(20000);
-  const [ownershipSupportFee, setOwnershipSupportFee] = useState<number | ''>(5000);
-  const [ownershipOtherFeeAmount, setOwnershipOtherFeeAmount] = useState<number | ''>('');
-  const [ownershipOtherFeeDescription, setOwnershipOtherFeeDescription] = useState('');
-
-  // One-Time Project Model fields (legacy / fallback)
-  const [totalProjectPrice, setTotalProjectPrice] = useState<number | ''>(85000);
-  const [advanceMilestoneAmount, setAdvanceMilestoneAmount] = useState<number | ''>(30000);
-  const [oneTimeOtherFeeAmount, setOneTimeOtherFeeAmount] = useState<number | ''>('');
-  const [oneTimeOtherFeeDescription, setOneTimeOtherFeeDescription] = useState('');
 
   // Common Budget Notes
   const [budgetNotes, setBudgetNotes] = useState('');
@@ -97,46 +69,28 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
   const [followUpDate, setFollowUpDate] = useState('');
   const [followUpTime, setFollowUpTime] = useState('14:00');
   const [followUpType, setFollowUpType] = useState<FollowUpType>('Call');
-  const [assignedToId, setAssignedToId] = useState(currentUser?.id || users[0]?.id || '');
+  const [assignedToId, setAssignedToId] = useState(isEmployeeRole ? currentUser?.id || '' : '');
 
   // Validation state
   const [nameError, setNameError] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [sourceError, setSourceError] = useState('');
+  const [budgetError, setBudgetError] = useState('');
+  const [assignedToError, setAssignedToError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Find matching pricing model item based on current budgetType
+  // Resolve the selected pricing model strictly from live PostgreSQL-backed pricingModels.
   const activePricingModel = useMemo(() => {
-    if (budgetType === 'No Budget Discussed') return null;
-    return pricingModels?.find(pm => 
-      pm.name.toLowerCase() === budgetType.toLowerCase() ||
-      (budgetType === 'Monthly Subscription Model' && (pm.name.includes('Monthly') || pm.name.includes('Subscription'))) ||
-      (budgetType === 'Ownership Model' && pm.name.includes('Ownership')) ||
-      (budgetType === 'One-Time Project Model' && (pm.name.includes('One-Time') || pm.name.includes('Project')))
-    ) || null;
+    if (!budgetType) return null;
+    return pricingModels?.find(pm => pm.name === budgetType || pm.id === budgetType) || null;
   }, [budgetType, pricingModels]);
 
-  // Handle custom field changes
+  // Handle PostgreSQL-defined dynamic pricing field changes.
   const handleCustomFieldChange = (key: string, value: any) => {
     setCustomFieldValues(prev => ({
       ...prev,
       [key]: value
     }));
-
-    if (key === 'monthly_fee' || key === 'monthlyFee' || key === 'monthlySubscriptionFee') {
-      setMonthlySubscriptionFee(value);
-    } else if (key === 'setup_fee' || key === 'setupFee' || key === 'oneTimeSetupFee') {
-      setOneTimeSetupFee(value);
-      setOwnershipSetupFee(value);
-    } else if (key === 'support_fee' || key === 'supportFee' || key === 'monthlySupportFee') {
-      setMonthlySupportFee(value);
-      setOwnershipSupportFee(value);
-    } else if (key === 'ownership_price' || key === 'ownershipPrice') {
-      setOwnershipPrice(value);
-    } else if (key === 'project_price' || key === 'totalProjectPrice' || key === 'total_price') {
-      setTotalProjectPrice(value);
-    } else if (key === 'advance_payment' || key === 'advanceMilestoneAmount') {
-      setAdvanceMilestoneAmount(value);
-    }
   };
 
   const getTomorrowDate = () => {
@@ -149,57 +103,29 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
   useEffect(() => {
     setNameError('');
     setPhoneError('');
+    setSourceError('');
+    setBudgetError('');
+    setAssignedToError('');
     if (leadToEdit) {
       setName(leadToEdit.name || '');
-      setPhone(leadToEdit.phone || '+92 300 ');
+      setPhone(leadToEdit.phone ? leadToEdit.phone.replace(/\D/g, '').slice(0, 11) : '');
       setEmail(leadToEdit.email || '');
       setCompany(leadToEdit.businessName || '');
-      setCity(leadToEdit.city || 'Lahore');
-      setSource(leadToEdit.source || 'Call');
-      setPriority(leadToEdit.priority || 'Medium');
-      setQuality(leadToEdit.quality || 'Average');
-      setStatus(leadToEdit.status || 'New');
-      setSelectedServices(leadToEdit.services?.length ? leadToEdit.services : ['Salon Management System']);
-      
-      const bType = leadToEdit.budgetType || (leadToEdit.pricingModel === 'Monthly Subscription' ? 'Monthly Subscription Model' : leadToEdit.pricingModel === 'Ownership Model' ? 'Ownership Model' : leadToEdit.pricingModel === 'One-Time Project' ? 'One-Time Project Model' : 'No Budget Discussed');
-      setBudgetType(bType);
+      setCity(leadToEdit.city || '');
+      setSource(leadToEdit.source || '');
+      setPriority(leadToEdit.priority || '');
+      setQuality(leadToEdit.quality || '');
+      setStatus(leadToEdit.status || '');
+      setSelectedServices(leadToEdit.services?.length ? leadToEdit.services : []);
+
+      const bType = (leadToEdit.pricingModel || leadToEdit.budgetType || '') as BudgetType | '';
+      const matchedPm = pricingModels?.find(pm => pm.id === leadToEdit.pricingModelId || pm.name === bType);
+      setBudgetType((matchedPm?.name || bType) as BudgetType | '');
 
       if (leadToEdit.budgetDetails) {
         const bd = leadToEdit.budgetDetails;
-        setMonthlySubscriptionFee(bd.monthlySubscriptionFee ?? 5000);
-        setOneTimeSetupFee(bd.oneTimeSetupFee ?? 10000);
-        setMonthlySupportFee(bd.monthlySupportFee ?? 2000);
-        setMonthlyOtherFeeAmount(bd.otherFeeAmount ?? '');
-        setMonthlyOtherFeeDescription(bd.otherFeeDescription ?? '');
-        setMonthlyTotalInitialPayment(bd.totalInitialPayment ?? 17000);
-
-        setOwnershipPrice(bd.ownershipPrice ?? 150000);
-        setOwnershipSetupFee(bd.setupFee ?? 20000);
-        setOwnershipSupportFee(bd.monthlySupportFee ?? 5000);
-        setOwnershipOtherFeeAmount(bd.otherFeeAmount ?? '');
-        setOwnershipOtherFeeDescription(bd.otherFeeDescription ?? '');
-
-        setTotalProjectPrice(bd.totalProjectPrice ?? 85000);
-        setAdvanceMilestoneAmount(bd.advanceMilestoneAmount ?? 30000);
-        setOneTimeOtherFeeAmount(bd.otherFeeAmount ?? '');
-        setOneTimeOtherFeeDescription(bd.otherFeeDescription ?? '');
-
         setBudgetNotes(bd.budgetNotes ?? '');
-
-        if (bd.customFieldValues && Object.keys(bd.customFieldValues).length > 0) {
-          setCustomFieldValues(bd.customFieldValues);
-        } else {
-          setCustomFieldValues({
-            monthly_fee: bd.monthlySubscriptionFee ?? 5000,
-            setup_fee: bd.oneTimeSetupFee ?? bd.setupFee ?? 10000,
-            support_fee: bd.monthlySupportFee ?? 2000,
-            ownership_price: bd.ownershipPrice ?? 150000,
-            project_price: bd.totalProjectPrice ?? 85000,
-            advance_payment: bd.advanceMilestoneAmount ?? 30000,
-            other_fee: bd.otherFeeAmount ?? '',
-            other_fee_desc: bd.otherFeeDescription ?? ''
-          });
-        }
+        setCustomFieldValues(bd.customFieldValues ? { ...bd.customFieldValues } : {});
       } else {
         setBudgetNotes('');
         setCustomFieldValues({});
@@ -209,47 +135,28 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
       setFollowUpDate(leadToEdit.nextFollowUpDate || '');
       setFollowUpTime(leadToEdit.nextFollowUpTime || '14:00');
       setFollowUpType(leadToEdit.nextFollowUpType || 'Call');
-      setAssignedToId(leadToEdit.assignedToId || currentUser?.id || users[0]?.id || '');
+      setAssignedToId(leadToEdit.assignedToId || (isEmployeeRole ? currentUser?.id || '' : ''));
     } else {
       setName('');
-      setPhone('+92 300 ');
+      setPhone('');
       setEmail('');
       setCompany('');
-      setCity('Lahore');
-      setSource('Call');
-      setPriority('Medium');
-      setQuality('Average');
-      setStatus('New');
-      setSelectedServices(['Salon Management System']);
-      setBudgetType('No Budget Discussed');
-
-      setMonthlySubscriptionFee(5000);
-      setOneTimeSetupFee(10000);
-      setMonthlySupportFee(2000);
-      setMonthlyOtherFeeAmount('');
-      setMonthlyOtherFeeDescription('');
-      setMonthlyTotalInitialPayment(17000);
-
-      setOwnershipPrice(150000);
-      setOwnershipSetupFee(20000);
-      setOwnershipSupportFee(5000);
-      setOwnershipOtherFeeAmount('');
-      setOwnershipOtherFeeDescription('');
-
-      setTotalProjectPrice(85000);
-      setAdvanceMilestoneAmount(30000);
-      setOneTimeOtherFeeAmount('');
-      setOneTimeOtherFeeDescription('');
-
+      setCity('');
+      setSource('');
+      setPriority('');
+      setQuality('');
+      setStatus('');
+      setSelectedServices([]);
+      setBudgetType('');
       setCustomFieldValues({});
       setBudgetNotes('');
       setInitialNote('');
       setFollowUpDate(getTomorrowDate());
       setFollowUpTime('14:00');
       setFollowUpType('Call');
-      setAssignedToId(currentUser?.id || users[0]?.id || '');
+      setAssignedToId(isEmployeeRole ? currentUser?.id || '' : '');
     }
-  }, [leadToEdit, isOpen, currentUser, users]);
+  }, [leadToEdit, isOpen, currentUser, isEmployeeRole]);
 
   useEffect(() => {
     if (activePricingModel?.fields && activePricingModel.fields.length > 0) {
@@ -267,72 +174,40 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
     }
   }, [activePricingModel]);
 
+  const selectedServicesBaseValue = useMemo(() => {
+    return selectedServices.reduce((total, serviceName) => {
+      const service = services.find(item => item.name === serviceName);
+      return total + Number(service?.defaultPricePKR || 0);
+    }, 0);
+  }, [selectedServices, services]);
+
   const calculatedLeadValue = useMemo(() => {
-    if (budgetType === 'No Budget Discussed') {
-      return selectedServices.length * 25000;
-    }
-
     if (activePricingModel?.fields && activePricingModel.fields.length > 0) {
-      const sum = activePricingModel.fields.reduce((acc, field) => {
-        if (field.includeInTotal) {
-          const val = Number(customFieldValues[field.key]);
-          return acc + (isNaN(val) ? 0 : val);
-        }
-        return acc;
+      const dynamicTotal = activePricingModel.fields.reduce((total, field) => {
+        if (!field.includeInTotal) return total;
+        const value = Number(customFieldValues[field.key]);
+        return total + (Number.isFinite(value) ? value : 0);
       }, 0);
-      if (sum > 0) return sum;
+
+      // Once the user enters pricing-model amounts, those values become the deal value.
+      if (dynamicTotal > 0) return dynamicTotal;
     }
 
-    if (budgetType === 'Monthly Subscription Model' || (activePricingModel?.billingType as string) === 'monthly_recurring' || activePricingModel?.billingType === 'Recurring') {
-      const sub = Number(customFieldValues.monthly_fee ?? monthlySubscriptionFee) || 0;
-      const setup = Number(customFieldValues.setup_fee ?? oneTimeSetupFee) || 0;
-      const support = Number(customFieldValues.support_fee ?? monthlySupportFee) || 0;
-      const other = Number(customFieldValues.other_fee ?? monthlyOtherFeeAmount) || 0;
-      return setup + (sub + support) * 12 + other;
-    }
-    if (budgetType === 'Ownership Model' || (activePricingModel?.billingType as string) === 'ownership' || activePricingModel?.billingType === 'Hybrid') {
-      const own = Number(customFieldValues.ownership_price ?? ownershipPrice) || 0;
-      const setup = Number(customFieldValues.setup_fee ?? ownershipSetupFee) || 0;
-      const support = Number(customFieldValues.support_fee ?? ownershipSupportFee) || 0;
-      const other = Number(customFieldValues.other_fee ?? ownershipOtherFeeAmount) || 0;
-      return own + setup + (support * 12) + other;
-    }
-    if (budgetType === 'One-Time Project Model' || (activePricingModel?.billingType as string) === 'one_time' || activePricingModel?.billingType === 'Fixed') {
-      const proj = Number(customFieldValues.project_price ?? totalProjectPrice) || 0;
-      const other = Number(customFieldValues.other_fee ?? oneTimeOtherFeeAmount) || 0;
-      return proj + other;
-    }
-    return 0;
-  }, [
-    budgetType,
-    activePricingModel,
-    customFieldValues,
-    selectedServices,
-    monthlySubscriptionFee,
-    oneTimeSetupFee,
-    monthlySupportFee,
-    monthlyOtherFeeAmount,
-    ownershipPrice,
-    ownershipSetupFee,
-    ownershipSupportFee,
-    ownershipOtherFeeAmount,
-    totalProjectPrice,
-    oneTimeOtherFeeAmount
-  ]);
+    // Before/without custom commercial amounts, use the real selected service catalog price.
+    return selectedServicesBaseValue;
+  }, [activePricingModel, customFieldValues, selectedServicesBaseValue]);
 
   const toggleService = (srvName: string) => {
     if (selectedServices.includes(srvName)) {
-      if (selectedServices.length > 1) {
-        setSelectedServices(prev => prev.filter(s => s !== srvName));
-      }
+      setSelectedServices(prev => prev.filter(s => s !== srvName));
     } else {
       setSelectedServices(prev => [...prev, srvName]);
     }
   };
 
-  const allServiceNames = Array.from(
-    new Set([...DEFAULT_SERVICE_OPTIONS, ...services.map(s => s.name)])
-  );
+  const allServiceNames = useMemo(() => {
+    return Array.from(new Set(services.map(s => s.name)));
+  }, [services]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -346,50 +221,56 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
       setNameError('');
     }
 
-    if (!phone.trim() || phone.trim() === '+92 300') {
-      setPhoneError('Valid active phone number is required');
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (!cleanPhone) {
+      setPhoneError('Phone number is required');
+      hasError = true;
+    } else if (cleanPhone.length !== 11) {
+      setPhoneError('Phone number must be exactly 11 digits (e.g. 03001234567)');
       hasError = true;
     } else {
       setPhoneError('');
     }
 
+    if (!source || !source.trim()) {
+      setSourceError('Please select a Lead Source');
+      hasError = true;
+    } else {
+      setSourceError('');
+    }
+
+    if (!budgetType) {
+      setBudgetError('Please select a Budget Model');
+      hasError = true;
+    } else {
+      setBudgetError('');
+    }
+
+    if (!assignedToId) {
+      setAssignedToError('Please select a Representative');
+      hasError = true;
+    } else {
+      setAssignedToError('');
+    }
+
     if (hasError) return;
 
-    const assignedUser = users.find(u => u.id === assignedToId);
+    const assignedUser = users.find(u => u.id === assignedToId) || availableReps.find(u => u.id === assignedToId);
+
+    const effectiveStatus = (status || 'New') as LeadStatus;
+    const effectivePriority = (priority || 'Medium') as Priority;
+    const effectiveQuality = (quality || 'Average') as LeadQuality;
+    const effectiveBudgetType = budgetType as BudgetType;
 
     const budgetDetails: BudgetDetails = {
-      budgetType,
+      budgetType: effectiveBudgetType,
       budgetNotes,
       customFieldValues,
       totalCalculatedValuePKR: calculatedLeadValue
     };
 
-    if (budgetType === 'Monthly Subscription Model') {
-      budgetDetails.monthlySubscriptionFee = Number(customFieldValues.monthly_fee ?? monthlySubscriptionFee) || 0;
-      budgetDetails.oneTimeSetupFee = Number(customFieldValues.setup_fee ?? oneTimeSetupFee) || 0;
-      budgetDetails.monthlySupportFee = Number(customFieldValues.support_fee ?? monthlySupportFee) || 0;
-      budgetDetails.otherFeeAmount = Number(customFieldValues.other_fee ?? monthlyOtherFeeAmount) || 0;
-      budgetDetails.totalInitialPayment = Number(customFieldValues.total_initial ?? monthlyTotalInitialPayment) || 0;
-      budgetDetails.otherFeeDescription = customFieldValues.other_fee_desc ?? monthlyOtherFeeDescription;
-    } else if (budgetType === 'Ownership Model') {
-      budgetDetails.ownershipPrice = Number(customFieldValues.ownership_price ?? ownershipPrice) || 0;
-      budgetDetails.setupFee = Number(customFieldValues.setup_fee ?? ownershipSetupFee) || 0;
-      budgetDetails.monthlySupportFee = Number(customFieldValues.support_fee ?? ownershipSupportFee) || 0;
-      budgetDetails.otherFeeAmount = Number(customFieldValues.other_fee ?? ownershipOtherFeeAmount) || 0;
-      budgetDetails.otherFeeDescription = customFieldValues.other_fee_desc ?? ownershipOtherFeeDescription;
-    } else if (budgetType === 'One-Time Project Model') {
-      budgetDetails.totalProjectPrice = Number(customFieldValues.project_price ?? totalProjectPrice) || 0;
-      budgetDetails.advanceMilestoneAmount = Number(customFieldValues.advance_payment ?? advanceMilestoneAmount) || 0;
-      budgetDetails.otherFeeAmount = Number(customFieldValues.other_fee ?? oneTimeOtherFeeAmount) || 0;
-      budgetDetails.otherFeeDescription = customFieldValues.other_fee_desc ?? oneTimeOtherFeeDescription;
-    }
-
-    const pricingModelMapped =
-      budgetType === 'Monthly Subscription Model'
-        ? 'Monthly Subscription'
-        : budgetType === 'Ownership Model'
-        ? 'Ownership Model'
-        : 'One-Time Project';
+    const resolvedPricingModelId = activePricingModel?.id || pricingModels?.find(pm => pm.name === effectiveBudgetType)?.id;
+    const pricingModelMapped = activePricingModel?.name || effectiveBudgetType;
 
     const effectiveBusinessName = company.trim() || name.trim() || 'Prospective Client';
     const effectiveEmail = email.trim() || `${name.toLowerCase().replace(/\s+/g, '')}@example.com`;
@@ -399,17 +280,19 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
         ...leadToEdit,
         name: name.trim(),
         businessName: effectiveBusinessName,
-        phone: phone.trim(),
+        phone: cleanPhone,
         email: effectiveEmail,
         city: city.trim(),
         services: selectedServices,
         valuePKR: calculatedLeadValue,
-        status,
-        priority,
-        quality,
-        source,
-        budgetType,
+        status: effectiveStatus,
+        priority: effectivePriority,
+        quality: effectiveQuality,
+        source: source.trim() as LeadSource,
+        budgetType: effectiveBudgetType,
         budgetDetails,
+        pricingModelId: resolvedPricingModelId || leadToEdit.pricingModelId,
+        pricingModelName: pricingModelMapped,
         pricingModel: pricingModelMapped,
         assignedToId,
         assignedToName: assignedUser?.name || 'Unassigned',
@@ -424,17 +307,19 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
       addLead({
         name: name.trim(),
         businessName: effectiveBusinessName,
-        phone: phone.trim(),
+        phone: cleanPhone,
         email: effectiveEmail,
         city: city.trim(),
         services: selectedServices,
         valuePKR: calculatedLeadValue,
-        status,
-        priority,
-        quality,
-        source,
-        budgetType,
+        status: effectiveStatus,
+        priority: effectivePriority,
+        quality: effectiveQuality,
+        source: source.trim() as LeadSource,
+        budgetType: effectiveBudgetType,
         budgetDetails,
+        pricingModelId: resolvedPricingModelId,
+        pricingModelName: pricingModelMapped,
         pricingModel: pricingModelMapped,
         assignedToId,
         assignedToName: assignedUser?.name || 'Unassigned',
@@ -444,7 +329,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
         nextFollowUpDate: followUpDate || undefined,
         nextFollowUpTime: followUpDate ? followUpTime : undefined,
         nextFollowUpType: followUpDate ? followUpType : undefined,
-        tags: [budgetType, priority]
+        tags: [effectiveBudgetType, effectivePriority].filter(Boolean)
       });
     }
 
@@ -522,10 +407,12 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
                 type="text"
                 value={phone}
                 onChange={e => {
-                  setPhone(e.target.value);
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                  setPhone(digits);
                   if (phoneError) setPhoneError('');
                 }}
-                placeholder="+92 300 1234567"
+                maxLength={11}
+                placeholder="03001234567 (11 digits)"
                 error={!!phoneError}
               />
             </FormField>
@@ -555,16 +442,21 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
                 type="text"
                 value={city}
                 onChange={e => setCity(e.target.value)}
-                placeholder="e.g. Lahore"
+                placeholder="e.g. Lahore, Karachi, Islamabad"
                 leftIcon={<MapPin className="w-3.5 h-3.5" />}
               />
             </FormField>
 
-            <FormField label="Lead Source">
+            <FormField label="Lead Source" required error={sourceError}>
               <Select
                 value={source}
-                onChange={e => setSource(e.target.value as LeadSource)}
+                onChange={e => {
+                  setSource(e.target.value as LeadSource);
+                  if (sourceError) setSourceError('');
+                }}
+                error={!!sourceError}
               >
+                <option value="">-- Select Lead Source --</option>
                 {sources.map(src => (
                   <option key={src} value={src}>{src}</option>
                 ))}
@@ -588,6 +480,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
                 value={status}
                 onChange={e => setStatus(e.target.value as LeadStatus)}
               >
+                <option value="">-- Select Status --</option>
                 <option value="New">New</option>
                 <option value="Contacted">Contacted</option>
                 <option value="Follow-Up Required">Follow-Up Required</option>
@@ -605,6 +498,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
                 value={priority}
                 onChange={e => setPriority(e.target.value as Priority)}
               >
+                <option value="">-- Select Priority --</option>
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
                 <option value="High">High</option>
@@ -617,6 +511,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
                 value={quality}
                 onChange={e => setQuality(e.target.value as LeadQuality)}
               >
+                <option value="">-- Select Lead Quality --</option>
                 <option value="Good">Good (High Intent)</option>
                 <option value="Average">Average</option>
                 <option value="Poor">Poor</option>
@@ -640,36 +535,41 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-            {allServiceNames.map(srvName => {
-              const isSelected = selectedServices.includes(srvName);
-              return (
-                <button
-                  type="button"
-                  key={srvName}
-                  onClick={() => toggleService(srvName)}
-                  className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#EFF6FF] dark:bg-blue-950/40 border-[#2563EB] text-[#2563EB] dark:text-blue-300 shadow-xs ring-1 ring-[#2563EB]/20'
-                      : 'bg-white dark:bg-slate-900 border-[#E5EAF1] dark:border-slate-800 text-[#0F172A] dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850'
-                  }`}
-                >
-                  <div className="mt-0.5 shrink-0">
-                    {isSelected ? (
-                      <div className="w-4 h-4 rounded-md bg-[#2563EB] text-white flex items-center justify-center">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </div>
-                    ) : (
-                      <div className="w-4 h-4 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold leading-snug">
-                      {srvName}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
+            {allServiceNames.length === 0 ? (
+              <div className="col-span-full py-6 text-center text-xs text-slate-500 italic bg-slate-50 dark:bg-slate-850 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                No services configured yet. Configure your services in Admin &gt; Services.
+              </div>
+            ) : (
+              allServiceNames.map(srvName => {
+                const isSelected = selectedServices.includes(srvName);
+                return (
+                  <button
+                    type="button"
+                    key={srvName}
+                    onClick={() => toggleService(srvName)}
+                    className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-all cursor-pointer ${isSelected
+                        ? 'bg-[#EFF6FF] dark:bg-blue-950/40 border-[#2563EB] text-[#2563EB] dark:text-blue-300 shadow-xs ring-1 ring-[#2563EB]/20'
+                        : 'bg-white dark:bg-slate-900 border-[#E5EAF1] dark:border-slate-800 text-[#0F172A] dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850'
+                      }`}
+                  >
+                    <div className="mt-0.5 shrink-0">
+                      {isSelected ? (
+                        <div className="w-4 h-4 rounded-md bg-[#2563EB] text-white flex items-center justify-center">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </div>
+                      ) : (
+                        <div className="w-4 h-4 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold leading-snug">
+                        {srvName}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -693,45 +593,29 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
             </div>
           </div>
 
-          <FormField label="Select Budget Model" required>
+          <FormField label="Select Budget Model" required error={budgetError}>
             <Select
               value={budgetType}
-              onChange={e => setBudgetType(e.target.value as BudgetType)}
+              onChange={e => {
+                setBudgetType(e.target.value as BudgetType);
+                setCustomFieldValues({});
+                if (budgetError) setBudgetError('');
+              }}
+              error={!!budgetError}
             >
-              <option value="No Budget Discussed">1. No Budget Discussed</option>
-              <option value="Monthly Subscription Model">2. Monthly Subscription Model (SaaS)</option>
-              <option value="Ownership Model">3. Ownership Model (Lifetime License)</option>
-              <option value="One-Time Project Model">4. One-Time Project Model</option>
-              {pricingModels && pricingModels.length > 0 && (
-                pricingModels
-                  .filter(pm => 
-                    pm.isActive && 
-                    !['Monthly Subscription (SaaS)', 'Monthly Subscription Model', 'One-Time Project Model', 'Ownership Model'].includes(pm.name)
-                  )
-                  .map((pm, idx) => (
-                    <option key={pm.id} value={pm.name}>
-                      {idx + 5}. {pm.name} ({pm.billingType})
-                    </option>
-                  ))
-              )}
+              <option value="">-- Select Budget Model --</option>
+              {pricingModels
+                .filter(pm => pm.isActive)
+                .map(pm => (
+                  <option key={pm.id} value={pm.name}>
+                    {pm.name} ({pm.billingType})
+                  </option>
+                ))}
             </Select>
           </FormField>
 
-          {/* DYNAMIC FORM RENDERING BY BUDGET TYPE */}
-          {budgetType === 'No Budget Discussed' && (
-            <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-[#E5EAF1] dark:border-slate-800 space-y-2 animate-fadeIn">
-              <FormField label="Budget Notes">
-                <Textarea
-                  rows={2}
-                  value={budgetNotes}
-                  onChange={e => setBudgetNotes(e.target.value)}
-                  placeholder="No budget discussed yet. Add optional note about client expectations, branch scale, or follow-up pricing targets..."
-                />
-              </FormField>
-            </div>
-          )}
-
-          {budgetType !== 'No Budget Discussed' && activePricingModel?.fields && activePricingModel.fields.length > 0 && (
+          {/* DYNAMIC FORM RENDERING FROM THE SELECTED DATABASE PRICING MODEL */}
+          {budgetType && activePricingModel?.fields && activePricingModel.fields.length > 0 && (
             <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-[#E5EAF1] dark:border-slate-800 space-y-4 animate-fadeIn">
               <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700/60">
                 <div className="flex items-center gap-2">
@@ -765,147 +649,17 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
             </div>
           )}
 
-          {budgetType === 'Monthly Subscription Model' && (!activePricingModel?.fields || activePricingModel.fields.length === 0) && (
-            <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-[#E5EAF1] dark:border-slate-800 space-y-4 animate-fadeIn">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                <FormField label="Monthly Fee (PKR)" required>
-                  <Input
-                    type="number"
-                    value={monthlySubscriptionFee}
-                    onChange={e => setMonthlySubscriptionFee(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="e.g. 5000"
-                  />
-                </FormField>
-
-                <FormField label="One-Time Setup Fee (PKR)">
-                  <Input
-                    type="number"
-                    value={oneTimeSetupFee}
-                    onChange={e => setOneTimeSetupFee(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="e.g. 10000"
-                  />
-                </FormField>
-
-                <FormField label="Monthly Support Fee (PKR)">
-                  <Input
-                    type="number"
-                    value={monthlySupportFee}
-                    onChange={e => setMonthlySupportFee(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="e.g. 2000"
-                  />
-                </FormField>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                <FormField label="Other Fee Amount (PKR)">
-                  <Input
-                    type="number"
-                    value={monthlyOtherFeeAmount}
-                    onChange={e => setMonthlyOtherFeeAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="Optional (e.g. 0)"
-                  />
-                </FormField>
-
-                <FormField label="Total Initial Payment (PKR)">
-                  <Input
-                    type="number"
-                    value={monthlyTotalInitialPayment}
-                    onChange={e => setMonthlyTotalInitialPayment(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="e.g. 17000"
-                  />
-                </FormField>
-
-                <FormField label="Other Fee Description">
-                  <Input
-                    type="text"
-                    value={monthlyOtherFeeDescription}
-                    onChange={e => setMonthlyOtherFeeDescription(e.target.value)}
-                    placeholder="e.g. SMS credits, onboarding"
-                  />
-                </FormField>
-              </div>
-
-              <FormField label="Budget Notes">
+          {budgetType && (!activePricingModel?.fields || activePricingModel.fields.length === 0) && (
+            <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-[#E5EAF1] dark:border-slate-800 space-y-3 animate-fadeIn">
+              <p className="text-xs text-[#64748B] dark:text-slate-400">
+                This pricing model has no custom deal fields. Until a commercial amount is entered through a configured pricing field, the calculated deal value uses the selected service catalog price.
+              </p>
+              <FormField label="Budget Notes & Terms">
                 <Textarea
                   rows={2}
                   value={budgetNotes}
                   onChange={e => setBudgetNotes(e.target.value)}
-                  placeholder="Budget notes..."
-                />
-              </FormField>
-            </div>
-          )}
-
-          {budgetType === 'Ownership Model' && (!activePricingModel?.fields || activePricingModel.fields.length === 0) && (
-            <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-[#E5EAF1] dark:border-slate-800 space-y-4 animate-fadeIn">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                <FormField label="Ownership Price (PKR)" required>
-                  <Input
-                    type="number"
-                    value={ownershipPrice}
-                    onChange={e => setOwnershipPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="e.g. 150000"
-                  />
-                </FormField>
-
-                <FormField label="Setup Fee (PKR)">
-                  <Input
-                    type="number"
-                    value={ownershipSetupFee}
-                    onChange={e => setOwnershipSetupFee(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="e.g. 20000"
-                  />
-                </FormField>
-
-                <FormField label="Monthly Support Fee (PKR)">
-                  <Input
-                    type="number"
-                    value={ownershipSupportFee}
-                    onChange={e => setOwnershipSupportFee(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="e.g. 5000"
-                  />
-                </FormField>
-              </div>
-
-              <FormField label="Budget Notes">
-                <Textarea
-                  rows={2}
-                  value={budgetNotes}
-                  onChange={e => setBudgetNotes(e.target.value)}
-                  placeholder="Ownership pricing discussion notes..."
-                />
-              </FormField>
-            </div>
-          )}
-
-          {budgetType === 'One-Time Project Model' && (!activePricingModel?.fields || activePricingModel.fields.length === 0) && (
-            <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-[#E5EAF1] dark:border-slate-800 space-y-4 animate-fadeIn">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <FormField label="Total Project Price (PKR)" required>
-                  <Input
-                    type="number"
-                    value={totalProjectPrice}
-                    onChange={e => setTotalProjectPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="e.g. 85000"
-                  />
-                </FormField>
-
-                <FormField label="Advance / Milestone Amount (PKR)">
-                  <Input
-                    type="number"
-                    value={advanceMilestoneAmount}
-                    onChange={e => setAdvanceMilestoneAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="e.g. 30000"
-                  />
-                </FormField>
-              </div>
-
-              <FormField label="Budget Notes">
-                <Textarea
-                  rows={2}
-                  value={budgetNotes}
-                  onChange={e => setBudgetNotes(e.target.value)}
-                  placeholder="Project milestone & deliverable pricing details..."
+                  placeholder="Pricing discussion notes, milestone conditions, discount approvals, or payment schedule details..."
                 />
               </FormField>
             </div>
@@ -924,13 +678,19 @@ export const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, leadToEdi
           <FormField
             label="Assign Representative"
             required
+            error={assignedToError}
             hint={isEmployeeRole ? 'Locked to your account' : undefined}
           >
             <Select
               value={assignedToId}
-              onChange={e => setAssignedToId(e.target.value)}
+              onChange={e => {
+                setAssignedToId(e.target.value);
+                if (assignedToError) setAssignedToError('');
+              }}
               disabled={isEmployeeRole}
+              error={!!assignedToError}
             >
+              {!isEmployeeRole && <option value="">-- Select Representative --</option>}
               {availableReps.map(u => (
                 <option key={u.id} value={u.id}>
                   {u.name} — {u.role} ({u.teamName || 'Direct Team'})

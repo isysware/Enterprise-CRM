@@ -48,6 +48,7 @@ export const UsersAdminView: React.FC = () => {
     updateUser,
     toggleUserStatus,
     deleteUser,
+    resetUserPassword,
     canManageSuperAdminAccount,
     canManageUser,
     canCreateUserWithRole,
@@ -74,7 +75,7 @@ export const UsersAdminView: React.FC = () => {
   // Form State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('+92 300 0000000');
+  const [phone, setPhone] = useState('');
   const [role, setRole] = useState<UserRole>('Employee');
   const [isActive, setIsActive] = useState(true);
   const [teamId, setTeamId] = useState('');
@@ -175,17 +176,16 @@ export const UsersAdminView: React.FC = () => {
     setEditingUser(null);
     setName('');
     setEmail('');
-    setPhone('+92 300 0000000');
+    setPhone('');
     const defaultRole = allowedTargetRoles.includes('Employee')
       ? 'Employee'
       : allowedTargetRoles[0] || 'Employee';
     setRole(defaultRole as UserRole);
     setIsActive(true);
-    const defaultTeam = teams[0];
-    setTeamId(defaultTeam?.id || '');
-    setManagerName(defaultTeam?.managerName || '');
-    setTeamLeadName(defaultTeam?.leaderName || '');
-    setPassword('Emp@123');
+    setTeamId('');
+    setManagerName('');
+    setTeamLeadName('');
+    setPassword('Emp@1234!');
     setAvatar('');
     setImageError(false);
     setErrorMessage('');
@@ -201,13 +201,13 @@ export const UsersAdminView: React.FC = () => {
     setEditingUser(userToEdit);
     setName(userToEdit.name);
     setEmail(userToEdit.email);
-    setPhone(userToEdit.phone || '+92 300 0000000');
+    setPhone(userToEdit.phone ? userToEdit.phone.replace(/\D/g, '').slice(0, 11) : '');
     setRole(userToEdit.role);
     setIsActive(userToEdit.isActive !== false);
     setTeamId(userToEdit.teamId || '');
     setManagerName(userToEdit.managerName || '');
     setTeamLeadName(userToEdit.teamLeadName || '');
-    setPassword(userToEdit.password || 'Emp@123');
+    setPassword('');
     setAvatar(userToEdit.avatar || '');
     setImageError(false);
     setErrorMessage('');
@@ -269,6 +269,30 @@ export const UsersAdminView: React.FC = () => {
         return;
       }
 
+      const trimmedPassword = password.trim();
+      if (trimmedPassword) {
+        if (trimmedPassword.length < 8) {
+          setErrorMessage('New password must be at least 8 characters long.');
+          return;
+        }
+        if (!/[A-Z]/.test(trimmedPassword)) {
+          setErrorMessage('New password must contain at least one uppercase letter (A-Z).');
+          return;
+        }
+        if (!/[a-z]/.test(trimmedPassword)) {
+          setErrorMessage('New password must contain at least one lowercase letter (a-z).');
+          return;
+        }
+        if (!/[0-9]/.test(trimmedPassword)) {
+          setErrorMessage('New password must contain at least one number (0-9).');
+          return;
+        }
+        if (!/[^A-Za-z0-9]/.test(trimmedPassword)) {
+          setErrorMessage('New password must contain at least one special character (e.g. !@#$%^&*).');
+          return;
+        }
+      }
+
       const res = await updateUser({
         ...editingUser,
         name: name.trim(),
@@ -280,14 +304,24 @@ export const UsersAdminView: React.FC = () => {
         teamName: assignedTeam?.name || undefined,
         managerName: managerName.trim(),
         teamLeadName: teamLeadName.trim(),
-        avatar: finalAvatar,
-        password: password.trim()
+        avatar: finalAvatar
       });
 
       if (!res.success && res.error) {
         setErrorMessage(res.error);
         return;
       }
+
+      if (trimmedPassword) {
+        const pwdRes = await resetUserPassword(editingUser.id, trimmedPassword);
+        if (!pwdRes.success) {
+          setErrorMessage(pwdRes.error || 'Profile details updated, but password reset failed.');
+          return;
+        }
+      }
+
+      setActionFeedback({ type: 'success', message: `User "${editingUser.name}" updated successfully.` });
+      setTimeout(() => setActionFeedback(null), 3000);
       setIsAddModalOpen(false);
       setEditingUser(null);
     } else {
@@ -295,6 +329,28 @@ export const UsersAdminView: React.FC = () => {
         setErrorMessage(
           `Security Policy: You are not authorized to create an account with role "${role}".`
         );
+        return;
+      }
+
+      const trimmedPassword = password.trim();
+      if (!trimmedPassword || trimmedPassword.length < 8) {
+        setErrorMessage('Initial password must be at least 8 characters long.');
+        return;
+      }
+      if (!/[A-Z]/.test(trimmedPassword)) {
+        setErrorMessage('Initial password must contain at least one uppercase letter (A-Z).');
+        return;
+      }
+      if (!/[a-z]/.test(trimmedPassword)) {
+        setErrorMessage('Initial password must contain at least one lowercase letter (a-z).');
+        return;
+      }
+      if (!/[0-9]/.test(trimmedPassword)) {
+        setErrorMessage('Initial password must contain at least one number (0-9).');
+        return;
+      }
+      if (!/[^A-Za-z0-9]/.test(trimmedPassword)) {
+        setErrorMessage('Initial password must contain at least one special character (e.g. !@#$%^&*).');
         return;
       }
 
@@ -309,13 +365,15 @@ export const UsersAdminView: React.FC = () => {
         managerName: managerName.trim(),
         teamLeadName: teamLeadName.trim(),
         avatar: finalAvatar,
-        password: password.trim()
+        password: trimmedPassword
       });
 
       if (!res.success && res.error) {
         setErrorMessage(res.error);
         return;
       }
+      setActionFeedback({ type: 'success', message: `New user account created successfully.` });
+      setTimeout(() => setActionFeedback(null), 3000);
       setIsAddModalOpen(false);
     }
   };
@@ -964,8 +1022,9 @@ export const UsersAdminView: React.FC = () => {
                     <Input
                       type="text"
                       value={phone}
-                      onChange={e => setPhone(e.target.value)}
-                      placeholder="+92 300 0000000"
+                      onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                      maxLength={11}
+                      placeholder="03001234567 (11 digits)"
                       className="font-mono"
                     />
                   </FormField>
@@ -1062,15 +1121,19 @@ export const UsersAdminView: React.FC = () => {
 
                 <FormField
                   label={editingUser ? 'Password / Reset Credentials' : 'Initial Password'}
-                  required
-                  helperText="Minimum 6 characters for user authentication"
+                  required={!editingUser}
+                  helperText={
+                    editingUser
+                      ? 'Leave blank to keep current password, or enter new (min 8 chars, uppercase, lowercase, number, symbol).'
+                      : 'Minimum 8 characters with uppercase, lowercase, number, and symbol (e.g. Emp@1234!).'
+                  }
                 >
                   <Input
                     type="text"
-                    required
+                    required={!editingUser}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="Emp@123"
+                    placeholder={editingUser ? 'Leave blank to keep unchanged' : 'Emp@1234!'}
                     className="font-mono"
                   />
                 </FormField>

@@ -33,6 +33,12 @@ export interface ClientDbRow {
   updated_at: Date;
 }
 
+const toUuidOrNull = (val?: string | null): string | null => {
+  if (!val || typeof val !== 'string') return null;
+  const trimmed = val.trim();
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed) ? trimmed : null;
+};
+
 export class ClientsService {
   public static async listClients(
     actor: AuthUser,
@@ -196,7 +202,7 @@ export class ClientsService {
         input.city?.trim() || null,
         JSON.stringify(input.servicesSnapshot || lead.service_snapshot || []),
         input.source || lead.source,
-        input.pricingModelId || lead.pricing_model_id,
+        toUuidOrNull(input.pricingModelId) || toUuidOrNull(lead.pricing_model_id) || null,
         input.finalValuePKR || lead.value_pkr || 0,
         ownerId,
         actor.id,

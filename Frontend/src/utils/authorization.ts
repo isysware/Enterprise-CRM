@@ -132,7 +132,7 @@ export function getHierarchyScope(
       if (u.id === currentUser.id) return true;
       if (u.role === 'Super Admin' || u.role === 'Admin') return false;
       if (u.role === 'Manager') return false; // Cannot assign across outside managers
-      return (u.teamId && managedTeamIds.includes(u.teamId)) || u.managerName === currentUser.name;
+      return u.role === 'Team Lead' || u.role === 'Employee';
     });
 
     return {
@@ -167,7 +167,7 @@ export function getHierarchyScope(
       if (u.id === currentUser.id) return true;
       if (u.role === 'Super Admin' || u.role === 'Admin' || u.role === 'Manager') return false;
       if (u.role === 'Team Lead') return false; // Cannot assign across outside team leads
-      return u.role === 'Employee' && ((u.teamId && ledTeamIds.includes(u.teamId)) || u.teamLeadName === currentUser.name);
+      return u.role === 'Employee';
     });
 
     return {

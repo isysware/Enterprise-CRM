@@ -42,7 +42,7 @@ export const ServicesAdminView: React.FC = () => {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('ERP');
   const [pricingModel, setPricingModel] = useState<PricingModel>('Monthly Subscription');
-  const [defaultPricePKR, setDefaultPricePKR] = useState(85000);
+  const [defaultPricePKR, setDefaultPricePKR] = useState<number | string>(25000);
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
 
@@ -107,7 +107,7 @@ export const ServicesAdminView: React.FC = () => {
     setName('');
     setCategory('ERP');
     setPricingModel('Monthly Subscription');
-    setDefaultPricePKR(85000);
+    setDefaultPricePKR('');
     setDescription('');
     setIsActive(true);
     setIsAddModalOpen(true);
@@ -118,34 +118,36 @@ export const ServicesAdminView: React.FC = () => {
     setName(srv.name);
     setCategory(srv.category);
     setPricingModel(srv.pricingModel);
-    setDefaultPricePKR(srv.defaultPricePKR || srv.basePricePKR || 0);
+    setDefaultPricePKR(srv.defaultPricePKR ?? srv.basePricePKR ?? 0);
     setDescription(srv.description || '');
     setIsActive(srv.isActive !== false);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
+    const parsedPrice = Number(defaultPricePKR) || 0;
+
     if (editingService) {
-      updateService({
+      await updateService({
         ...editingService,
         name: name.trim(),
         category: category.trim(),
         pricingModel,
-        defaultPricePKR: Number(defaultPricePKR),
-        basePricePKR: Number(defaultPricePKR),
+        defaultPricePKR: parsedPrice,
+        basePricePKR: parsedPrice,
         description: description.trim(),
         isActive
       });
       setEditingService(null);
     } else {
-      addService({
+      await addService({
         name: name.trim(),
         category: category.trim(),
         pricingModel,
-        defaultPricePKR: Number(defaultPricePKR),
-        basePricePKR: Number(defaultPricePKR),
+        defaultPricePKR: parsedPrice,
+        basePricePKR: parsedPrice,
         description: description.trim(),
         isActive
       });
@@ -537,7 +539,8 @@ export const ServicesAdminView: React.FC = () => {
                 required
                 min={0}
                 value={defaultPricePKR}
-                onChange={e => setDefaultPricePKR(Number(e.target.value))}
+                onChange={e => setDefaultPricePKR(e.target.value)}
+                placeholder="e.g. 25000"
                 className="font-mono font-medium"
               />
             </FormField>

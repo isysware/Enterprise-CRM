@@ -42,7 +42,7 @@ export const servicesApi = {
   createService: (data: CreateServiceInput) => apiClient.post<ServiceDto>('/services', data),
 
   updateService: (id: string, data: UpdateServiceInput) =>
-    apiClient.patch<ServiceDto>(`/services/${id}`, data),
+    apiClient.put<ServiceDto>(`/services/${id}`, data),
 
   deleteService: (id: string) => apiClient.delete<null>(`/services/${id}`),
 };

@@ -18,25 +18,52 @@ export interface PricingModelDbRow {
 }
 
 export class PricingModelsService {
-  public static async listPricingModels(): Promise<PricingModelDbRow[]> {
+  public static mapRow(row: PricingModelDbRow): any {
+    const defaultValues = typeof row.default_values === 'string'
+      ? JSON.parse(row.default_values)
+      : (row.default_values || {});
+    const fieldSchema = typeof row.field_schema === 'string'
+      ? JSON.parse(row.field_schema)
+      : (row.field_schema || []);
+
+    return {
+      id: row.id,
+      name: row.name,
+      billingType: row.billing_type,
+      description: row.description,
+      isActive: row.is_active,
+      isDefault: row.is_default,
+      defaultValues,
+      fieldSchema,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      billing_type: row.billing_type,
+      is_active: row.is_active,
+      is_default: row.is_default,
+      default_values: defaultValues,
+      field_schema: fieldSchema,
+    };
+  }
+
+  public static async listPricingModels(): Promise<any[]> {
     const res = await query<PricingModelDbRow>(
       'SELECT * FROM pricing_models ORDER BY is_default DESC, name ASC'
     );
-    return res.rows;
+    return res.rows.map((r) => this.mapRow(r));
   }
 
-  public static async getPricingModelById(id: string): Promise<PricingModelDbRow> {
+  public static async getPricingModelById(id: string): Promise<any> {
     const res = await query<PricingModelDbRow>('SELECT * FROM pricing_models WHERE id = $1', [id]);
     if (res.rows.length === 0) {
       throw AppError.notFound(`Pricing model '${id}' not found`);
     }
-    return res.rows[0];
+    return this.mapRow(res.rows[0]);
   }
 
   public static async createPricingModel(
     actor: AuthUser,
     input: CreatePricingModelInput
-  ): Promise<PricingModelDbRow> {
+  ): Promise<any> {
     const existing = await query('SELECT id FROM pricing_models WHERE LOWER(name) = LOWER($1)', [
       input.name.trim(),
     ]);
@@ -73,14 +100,14 @@ export class PricingModelsService {
       res.rows[0].name
     );
 
-    return res.rows[0];
+    return this.mapRow(res.rows[0]);
   }
 
   public static async updatePricingModel(
     actor: AuthUser,
     id: string,
     input: UpdatePricingModelInput
-  ): Promise<PricingModelDbRow> {
+  ): Promise<any> {
     const existing = await this.getPricingModelById(id);
 
     if (input.isDefault) {
@@ -136,7 +163,7 @@ export class PricingModelsService {
       res.rows[0].name
     );
 
-    return res.rows[0];
+    return this.mapRow(res.rows[0]);
   }
 
   public static async deletePricingModel(actor: AuthUser, id: string): Promise<void> {

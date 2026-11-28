@@ -1,4 +1,5 @@
 import { Lead, Client, FollowUp, User } from '../types';
+import { getLocalDateString } from './formatters';
 import {
   AIScopeType,
   AISafeCurrentUser,
@@ -89,7 +90,7 @@ export const buildAIAuthorizedContext = (
   };
 
   // 3. Compute High-Level Bounded Metrics from ALREADY SCOPED data
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
 
   const totalPipelineValuePKR = scopedLeads.reduce(
     (sum, l) => sum + (Number(l.valuePKR) || 0),

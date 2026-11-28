@@ -6,6 +6,7 @@ import { SettingsBrandingTab } from './settings/SettingsBrandingTab';
 import { SettingsLetterheadTab } from './settings/SettingsLetterheadTab';
 import { SettingsPricingTab } from './settings/SettingsPricingTab';
 import { SettingsCommunicationTab } from './settings/SettingsCommunicationTab';
+import { SettingsDeleteManagementTab } from './settings/SettingsDeleteManagementTab';
 import { PageHeader, ConfirmDialog } from '../ui';
 
 interface SettingsAdminViewProps {
@@ -29,6 +30,10 @@ const SETTINGS_PAGES: Record<SettingsSubTab, { title: string; description: strin
   communication: {
     title: 'Communication & Alerts',
     description: 'Configure communication preferences, templates and operational alert thresholds.'
+  },
+  'delete-management': {
+    title: 'Delete Management & Data Purge',
+    description: 'Permanently purge selected CRM data categories from PostgreSQL database with transactional integrity.'
   }
 };
 
@@ -106,6 +111,10 @@ export const SettingsAdminView: React.FC<SettingsAdminViewProps> = ({
 
         {currentTab === 'communication' && (
           <SettingsCommunicationTab onSaveSuccess={handleSaveSuccess} />
+        )}
+
+        {currentTab === 'delete-management' && (
+          <SettingsDeleteManagementTab onSaveSuccess={handleSaveSuccess} />
         )}
       </div>
 

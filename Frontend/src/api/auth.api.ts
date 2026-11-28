@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient, setAuthToken } from './client';
 import { UserRole } from '../types';
 
 export interface AuthUserDto {
@@ -44,14 +44,31 @@ export interface GetMeResponseData {
 }
 
 export const authApi = {
-  login: (credentials: { email: string; password: string }) =>
-    apiClient.post<LoginResponseData>('/auth/login', credentials),
+  login: async (credentials: { email: string; password: string }) => {
+    const res = await apiClient.post<LoginResponseData>('/auth/login', credentials);
+    if (res?.accessToken) {
+      setAuthToken(res.accessToken);
+    }
+    return res;
+  },
 
-  logout: () => apiClient.post<null>('/auth/logout'),
+  logout: async () => {
+    try {
+      await apiClient.post<null>('/auth/logout');
+    } finally {
+      setAuthToken(null);
+    }
+  },
 
   getMe: () => apiClient.get<GetMeResponseData>('/auth/me'),
 
-  refresh: () => apiClient.post<LoginResponseData>('/auth/refresh'),
+  refresh: async () => {
+    const res = await apiClient.post<LoginResponseData>('/auth/refresh');
+    if (res?.accessToken) {
+      setAuthToken(res.accessToken);
+    }
+    return res;
+  },
 
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     apiClient.post<null>('/auth/change-password', data),

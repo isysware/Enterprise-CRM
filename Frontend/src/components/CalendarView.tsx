@@ -19,7 +19,7 @@ import {
   User,
   ArrowRight
 } from 'lucide-react';
-import { formatDate, getWhatsAppUrl, getLocalDateString } from '../utils/formatters';
+import { getWhatsAppUrl, getLocalDateString, formatDate, formatTime } from '../utils/formatters';
 import { EmptyState, PageHeader, Button } from './ui';
 
 interface CalendarViewProps {
@@ -27,6 +27,8 @@ interface CalendarViewProps {
   onOpenRescheduleModal: (followUp: FollowUp) => void;
   onOpenLeadDetail: (leadId: string) => void;
 }
+
+
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
   onOpenScheduleModal,
@@ -186,11 +188,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <button
             type="button"
             onClick={() => setViewMode('month')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              viewMode === 'month'
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${viewMode === 'month'
                 ? 'bg-white dark:bg-slate-700 text-[#2563EB] dark:text-blue-300 shadow-2xs'
                 : 'text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-slate-200'
-            }`}
+              }`}
           >
             <CalendarDays className="w-3.5 h-3.5" />
             <span>Month</span>
@@ -198,11 +199,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <button
             type="button"
             onClick={() => setViewMode('agenda')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              viewMode === 'agenda'
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${viewMode === 'agenda'
                 ? 'bg-white dark:bg-slate-700 text-[#2563EB] dark:text-blue-300 shadow-2xs'
                 : 'text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-slate-200'
-            }`}
+              }`}
           >
             <ListFilter className="w-3.5 h-3.5" />
             <span>Agenda</span>
@@ -244,24 +244,22 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   <div
                     key={dateStr}
                     onClick={() => setSelectedDateStr(dateStr)}
-                    className={`min-h-[90px] sm:min-h-[110px] p-2 flex flex-col justify-between transition-all cursor-pointer select-none ${
-                      isSelected
+                    className={`min-h-[90px] sm:min-h-[110px] p-2 flex flex-col justify-between transition-all cursor-pointer select-none ${isSelected
                         ? 'bg-blue-50/60 dark:bg-blue-950/30 ring-2 ring-[#2563EB] ring-inset'
                         : isToday
-                        ? 'bg-blue-50/30 dark:bg-blue-950/15'
-                        : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
-                    }`}
+                          ? 'bg-blue-50/30 dark:bg-blue-950/15'
+                          : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
+                      }`}
                   >
                     {/* Top Row: Date Number and Activity Count */}
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-xs font-medium w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                          isToday
+                        className={`text-xs font-medium w-6 h-6 rounded-full flex items-center justify-center transition-colors ${isToday
                             ? 'bg-[#2563EB] text-white shadow-2xs font-medium'
                             : isSelected
-                            ? 'bg-blue-100 dark:bg-blue-900 text-[#2563EB] dark:text-blue-300'
-                            : 'text-[#0F172A] dark:text-slate-300'
-                        }`}
+                              ? 'bg-blue-100 dark:bg-blue-900 text-[#2563EB] dark:text-blue-300'
+                              : 'text-[#0F172A] dark:text-slate-300'
+                          }`}
                       >
                         {dayNumber}
                       </span>
@@ -276,7 +274,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     {/* Event Chips List */}
                     <div className="space-y-1 my-1 flex-1 overflow-hidden">
                       {events.slice(0, 2).map(ev => {
-                        const isDone = ev.status === 'Done';
+                        const isDone =
+                          ev.status === 'Done' ||
+                          ev.status === 'Completed' ||
+                          (ev.status as string)?.toLowerCase() === 'completed' ||
+                          (ev.status as string)?.toLowerCase() === 'done';
                         const isMissed =
                           ev.status === 'Missed' ||
                           (ev.scheduledDate < todayStr && ev.status === 'Pending');
@@ -295,9 +297,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           <div
                             key={ev.id}
                             className={`text-[10px] font-medium px-1.5 py-0.5 rounded border truncate flex items-center gap-1 ${chipStyle}`}
-                            title={`${ev.scheduledTime} - ${ev.clientBusiness || ev.clientName} (${ev.type})`}
+                            title={`${formatTime(ev.scheduledTime)} - ${ev.clientBusiness || ev.clientName} (${ev.type})`}
                           >
-                            <span className="font-bold shrink-0">{ev.scheduledTime}</span>
+                            <span className="font-bold shrink-0">{formatTime(ev.scheduledTime)}</span>
                             <span className="truncate">{ev.clientBusiness || ev.clientName}</span>
                           </div>
                         );
@@ -359,7 +361,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               ) : (
                 selectedDayEvents.map(ev => {
                   const waUrl = getWhatsAppUrl(ev.phone, ev.clientName, ev.clientBusiness);
-                  const isDone = ev.status === 'Done';
+                  const isDone =
+                    ev.status === 'Done' ||
+                    ev.status === 'Completed' ||
+                    (ev.status as string)?.toLowerCase() === 'completed' ||
+                    (ev.status as string)?.toLowerCase() === 'done';
                   const isMissed =
                     ev.status === 'Missed' ||
                     (ev.scheduledDate < todayStr && ev.status === 'Pending');
@@ -383,15 +389,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         </div>
 
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${
-                            isDone
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${isDone
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'
                               : isMissed
-                              ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800'
-                              : 'bg-blue-50 text-[#2563EB] border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800'
-                          }`}
+                                ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800'
+                                : 'bg-blue-50 text-[#2563EB] border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800'
+                            }`}
                         >
-                          {ev.scheduledTime} ({ev.type})
+                          {formatTime(ev.scheduledTime)} ({ev.type})
                         </span>
                       </div>
 
@@ -426,22 +431,29 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
                         {/* Status Mutations */}
                         <div className="flex items-center gap-2">
-                          {!isDone && (
-                            <button
-                              type="button"
-                              onClick={() => completeFollowUp(ev.id, 'Completed from calendar')}
-                              className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer"
-                            >
-                              Done
-                            </button>
+                          {!isDone ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => completeFollowUp(ev.id, 'Completed from calendar')}
+                                className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer"
+                              >
+                                Done
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onOpenRescheduleModal(ev)}
+                                className="text-[11px] font-medium text-amber-600 hover:text-amber-700 cursor-pointer"
+                              >
+                                Reschedule
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Completed
+                            </span>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => onOpenRescheduleModal(ev)}
-                            className="text-[11px] font-medium text-amber-600 hover:text-amber-700 cursor-pointer"
-                          >
-                            Reschedule
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -488,7 +500,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {events.map(ev => {
                       const waUrl = getWhatsAppUrl(ev.phone, ev.clientName, ev.clientBusiness);
-                      const isDone = ev.status === 'Done';
+                      const isDone =
+                        ev.status === 'Done' ||
+                        ev.status === 'Completed' ||
+                        (ev.status as string)?.toLowerCase() === 'completed' ||
+                        (ev.status as string)?.toLowerCase() === 'done';
                       const isMissed =
                         ev.status === 'Missed' ||
                         (ev.scheduledDate < todayStr && ev.status === 'Pending');
@@ -508,15 +524,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                               </p>
                             </div>
                             <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${
-                                isDone
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${isDone
                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                   : isMissed
-                                  ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                  : 'bg-blue-50 text-[#2563EB] border-blue-200'
-                              }`}
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : 'bg-blue-50 text-[#2563EB] border-blue-200'
+                                }`}
                             >
-                              {ev.scheduledTime} ({ev.type})
+                              {formatTime(ev.scheduledTime)} ({ev.type})
                             </span>
                           </div>
 
@@ -545,22 +560,29 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                             </div>
 
                             <div className="flex items-center gap-2">
-                              {!isDone && (
-                                <button
-                                  type="button"
-                                  onClick={() => completeFollowUp(ev.id, 'Completed from calendar')}
-                                  className="text-[11px] font-bold text-emerald-600 hover:underline cursor-pointer"
-                                >
-                                  Done
-                                </button>
+                              {!isDone ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => completeFollowUp(ev.id, 'Completed from calendar')}
+                                    className="text-[11px] font-bold text-emerald-600 hover:underline cursor-pointer"
+                                  >
+                                    Done
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => onOpenRescheduleModal(ev)}
+                                    className="text-[11px] font-medium text-amber-600 hover:underline cursor-pointer"
+                                  >
+                                    Reschedule
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  Completed
+                                </span>
                               )}
-                              <button
-                                type="button"
-                                onClick={() => onOpenRescheduleModal(ev)}
-                                className="text-[11px] font-medium text-amber-600 hover:underline cursor-pointer"
-                              >
-                                Reschedule
-                              </button>
                             </div>
                           </div>
                         </div>

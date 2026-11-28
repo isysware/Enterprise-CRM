@@ -349,11 +349,13 @@ const MainLayout: React.FC = () => {
         existingProposal={existingProposalTarget}
       />
 
-      {/* Global AI Assistant Launcher & Panel */}
-      <AIAssistantLauncher
-        isOpen={isAIAssistantOpen}
-        onToggle={() => setIsAIAssistantOpen(prev => !prev)}
-      />
+      {/* Global AI Assistant Launcher & Panel (Hidden on reporting pages) */}
+      {activeTab !== 'reports' && (
+        <AIAssistantLauncher
+          isOpen={isAIAssistantOpen}
+          onToggle={() => setIsAIAssistantOpen(prev => !prev)}
+        />
+      )}
       <AIAssistantPanel
         isOpen={isAIAssistantOpen}
         onClose={() => setIsAIAssistantOpen(false)}

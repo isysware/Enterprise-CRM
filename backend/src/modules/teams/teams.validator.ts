@@ -3,9 +3,10 @@ import { z } from 'zod';
 export const createTeamSchema = z.object({
   name: z.string().min(2, 'Team name must be at least 2 characters').max(100),
   code: z.string().min(2, 'Team code must be at least 2 characters').max(50),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
   managerId: z.string().uuid().optional().nullable(),
   teamLeadId: z.string().uuid().optional().nullable(),
+  memberIds: z.array(z.string().uuid()).optional(),
 });
 
 export const updateTeamSchema = z.object({
@@ -15,6 +16,7 @@ export const updateTeamSchema = z.object({
   managerId: z.string().uuid().optional().nullable(),
   teamLeadId: z.string().uuid().optional().nullable(),
   status: z.enum(['active', 'inactive', 'archived']).optional(),
+  memberIds: z.array(z.string().uuid()).optional(),
 });
 
 export const addTeamMemberSchema = z.object({

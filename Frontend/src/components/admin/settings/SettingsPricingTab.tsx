@@ -46,7 +46,7 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
   } = useCRM();
 
   const [defaultPricingModel, setDefaultPricingModel] = useState<string>(
-    settings.defaultPricingModel || 'Monthly Subscription (SaaS)'
+    settings.defaultPricingModel || ''
   );
 
   // Pricing Model Modal State
@@ -54,9 +54,9 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
   const [editingPricingModel, setEditingPricingModel] = useState<PricingModelItem | null>(null);
   const [deleteConfirmModel, setDeleteConfirmModel] = useState<PricingModelItem | null>(null);
   const [pmName, setPmName] = useState('');
-  const [pmBillingType, setPmBillingType] = useState<'Recurring' | 'Milestone' | 'Fixed' | 'Hybrid'>('Recurring');
-  const [pmSetupFee, setPmSetupFee] = useState<number>(15000);
-  const [pmFrequency, setPmFrequency] = useState('Monthly');
+  const [pmBillingType, setPmBillingType] = useState<PricingModelItem['billingType'] | ''>('');
+  const [pmSetupFee, setPmSetupFee] = useState<number | ''>('');
+  const [pmFrequency, setPmFrequency] = useState('');
   const [pmDescription, setPmDescription] = useState('');
   const [pmIsActive, setPmIsActive] = useState(true);
   const [pmFields, setPmFields] = useState<PricingModelField[]>([]);
@@ -65,6 +65,7 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
 
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSavingModel, setIsSavingModel] = useState(false);
 
   // Helper to generate a clean camelCase key from label
   const generateFieldKey = (label: string) => {
@@ -83,33 +84,12 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
   const handleOpenAddPricingModal = () => {
     setEditingPricingModel(null);
     setPmName('');
-    setPmBillingType('Recurring');
-    setPmSetupFee(15000);
-    setPmFrequency('Monthly');
+    setPmBillingType('');
+    setPmSetupFee('');
+    setPmFrequency('');
     setPmDescription('');
     setPmIsActive(true);
-    setPmFields([
-      {
-        id: `f-${Date.now()}-1`,
-        label: 'Monthly Subscription Fee (PKR)',
-        key: 'monthlyFee',
-        type: 'currency',
-        defaultValue: 15000,
-        placeholder: 'e.g. 15000',
-        isRequired: true,
-        includeInTotal: true
-      },
-      {
-        id: `f-${Date.now()}-2`,
-        label: 'One-Time Setup Fee (PKR)',
-        key: 'oneTimeSetupFee',
-        type: 'currency',
-        defaultValue: 15000,
-        placeholder: 'e.g. 15000',
-        isRequired: false,
-        includeInTotal: true
-      }
-    ]);
+    setPmFields([]);
     setPmError(null);
     setIsPricingModalOpen(true);
   };
@@ -120,7 +100,7 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
     setPmName(model.name);
     setPmBillingType(model.billingType);
     setPmSetupFee(model.defaultSetupFeePKR || 0);
-    setPmFrequency(model.defaultBillingFrequency || 'Monthly');
+    setPmFrequency(model.defaultBillingFrequency || '');
     setPmDescription(model.description);
     setPmIsActive(model.isActive);
     setPmFields(model.fields && model.fields.length > 0 ? [...model.fields] : []);
@@ -186,10 +166,17 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
   };
 
   // Save Pricing Model
-  const handleSavePricingModel = (e: React.FormEvent) => {
+  const handleSavePricingModel = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPmError(null);
+
     if (!pmName.trim()) {
       setPmError('Model name is required.');
+      return;
+    }
+
+    if (!pmBillingType) {
+      setPmError('Please select a billing structure.');
       return;
     }
 
@@ -203,32 +190,51 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
       };
     });
 
-    if (editingPricingModel) {
-      updatePricingModel({
-        ...editingPricingModel,
-        name: pmName.trim(),
-        billingType: pmBillingType,
-        defaultSetupFeePKR: Number(pmSetupFee) || 0,
-        defaultBillingFrequency: pmFrequency.trim() || 'Monthly',
-        description: pmDescription.trim(),
-        isActive: pmIsActive,
-        fields: sanitizedFields
-      });
-      onSaveSuccess(`Pricing model "${pmName}" updated with ${sanitizedFields.length} dynamic fields!`);
-    } else {
-      addPricingModel({
-        name: pmName.trim(),
-        billingType: pmBillingType,
-        defaultSetupFeePKR: Number(pmSetupFee) || 0,
-        defaultBillingFrequency: pmFrequency.trim() || 'Monthly',
-        description: pmDescription.trim(),
-        isActive: pmIsActive,
-        fields: sanitizedFields
-      });
-      onSaveSuccess(`New pricing model "${pmName}" created!`);
-    }
+    setIsSavingModel(true);
 
-    setIsPricingModalOpen(false);
+    try {
+      if (editingPricingModel) {
+        const updated = await updatePricingModel({
+          ...editingPricingModel,
+          name: pmName.trim(),
+          billingType: pmBillingType as PricingModelItem['billingType'],
+          defaultSetupFeePKR: Number(pmSetupFee) || 0,
+          defaultBillingFrequency: pmFrequency.trim(),
+          description: pmDescription.trim(),
+          isActive: pmIsActive,
+          fields: sanitizedFields
+        });
+        if (!updated) {
+          setPmError('Failed to update pricing model. Please check the fields and try again.');
+          setIsSavingModel(false);
+          return;
+        }
+        onSaveSuccess(`Pricing model "${pmName}" updated with ${sanitizedFields.length} dynamic fields!`);
+      } else {
+        const created = await addPricingModel({
+          name: pmName.trim(),
+          billingType: pmBillingType as PricingModelItem['billingType'],
+          defaultSetupFeePKR: Number(pmSetupFee) || 0,
+          defaultBillingFrequency: pmFrequency.trim(),
+          description: pmDescription.trim(),
+          isActive: pmIsActive,
+          fields: sanitizedFields
+        });
+        if (!created) {
+          setPmError('Failed to create pricing model in database. Please check the fields and try again.');
+          setIsSavingModel(false);
+          return;
+        }
+        onSaveSuccess(`New pricing model "${pmName}" created and saved to database!`);
+      }
+
+      setIsPricingModalOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save pricing model.';
+      setPmError(message);
+    } finally {
+      setIsSavingModel(false);
+    }
   };
 
   // Delete Pricing Model
@@ -263,22 +269,39 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
     }
   };
 
-  const handleSaveDefaultPricing = (e: React.FormEvent) => {
+  const handleSaveDefaultPricing = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTabActionError(null);
+    if (!defaultPricingModel) {
+      setTabActionError('Please select a default pricing model first.');
+      return;
+    }
     setIsSaving(true);
 
-    updateSettings(
-      { defaultPricingModel },
-      'pricing_config',
-      'Software Pricing Configuration'
-    );
+    try {
+      await updateSettings(
+        { defaultPricingModel },
+        'pricing_config',
+        'Software Pricing Configuration'
+      );
 
-    setTimeout(() => {
-      setIsSaving(false);
+      const targetModel = pricingModels.find(m => m.name === defaultPricingModel);
+      if (targetModel && !targetModel.isSystemDefault) {
+        await updatePricingModel({
+          ...targetModel,
+          isSystemDefault: true
+        });
+      }
+
       setIsSaved(true);
       onSaveSuccess('Default Software Pricing Model saved successfully!');
       setTimeout(() => setIsSaved(false), 3000);
-    }, 400);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save default pricing model.';
+      setTabActionError(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -343,6 +366,7 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
               onChange={e => setDefaultPricingModel(e.target.value)}
               className="px-3 py-1.5 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white font-medium focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden cursor-pointer"
             >
+              <option value="">-- Select Default Pricing Model --</option>
               {pricingModels.map(pm => (
                 <option key={pm.id} value={pm.name}>
                   {pm.name} ({pm.billingType})
@@ -351,7 +375,7 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
             </select>
             <button
               type="submit"
-              disabled={isSaving}
+              disabled={isSaving || !defaultPricingModel}
               className="px-3.5 py-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shrink-0 disabled:opacity-50 shadow-xs shadow-blue-500/20"
             >
               {isSaving ? 'Saving...' : 'Set Default'}
@@ -422,11 +446,10 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
                     </td>
 
                     <td className="py-3.5 px-3">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        model.isActive
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${model.isActive
                           ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
-                      }`}>
+                        }`}>
                         {model.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
@@ -471,7 +494,7 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
       <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl shadow-xs">
         <div className="text-xs text-[#64748B] dark:text-slate-400 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-          <span>Settings Configuration: Local Browser Session (Cloud storage not connected)</span>
+          <span>Configuration: Connected to PostgreSQL Database</span>
         </div>
 
         <button
@@ -546,6 +569,7 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
                     onChange={e => setPmBillingType(e.target.value as any)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden cursor-pointer"
                   >
+                    <option value="">-- Select Billing Structure --</option>
                     <option value="Recurring">Recurring Subscription (Monthly/Annual)</option>
                     <option value="Milestone">Milestone-Based Turnkey Project</option>
                     <option value="Fixed">Fixed Price / One-Off Licensing</option>
@@ -561,7 +585,8 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
                     type="number"
                     min="0"
                     value={pmSetupFee}
-                    onChange={e => setPmSetupFee(Number(e.target.value) || 0)}
+                    onChange={e => setPmSetupFee(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="0"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden font-mono"
                   />
                 </div>
@@ -739,9 +764,19 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-xs shadow-blue-500/20"
+                  disabled={isSavingModel}
+                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-xs shadow-blue-500/20 disabled:opacity-50"
                 >
-                  {editingPricingModel ? 'Update Model' : 'Create Model'}
+                  {isSavingModel && (
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  )}
+                  <span>
+                    {isSavingModel
+                      ? 'Saving...'
+                      : editingPricingModel
+                        ? 'Update Model'
+                        : 'Create Model'}
+                  </span>
                 </button>
               </div>
             </form>

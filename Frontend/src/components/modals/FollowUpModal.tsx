@@ -83,7 +83,7 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
 
@@ -100,33 +100,44 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
 
     const assignedUser = users.find(u => u.id === assignedToId);
 
-    if (followUpToReschedule) {
-      rescheduleFollowUp(
-        followUpToReschedule.id,
-        scheduledDate,
-        scheduledTime,
-        notes || 'Rescheduled follow-up call.'
-      );
-    } else {
-      addFollowUp({
-        leadId: leadId || undefined,
-        clientName: clientName.trim(),
-        clientBusiness: clientBusiness.trim(),
-        phone: phone.trim(),
-        scheduledDate,
-        scheduledTime,
-        type,
-        source: 'Follow-Up',
-        notes: notes.trim() || 'Scheduled follow-up contact.',
-        assignedToId,
-        assignedToName: assignedUser?.name || 'Assigned Agent',
-        status: 'Pending'
-      });
-    }
-
     setIsSubmitting(true);
-    onClose();
-    setIsSubmitting(false);
+    try {
+      if (followUpToReschedule) {
+        if (followUpToReschedule.status === 'Done' || (followUpToReschedule.status as string) === 'Completed') {
+          setErrors({ scheduledDate: 'Cannot reschedule a completed follow-up' });
+          return;
+        }
+
+        await rescheduleFollowUp(
+          followUpToReschedule.id,
+          scheduledDate,
+          scheduledTime,
+          notes || 'Rescheduled follow-up call.',
+          type,
+          assignedToId
+        );
+      } else {
+        await addFollowUp({
+          leadId: leadId || undefined,
+          clientName: clientName.trim(),
+          clientBusiness: clientBusiness.trim(),
+          phone: phone.trim(),
+          scheduledDate,
+          scheduledTime,
+          type,
+          source: 'Follow-Up',
+          notes: notes.trim() || 'Scheduled follow-up contact.',
+          assignedToId,
+          assignedToName: assignedUser?.name || 'Assigned Agent',
+          status: 'Pending'
+        });
+      }
+      onClose();
+    } catch (err) {
+      console.error('Failed to submit follow-up modal:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const modalFooter = (

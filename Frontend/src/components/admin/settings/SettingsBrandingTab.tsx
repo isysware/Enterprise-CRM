@@ -43,7 +43,7 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
   const { settings, updateSettings } = useCRM();
 
   const [applicationName, setApplicationName] = useState(settings.applicationName || 'CRM');
-  const [companyName, setCompanyName] = useState(settings.companyName || 'iSysware');
+  const [companyName, setCompanyName] = useState(settings.companyName || '');
   const [companyLogo, setCompanyLogo] = useState(settings.companyLogo || '');
   const [currency, setCurrency] = useState(settings.currency || 'PKR');
   const [currencySymbol, setCurrencySymbol] = useState(settings.currencySymbol || 'Rs.');
@@ -56,14 +56,21 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
   const [isSaved, setIsSaved] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Track whether the user has made manual edits since last save so we don't
+  // overwrite their in-progress typing when settings context refreshes.
+  const hasUnsavedEdits = useRef(false);
 
   useEffect(() => {
-    setApplicationName(settings.applicationName || 'CRM');
-    setCompanyName(settings.companyName || 'iSysware');
-    setCompanyLogo(settings.companyLogo || '');
-    setCurrency(settings.currency || 'PKR');
-    setCurrencySymbol(settings.currencySymbol || 'Rs.');
-    setTimezone(settings.timezone || 'Asia/Karachi (UTC+5)');
+    // Only sync from settings when there are no unsaved user edits
+    // (i.e. on initial mount or after a successful save)
+    if (!hasUnsavedEdits.current) {
+      setApplicationName(settings.applicationName || 'CRM');
+      setCompanyName(settings.companyName || '');
+      setCompanyLogo(settings.companyLogo || '');
+      setCurrency(settings.currency || 'PKR');
+      setCurrencySymbol(settings.currencySymbol || 'Rs.');
+      setTimezone(settings.timezone || 'Asia/Karachi (UTC+5)');
+    }
   }, [settings]);
 
   // Handle Image File Upload (Base64 conversion)
@@ -127,27 +134,31 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
     else if (val === 'EUR') setCurrencySymbol('€');
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
 
     const brandingData = {
       applicationName: applicationName.trim() || 'CRM',
-      companyName: companyName.trim() || 'iSysware',
+      companyName: companyName.trim(),
       companyLogo,
       currency,
       currencySymbol,
       timezone
     };
 
-    updateSettings(brandingData, 'branding', 'Organization Identity & Branding');
-
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      await updateSettings(brandingData, 'branding', 'Organization Identity & Branding');
+      // Mark edits as saved after the API call resolves so the useEffect doesn't overwrite it
+      hasUnsavedEdits.current = false;
       setIsSaved(true);
       onSaveSuccess('Organization Identity & Branding settings saved successfully!');
       setTimeout(() => setIsSaved(false), 3000);
-    }, 400);
+    } catch (err) {
+      console.error('Failed to save branding settings:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -219,10 +230,10 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
                 {/* Info & Remove Button */}
                 <div className="flex-1 min-w-0 pl-1">
                   <p className="text-xs font-bold text-[#0F172A] dark:text-slate-200 truncate">
-                    {companyLogo ? 'Local Preview Active' : 'Default Monogram'}
+                    {companyLogo ? 'Custom Logo Active' : 'Default Monogram'}
                   </p>
                   <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-0.5">
-                    PNG, SVG, JPG, WebP (Local browser preview)
+                    PNG, SVG, JPG, WebP supported
                   </p>
                   {companyLogo && (
                     <button
@@ -298,7 +309,7 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
                       Click to choose image file
                     </span>
                     <span className="text-[10px] text-[#64748B] mt-0.5">
-                      Local Preview — In-memory browser preview (cloud storage not connected)
+                      PNG, SVG, JPG, WebP image formats supported
                     </span>
                   </label>
                 </div>
@@ -392,7 +403,7 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
                     </span>
                   </div>
                   <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                    {companyName || 'iSysware'}
+                    {companyName || 'Company Name'}
                   </p>
                 </div>
               </div>
@@ -408,7 +419,7 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
               <input
                 type="text"
                 value={applicationName}
-                onChange={e => setApplicationName(e.target.value)}
+                onChange={e => { hasUnsavedEdits.current = true; setApplicationName(e.target.value); }}
                 placeholder="e.g. Apex CRM or CRM"
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden"
                 required
@@ -425,7 +436,7 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
               <input
                 type="text"
                 value={companyName}
-                onChange={e => setCompanyName(e.target.value)}
+                onChange={e => { hasUnsavedEdits.current = true; setCompanyName(e.target.value); }}
                 placeholder="e.g. iSysware Solutions"
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden"
                 required
@@ -524,7 +535,7 @@ export const SettingsBrandingTab: React.FC<SettingsBrandingTabProps> = ({ onSave
       <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl shadow-xs">
         <div className="text-xs text-[#64748B] dark:text-slate-400 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-          <span>Local Configuration: In-browser session (Cloud storage not connected)</span>
+          <span>Configuration: Connected to PostgreSQL Database</span>
         </div>
 
         <button

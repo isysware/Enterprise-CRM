@@ -21,6 +21,7 @@ export interface LeadDbDto {
   team_id: string | null;
   team_name?: string | null;
   pricing_model_id: string | null;
+  pricing_model_name?: string | null;
   budget_details: Record<string, unknown>;
   notes: string | null;
   tags: string[];

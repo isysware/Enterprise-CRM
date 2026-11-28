@@ -47,10 +47,23 @@ export interface AiAssistantResponse {
   answer: string;
   insights?: {
     totalScopedLeads?: number;
+    openLeadsCount?: number;
+    newLeadsCount?: number;
+    wonLeadsCount?: number;
+    lostLeadsCount?: number;
+    conversionRate?: number;
+    totalLeadValuePKR?: number;
+    activePipelineValuePKR?: number;
+    hotUrgentLeadsCount?: number;
+    totalClientsCount?: number;
+    convertedContractValuePKR?: number;
+    completedFollowUpsCount?: number;
+    pendingFollowUpsCount?: number;
     pipelineValuePKR?: number;
     missedFollowUpsCount?: number;
     upcomingFollowUpsCount?: number;
     conversionsCount?: number;
+    [key: string]: unknown;
   };
   actionProposal?: AiActionProposal;
   suggestedPrompts?: string[];

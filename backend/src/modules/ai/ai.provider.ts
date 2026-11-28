@@ -8,9 +8,19 @@ export interface ScopedCrmContext {
   };
   summary: {
     totalLeads: number;
-    pipelineValuePKR: number;
+    openLeadsCount: number;
+    newLeadsCount: number;
     wonLeadsCount: number;
     lostLeadsCount: number;
+    conversionRate: number;
+    totalLeadValuePKR: number;
+    activePipelineValuePKR: number;
+    hotUrgentLeadsCount: number;
+    totalClientsCount: number;
+    convertedContractValuePKR: number;
+    completedFollowUpsCount: number;
+    pendingFollowUpsCount: number;
+    pipelineValuePKR: number;
     conversionsCount: number;
   };
   todayLeads: Array<{
@@ -133,41 +143,166 @@ export class DeterministicCrmCopilotProvider implements IAiProvider {
       };
     }
 
-    // 2. Today's Leads / New Leads
-    if (lower.includes("today's lead") || lower.includes('todays lead') || lower.includes('leads today') || lower.includes('new leads')) {
-      const count = context.todayLeads.length;
-      if (count === 0) {
-        return {
-          answer: `There are currently no new leads created today within your authorized scope (${context.actor.role}). You have ${context.summary.totalLeads} total active leads in your pipeline.`,
-          insights: {
-            totalScopedLeads: context.summary.totalLeads,
-            pipelineValuePKR: context.summary.pipelineValuePKR,
-          },
-          suggestedPrompts: ['What are my missed follow-ups?', 'Give me a pipeline summary', "Tomorrow's follow-ups"],
-          source: 'internal_crm_database',
-        };
-      }
+    // 2. Multi-Metric / Comprehensive Operational Analysis
+    const hasTotalLeadVal = lower.includes('total lead value') || (lower.includes('total value') && !lower.includes('contract'));
+    const hasTotalLeads = (lower.includes('total lead') || lower.includes('how many lead')) && !hasTotalLeadVal;
+    const hasActivePipeline = lower.includes('active pipeline') || lower.includes('pipeline value');
+    const hasConversion = lower.includes('conversion') || lower.includes('converted') || lower.includes('win rate');
+    const hasNewLeads = lower.includes('new lead') || lower.includes('open lead');
+    const hasHotLeads = lower.includes('hot lead') || lower.includes('urgent');
+    const hasClients = lower.includes('client') || lower.includes('contract value');
+    const hasFollowUps = lower.includes('completed follow') || lower.includes('pending follow');
 
-      const leadItems = context.todayLeads
-        .slice(0, 5)
-        .map(
-          (l) =>
-            `• **${l.name}** (${l.businessName || 'Individual'}) - Status: *${l.status}*, Value: PKR ${Number(l.valuePKR).toLocaleString()}, Priority: ${l.priority}`
-        )
-        .join('\n');
+    const matchedMetrics = [
+      hasTotalLeads,
+      hasTotalLeadVal,
+      hasActivePipeline,
+      hasConversion,
+      hasNewLeads,
+      hasHotLeads,
+      hasClients,
+      hasFollowUps
+    ].filter(Boolean).length;
+
+    const isComprehensiveReport =
+      matchedMetrics >= 2 ||
+      lower.includes('multi') ||
+      lower.includes('baseline') ||
+      lower.includes('all metric') ||
+      lower.includes('all the metric') ||
+      lower.includes('kpi') ||
+      lower.includes('summary') ||
+      lower.includes('overview') ||
+      (lower.includes('report') && !lower.includes('staff'));
+
+    if (isComprehensiveReport) {
+      const comprehensiveAnswer =
+        `### 📊 Scoped CRM Pipeline Summary & Operational Analysis (${context.actor.role} scope)\n\n` +
+        `• **Total Leads**: ${context.summary.totalLeads}\n` +
+        `• **New / Open Leads**: ${context.summary.openLeadsCount} (New: ${context.summary.newLeadsCount})\n` +
+        `• **Converted Deals**: ${context.summary.wonLeadsCount}\n` +
+        `• **Conversion Rate**: ${context.summary.conversionRate}%\n` +
+        `• **Total Lead Value**: PKR ${context.summary.totalLeadValuePKR.toLocaleString()}\n` +
+        `• **Active Pipeline Value**: PKR ${context.summary.activePipelineValuePKR.toLocaleString()} *(strictly excludes Won/Converted & Lost)*\n` +
+        `• **Hot / Urgent Leads**: ${context.summary.hotUrgentLeadsCount}\n` +
+        `• **Active Clients**: ${context.summary.totalClientsCount}\n` +
+        `• **Converted Contract Value**: PKR ${context.summary.convertedContractValuePKR.toLocaleString()}\n` +
+        `• **Completed Follow-Ups**: ${context.summary.completedFollowUpsCount}\n` +
+        `• **Pending Follow-Ups**: ${context.summary.pendingFollowUpsCount}\n\n` +
+        `*Data calculated strictly from live scoped PostgreSQL database records.*`;
 
       return {
-        answer: `You have **${count}** lead(s) created today within your scope:\n\n${leadItems}\n\nTotal pipeline value for your scope is **PKR ${context.summary.pipelineValuePKR.toLocaleString()}**.`,
+        answer: comprehensiveAnswer,
         insights: {
           totalScopedLeads: context.summary.totalLeads,
-          pipelineValuePKR: context.summary.pipelineValuePKR,
+          openLeadsCount: context.summary.openLeadsCount,
+          newLeadsCount: context.summary.newLeadsCount,
+          wonLeadsCount: context.summary.wonLeadsCount,
+          conversionRate: context.summary.conversionRate,
+          totalLeadValuePKR: context.summary.totalLeadValuePKR,
+          activePipelineValuePKR: context.summary.activePipelineValuePKR,
+          hotUrgentLeadsCount: context.summary.hotUrgentLeadsCount,
+          totalClientsCount: context.summary.totalClientsCount,
+          convertedContractValuePKR: context.summary.convertedContractValuePKR,
+          completedFollowUpsCount: context.summary.completedFollowUpsCount,
+          pendingFollowUpsCount: context.summary.pendingFollowUpsCount,
+          pipelineValuePKR: context.summary.activePipelineValuePKR,
+          conversionsCount: context.summary.totalClientsCount,
         },
-        suggestedPrompts: ['Show missed follow-ups', 'Show pipeline summary', 'Show client conversions'],
+        suggestedPrompts: ['Show missed follow-ups', "Show today's leads", 'Show source performance', 'Show staff performance'],
         source: 'internal_crm_database',
       };
     }
 
-    // 3. Tomorrow's Follow-Ups / Upcoming Follow-Ups
+    // 3. Single Metric: Total Lead Value
+    if (lower.includes('total lead value') || (lower.includes('total value') && !lower.includes('contract'))) {
+      return {
+        answer:
+          `The **Total Lead Value** within your authorized scope (${context.actor.role}) is **PKR ${context.summary.totalLeadValuePKR.toLocaleString()}**, covering all ${context.summary.totalLeads} scoped leads.\n\n` +
+          `*(Note: **Active Pipeline Value**, which excludes Converted and Lost deals, is **PKR ${context.summary.activePipelineValuePKR.toLocaleString()}**)*`,
+        insights: {
+          totalLeadValuePKR: context.summary.totalLeadValuePKR,
+          activePipelineValuePKR: context.summary.activePipelineValuePKR,
+          totalScopedLeads: context.summary.totalLeads,
+        },
+        suggestedPrompts: ['What is active pipeline value?', 'Give me a pipeline summary'],
+        source: 'internal_crm_database',
+      };
+    }
+
+    // 4. Single Metric: Active Pipeline Value
+    if (lower.includes('active pipeline') || (lower.includes('pipeline value') && !lower.includes('total lead value'))) {
+      return {
+        answer:
+          `The **Active Pipeline Value** within your authorized scope (${context.actor.role}) is **PKR ${context.summary.activePipelineValuePKR.toLocaleString()}** across ${context.summary.openLeadsCount} active open leads.\n\n` +
+          `Converted and Lost deals are strictly excluded from the active pipeline.\n` +
+          `*(Total cumulative Lead Value across all ${context.summary.totalLeads} leads is **PKR ${context.summary.totalLeadValuePKR.toLocaleString()}**)*`,
+        insights: {
+          activePipelineValuePKR: context.summary.activePipelineValuePKR,
+          totalLeadValuePKR: context.summary.totalLeadValuePKR,
+          totalScopedLeads: context.summary.totalLeads,
+          openLeadsCount: context.summary.openLeadsCount,
+        },
+        suggestedPrompts: ['What is total lead value?', 'Show conversion rate'],
+        source: 'internal_crm_database',
+      };
+    }
+
+    // 5. Single Metric: Conversion Rate / Converted Deals
+    if (lower.includes('conversion rate') || lower.includes('converted deal') || lower.includes('win rate')) {
+      return {
+        answer:
+          `Your **Conversion Rate** is **${context.summary.conversionRate}%** with **${context.summary.wonLeadsCount}** converted deal(s) out of **${context.summary.totalLeads}** total leads.\n\n` +
+          `Closed client contract value is **PKR ${context.summary.convertedContractValuePKR.toLocaleString()}**.`,
+        insights: {
+          conversionRate: context.summary.conversionRate,
+          wonLeadsCount: context.summary.wonLeadsCount,
+          totalScopedLeads: context.summary.totalLeads,
+          convertedContractValuePKR: context.summary.convertedContractValuePKR,
+        },
+        suggestedPrompts: ['Show active pipeline value', 'Show recent conversions'],
+        source: 'internal_crm_database',
+      };
+    }
+
+    // 6. Single Metric: Hot / Urgent Leads
+    if (lower.includes('hot') || lower.includes('urgent')) {
+      return {
+        answer: `You have **${context.summary.hotUrgentLeadsCount}** Hot / Urgent priority lead(s) requiring immediate attention in your authorized scope.`,
+        insights: {
+          hotUrgentLeadsCount: context.summary.hotUrgentLeadsCount,
+          totalScopedLeads: context.summary.totalLeads,
+        },
+        suggestedPrompts: ["Show today's follow-ups", 'Give me a pipeline summary'],
+        source: 'internal_crm_database',
+      };
+    }
+
+    // 7. Single Metric: Clients & Contract Value
+    if (lower.includes('client') || lower.includes('contract value')) {
+      const convs = context.recentConversions;
+      const convRows = convs
+        .slice(0, 5)
+        .map((c) => `• **${c.businessName}** (${c.clientName}) — PKR ${Number(c.finalValuePKR).toLocaleString()} on ${c.convertedDate}`)
+        .join('\n');
+
+      return {
+        answer:
+          `### 🏆 Clients & Revenue Summary (${context.actor.role} scope)\n\n` +
+          `• **Active Clients**: ${context.summary.totalClientsCount}\n` +
+          `• **Converted Contract Value**: PKR ${context.summary.convertedContractValuePKR.toLocaleString()}\n\n` +
+          (convRows ? `**Recent Acquisitions:**\n${convRows}` : ''),
+        insights: {
+          totalClientsCount: context.summary.totalClientsCount,
+          convertedContractValuePKR: context.summary.convertedContractValuePKR,
+          totalScopedLeads: context.summary.totalLeads,
+        },
+        suggestedPrompts: ['Show pipeline summary', 'Show source performance'],
+        source: 'internal_crm_database',
+      };
+    }
+
+    // 8. Tomorrow's Follow-Ups
     if (lower.includes('tomorrow') && lower.includes('follow')) {
       const tomorrowList = context.followUps.tomorrow;
       if (tomorrowList.length === 0) {
@@ -197,7 +332,7 @@ export class DeterministicCrmCopilotProvider implements IAiProvider {
       };
     }
 
-    // 4. Missed / Overdue Follow-Ups
+    // 9. Missed / Overdue Follow-Ups
     if (lower.includes('missed') || lower.includes('overdue')) {
       const missedList = context.followUps.missed;
       if (missedList.length === 0) {
@@ -228,36 +363,71 @@ export class DeterministicCrmCopilotProvider implements IAiProvider {
       };
     }
 
-    // 5. Pipeline Summary / Overview
-    if (lower.includes('pipeline') || lower.includes('summary') || lower.includes('overview')) {
+    // 10. General Follow-Ups Query
+    if (lower.includes('follow') || lower.includes('touchpoint')) {
       return {
         answer:
-          `### 📊 Authorized CRM Pipeline Summary (${context.actor.role} scope)\n\n` +
-          `• **Total Leads**: ${context.summary.totalLeads}\n` +
-          `• **Active Pipeline Value**: PKR ${context.summary.pipelineValuePKR.toLocaleString()}\n` +
-          `• **Deals Won / Converted**: ${context.summary.wonLeadsCount}\n` +
-          `• **Deals Lost**: ${context.summary.lostLeadsCount}\n` +
-          `• **Pending Follow-ups Today**: ${context.followUps.today.length}\n` +
-          `• **Overdue Follow-ups**: ${context.followUps.missed.length}`,
+          `### 📅 Follow-Ups Activity (${context.actor.role} scope)\n\n` +
+          `• **Completed Follow-Ups**: ${context.summary.completedFollowUpsCount}\n` +
+          `• **Pending Follow-Ups**: ${context.summary.pendingFollowUpsCount}\n` +
+          `• **Due Today**: ${context.followUps.today.length}\n` +
+          `• **Missed / Overdue**: ${context.followUps.missed.length}\n` +
+          `• **Tomorrow**: ${context.followUps.tomorrow.length}`,
         insights: {
-          totalScopedLeads: context.summary.totalLeads,
-          pipelineValuePKR: context.summary.pipelineValuePKR,
+          completedFollowUpsCount: context.summary.completedFollowUpsCount,
+          pendingFollowUpsCount: context.summary.pendingFollowUpsCount,
           missedFollowUpsCount: context.followUps.missed.length,
           upcomingFollowUpsCount: context.followUps.today.length,
         },
-        suggestedPrompts: ['Show missed follow-ups', "Show today's leads", 'Show staff performance'],
+        suggestedPrompts: ['Show missed follow-ups', "Show tomorrow's follow-ups", 'Pipeline summary'],
         source: 'internal_crm_database',
       };
     }
 
-    // 6. Staff Performance / Team Workload
+    // 11. Specifically Today's Created Leads
+    if (lower.includes("today's lead") || lower.includes('todays lead') || lower.includes('leads today') || lower.includes('created today')) {
+      const count = context.todayLeads.length;
+      if (count === 0) {
+        return {
+          answer: `There are currently no new leads created today within your authorized scope (${context.actor.role}). You have ${context.summary.totalLeads} total leads in your pipeline.`,
+          insights: {
+            totalScopedLeads: context.summary.totalLeads,
+            totalLeadValuePKR: context.summary.totalLeadValuePKR,
+            activePipelineValuePKR: context.summary.activePipelineValuePKR,
+          },
+          suggestedPrompts: ['What are my missed follow-ups?', 'Give me a pipeline summary', "Tomorrow's follow-ups"],
+          source: 'internal_crm_database',
+        };
+      }
+
+      const leadItems = context.todayLeads
+        .slice(0, 5)
+        .map(
+          (l) =>
+            `• **${l.name}** (${l.businessName || 'Individual'}) - Status: *${l.status}*, Value: PKR ${Number(l.valuePKR).toLocaleString()}, Priority: ${l.priority}`
+        )
+        .join('\n');
+
+      return {
+        answer: `You have **${count}** lead(s) created today within your scope:\n\n${leadItems}\n\nTotal cumulative lead value for your scope is **PKR ${context.summary.totalLeadValuePKR.toLocaleString()}** (Active Pipeline: PKR ${context.summary.activePipelineValuePKR.toLocaleString()}).`,
+        insights: {
+          totalScopedLeads: context.summary.totalLeads,
+          totalLeadValuePKR: context.summary.totalLeadValuePKR,
+          activePipelineValuePKR: context.summary.activePipelineValuePKR,
+        },
+        suggestedPrompts: ['Show missed follow-ups', 'Show pipeline summary', 'Show client conversions'],
+        source: 'internal_crm_database',
+      };
+    }
+
+    // 12. Staff Performance / Team Workload
     if (lower.includes('staff') || lower.includes('performance') || lower.includes('team')) {
       if (!context.staffPerformance || context.staffPerformance.length === 0) {
         return {
-          answer: `As an **${context.actor.role}**, your performance context is personal-only. You currently manage **${context.summary.totalLeads}** leads with **PKR ${context.summary.pipelineValuePKR.toLocaleString()}** in pipeline value.`,
+          answer: `As an **${context.actor.role}**, your performance context is personal-only. You currently manage **${context.summary.totalLeads}** leads with **PKR ${context.summary.activePipelineValuePKR.toLocaleString()}** in active pipeline value.`,
           insights: {
             totalScopedLeads: context.summary.totalLeads,
-            pipelineValuePKR: context.summary.pipelineValuePKR,
+            pipelineValuePKR: context.summary.activePipelineValuePKR,
           },
           source: 'internal_crm_database',
         };
@@ -275,41 +445,14 @@ export class DeterministicCrmCopilotProvider implements IAiProvider {
         answer: `### 👥 Staff Performance Breakdown (within your supervisory hierarchy):\n\n${staffRows}`,
         insights: {
           totalScopedLeads: context.summary.totalLeads,
-          pipelineValuePKR: context.summary.pipelineValuePKR,
+          pipelineValuePKR: context.summary.activePipelineValuePKR,
         },
         suggestedPrompts: ['Show pipeline summary', 'Show client conversions'],
         source: 'internal_crm_database',
       };
     }
 
-    // 7. Client Conversions
-    if (lower.includes('conversion') || lower.includes('client')) {
-      const convs = context.recentConversions;
-      if (convs.length === 0) {
-        return {
-          answer: `There are currently **0** client conversions recorded within your authorized scope.`,
-          insights: { conversionsCount: 0 },
-          source: 'internal_crm_database',
-        };
-      }
-
-      const convRows = convs
-        .slice(0, 5)
-        .map((c) => `• **${c.businessName}** (${c.clientName}) — PKR ${Number(c.finalValuePKR).toLocaleString()} on ${c.convertedDate}`)
-        .join('\n');
-
-      return {
-        answer: `### 🏆 Recent Client Conversions:\n\n${convRows}\n\nTotal converted clients in scope: **${convs.length}**.`,
-        insights: {
-          conversionsCount: convs.length,
-          totalScopedLeads: context.summary.totalLeads,
-        },
-        suggestedPrompts: ['Show pipeline summary', 'Show source performance'],
-        source: 'internal_crm_database',
-      };
-    }
-
-    // 8. Lead Source Performance
+    // 13. Lead Source Performance
     if (lower.includes('source') || lower.includes('channel')) {
       const sources = context.sourcesBreakdown;
       const srcRows = sources
@@ -327,18 +470,21 @@ export class DeterministicCrmCopilotProvider implements IAiProvider {
     return {
       answer:
         `Hello ${context.actor.name}! Here is your current CRM operational briefing based on your **${context.actor.role}** authorized access:\n\n` +
-        `• **Scoped Leads**: ${context.summary.totalLeads} (PKR ${context.summary.pipelineValuePKR.toLocaleString()} pipeline value)\n` +
-        `• **Pending Follow-ups Today**: ${context.followUps.today.length}\n` +
-        `• **Missed Follow-ups**: ${context.followUps.missed.length}\n` +
-        `• **Tomorrow's Follow-ups**: ${context.followUps.tomorrow.length}\n\n` +
-        `How can I assist you further with your leads or sales operations?`,
+        `• **Total Leads**: ${context.summary.totalLeads} (Total Value: PKR ${context.summary.totalLeadValuePKR.toLocaleString()})\n` +
+        `• **Active Pipeline**: PKR ${context.summary.activePipelineValuePKR.toLocaleString()} across ${context.summary.openLeadsCount} open leads\n` +
+        `• **Converted Deals**: ${context.summary.wonLeadsCount} (${context.summary.conversionRate}% win rate)\n` +
+        `• **Follow-Ups**: ${context.summary.completedFollowUpsCount} completed, ${context.summary.pendingFollowUpsCount} pending\n\n` +
+        `How can I assist you further with your leads, pipeline, or reporting?`,
       insights: {
         totalScopedLeads: context.summary.totalLeads,
-        pipelineValuePKR: context.summary.pipelineValuePKR,
-        missedFollowUpsCount: context.followUps.missed.length,
-        upcomingFollowUpsCount: context.followUps.today.length,
+        totalLeadValuePKR: context.summary.totalLeadValuePKR,
+        activePipelineValuePKR: context.summary.activePipelineValuePKR,
+        wonLeadsCount: context.summary.wonLeadsCount,
+        conversionRate: context.summary.conversionRate,
+        completedFollowUpsCount: context.summary.completedFollowUpsCount,
+        pendingFollowUpsCount: context.summary.pendingFollowUpsCount,
       },
-      suggestedPrompts: ["Show today's leads", 'Show missed follow-ups', "Show tomorrow's follow-ups", 'Give me a pipeline summary'],
+      suggestedPrompts: ["Show pipeline summary", "Show today's leads", 'Show missed follow-ups', "Show tomorrow's follow-ups"],
       source: 'internal_crm_database',
     };
   }

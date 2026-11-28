@@ -30,6 +30,13 @@ router.put(
   asyncHandler(ServicesController.updateService)
 );
 
+router.patch(
+  '/:id',
+  requirePermission('canManageServices'),
+  validate({ body: updateServiceSchema }),
+  asyncHandler(ServicesController.updateService)
+);
+
 router.delete(
   '/:id',
   requirePermission('canManageServices'),

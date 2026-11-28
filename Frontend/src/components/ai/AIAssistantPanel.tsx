@@ -23,7 +23,7 @@ import {
 import { AIMessage } from './types';
 import { aiApi } from '../../api';
 import { buildAIAuthorizedContext, getAIScopeType } from '../../utils/buildAIAuthorizedContext';
-import { formatPKR } from '../../utils/formatters';
+import { formatPKR, getLocalDateString, formatDate, formatTime } from '../../utils/formatters';
 
 interface AIAssistantPanelProps {
   isOpen: boolean;
@@ -94,7 +94,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   if (!isOpen) return null;
 
   const scopeLabel = getAIScopeType(currentUser.role);
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
 
   // Scoped metrics
   const totalPipelineVal = scopedLeads.reduce((s, l) => s + (Number(l.valuePKR) || 0), 0);
@@ -142,7 +142,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
     {
       id: 'due-today',
       label: 'Due Today',
-      prompt: `List all calls, visits, and follow-up activities scheduled for today (${todayStr}).`
+      prompt: `List all calls, visits, and follow-up activities scheduled for today (${formatDate(todayStr)}).`
     },
     {
       id: 'team',
@@ -164,7 +164,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
       id: `user-${Date.now()}`,
       role: 'user',
       content: text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: formatTime(new Date())
     };
 
     setMessages(prev => [...prev, userMsg]);
@@ -217,7 +217,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
         id: `bot-${Date.now()}`,
         role: 'assistant',
         content: reply,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: formatTime(new Date())
       };
 
       setMessages(prev => [...prev, botMsg]);
@@ -226,7 +226,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
         id: `bot-err-${Date.now()}`,
         role: 'assistant',
         content: err instanceof Error ? err.message : 'Unable to connect to AI assistant service. Please check network and try again.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: formatTime(new Date())
       };
       setMessages(prev => [...prev, errorMsg]);
     } finally {

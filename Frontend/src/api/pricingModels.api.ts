@@ -3,7 +3,10 @@ import { apiClient } from './client';
 export interface DynamicFieldDto {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'select' | 'boolean' | 'date';
+  type: 'text' | 'number' | 'select' | 'boolean' | 'date' | 'currency' | 'dropdown';
+  id?: string;
+  placeholder?: string;
+  isRequired?: boolean;
   options?: string[];
   defaultValue?: unknown;
   required?: boolean;

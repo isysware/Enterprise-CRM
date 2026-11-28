@@ -34,7 +34,9 @@ import {
   parseAmount,
   getRoleBadgeStyle,
   getLocalDateString,
-  classifyFollowUp
+  classifyFollowUp,
+  formatDate,
+  formatTime
 } from '../utils/formatters';
 import {
   PageHeader,
@@ -140,9 +142,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [metrics.convertedLeads, scopedLeads.length]);
 
   const urgentLeadsCount = useMemo(() => {
-    return scopedLeads.filter(l => l.priority === 'Urgent').length;
+    return scopedLeads.filter(l =>
+      (l.quality === 'Good' || l.priority === 'Urgent') &&
+      l.status !== 'Converted' &&
+      l.status !== 'Lost'
+    ).length;
   }, [scopedLeads]);
-
   // Stage performance breakdown (Values and Counts)
   const stageDefs: { status: LeadStatus; label: string; color: string; hexColor: string }[] = useMemo(() => [
     { status: 'New', label: 'New', color: 'bg-sky-500', hexColor: '#0ea5e9' },
@@ -315,7 +320,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       const pipelineValue = teamLeads.reduce((acc, l) => acc + getLeadValue(l), 0);
       const missedFollowUps = scopedFollowUps.filter(
         f => classifyFollowUp(f, todayStr) === 'missed' &&
-             (memberIds.includes(f.assignedToId) || teamLeads.some(l => l.id === f.leadId))
+          (memberIds.includes(f.assignedToId) || teamLeads.some(l => l.id === f.leadId))
       ).length;
 
       const managerName = team.managerName || users.find(u => u.id === team.managerId)?.name || 'Direct';
@@ -514,7 +519,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   CRM Workspace Active
                 </span>
                 <span className="text-[11px] text-blue-100/90 font-medium font-mono hidden sm:inline" suppressHydrationWarning>
-                  {new Date().toLocaleDateString('en-GB', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  {formatDate(getLocalDateString())}
                 </span>
               </div>
 
@@ -732,11 +737,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           >
             <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
             <span>Missed</span>
-            <span className={`font-mono font-medium px-1.5 py-0.2 rounded text-[11px] ${
-              metrics.missedFollowUps > 0
+            <span className={`font-mono font-medium px-1.5 py-0.2 rounded text-[11px] ${metrics.missedFollowUps > 0
                 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
                 : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-            }`}>
+              }`}>
               {metrics.missedFollowUps}
             </span>
           </button>
@@ -1299,11 +1303,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <button
                 type="button"
                 onClick={() => setPerformanceTab('teams')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  performanceTab === 'teams'
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${performanceTab === 'teams'
                     ? 'bg-white dark:bg-slate-900 text-[#2563EB] shadow-xs'
                     : 'text-[#64748B] hover:text-[#0F172A] dark:hover:text-white'
-                }`}
+                  }`}
               >
                 Teams ({scopedTeams.length})
               </button>
@@ -1311,11 +1314,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <button
                 type="button"
                 onClick={() => setPerformanceTab('leads')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  performanceTab === 'leads'
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${performanceTab === 'leads'
                     ? 'bg-white dark:bg-slate-900 text-[#2563EB] shadow-xs'
                     : 'text-[#64748B] hover:text-[#0F172A] dark:hover:text-white'
-                }`}
+                  }`}
               >
                 Team Leads ({teamLeadPerformanceData.length})
               </button>
@@ -1323,11 +1325,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <button
                 type="button"
                 onClick={() => setPerformanceTab('users')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  performanceTab === 'users'
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${performanceTab === 'users'
                     ? 'bg-white dark:bg-slate-900 text-[#2563EB] shadow-xs'
                     : 'text-[#64748B] hover:text-[#0F172A] dark:hover:text-white'
-                }`}
+                  }`}
               >
                 Users ({userPerformanceData.length})
               </button>
@@ -1827,7 +1828,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     {log.userName}
                   </span>
                   <span className="text-[10px] text-[#64748B] font-mono">
-                    {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {formatTime(log.timestamp)}
                   </span>
                 </div>
               </div>

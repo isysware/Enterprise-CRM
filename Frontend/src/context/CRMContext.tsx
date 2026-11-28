@@ -8,6 +8,8 @@ import {
   ServiceItem,
   Lead,
   FollowUp,
+  FollowUpType,
+  FollowUpStatus,
   Client,
   ActivityLog,
   SystemSettings,
@@ -19,17 +21,13 @@ import {
   LeadSource,
   PricingModel,
   PricingModelItem,
+  PricingModelField,
   Activity,
   Proposal,
   IncomingLead
 } from '../types';
 import {
-  DEFAULT_USERS,
-  DEFAULT_TEAMS,
-  DEFAULT_SERVICES,
-  DEFAULT_SOURCES,
   DEFAULT_ROLE_PERMISSIONS,
-  DEFAULT_PRICING_MODELS,
   DEFAULT_SETTINGS
 } from '../data/mockData';
 import { getClientRevenue, getLocalDateString, classifyFollowUp } from '../utils/formatters';
@@ -58,6 +56,7 @@ import {
 } from '../utils/authorization';
 import {
   authApi,
+  setAuthToken,
   usersApi,
   teamsApi,
   servicesApi,
@@ -162,7 +161,7 @@ interface CRMContextType {
   scopedFollowUps: FollowUp[];
   addFollowUp: (followUp: Omit<FollowUp, 'id' | 'createdAt'>) => Promise<FollowUp | null> | void;
   completeFollowUp: (id: string, resultNotes?: string) => Promise<boolean> | void;
-  rescheduleFollowUp: (id: string, newDate: string, newTime: string, notes?: string) => Promise<boolean> | void;
+  rescheduleFollowUp: (id: string, newDate: string, newTime: string, notes?: string, type?: FollowUpType, assignedToId?: string) => Promise<boolean> | void;
   deleteFollowUp: (id: string) => Promise<boolean> | void;
 
   // Clients
@@ -178,7 +177,6 @@ interface CRMContextType {
   addProposal: (proposal: Omit<Proposal, 'id' | 'createdAt'>) => Proposal;
   updateProposal: (proposal: Proposal) => Promise<boolean> | void;
   deleteProposal: (id: string) => void;
-  canGenerateProposals: boolean;
 
   // Incoming Leads
   incomingLeads: IncomingLead[];
@@ -370,6 +368,19 @@ const toValidUuidOrNull = (id?: string | null): string | null => {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed) ? trimmed : null;
 };
 
+const normalizeDateOnly = (value?: string | null): string | null => {
+  if (!value || !value.trim()) return null;
+  const raw = value.trim();
+  const match = raw.match(/^(\d{4}-\d{2}-\d{2})(?:T.*)?$/);
+  if (!match) throw new Error(`Invalid date format: ${raw}`);
+  const dateOnly = match[1];
+  const parsed = new Date(`${dateOnly}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== dateOnly) {
+    throw new Error(`Invalid calendar date: ${raw}`);
+  }
+  return dateOnly;
+};
+
 const toValidEmailOrNull = (email?: string | null): string | null => {
   if (!email) return null;
   const trimmed = email.trim().toLowerCase();
@@ -388,59 +399,82 @@ const mapFrontendActivityTypeToBackend = (type: string): 'Call' | 'Meeting' | 'N
 };
 
 // Reference DTO Mappers
-const mapUserDto = (u: AuthUserDto): User => ({
+const mapUserDto = (u: any): User => ({
   id: u.id,
   name: u.name,
   email: u.email,
-  phone: u.phone || '+92 300 0000000',
-  role: u.role,
-  isActive: u.status === 'active' || u.isActive !== false,
-  teamId: u.teamId || undefined,
-  teamName: u.teamName || undefined,
-  managerId: u.managerId || undefined,
-  managerName: u.managerName || undefined,
-  teamLeadId: u.teamLeadId || undefined,
-  teamLeadName: u.teamLeadName || undefined,
-  avatar: u.avatarUrl || u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.name)}`,
-  createdAt: u.createdAt || new Date().toISOString(),
-  lastLogin: u.lastLogin
+  phone: u.phone ? String(u.phone).replace(/\D/g, '').slice(0, 11) : '',
+  role: u.role || u.role_name || u.roleName,
+  isActive: u.status === 'active' || u.isActive === true || (u.is_active !== undefined ? u.is_active : true),
+  teamId: u.teamId || u.team_id || undefined,
+  teamName: u.teamName || u.team_name || undefined,
+  managerId: u.managerId || u.manager_id || undefined,
+  managerName: u.managerName || u.manager_name || undefined,
+  teamLeadId: u.teamLeadId || u.team_lead_id || undefined,
+  teamLeadName: u.teamLeadName || u.team_lead_name || undefined,
+  avatar: u.avatarUrl || u.avatar_url || u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.name)}`,
+  createdAt: u.createdAt || u.created_at || new Date().toISOString(),
+  lastLogin: u.lastLogin || u.last_login
 });
 
-const mapTeamDto = (t: TeamDto): Team => ({
+const mapTeamDto = (t: any): Team => ({
   id: t.id,
   name: t.name,
   code: t.code,
   description: t.description || '',
-  managerId: t.managerId || undefined,
-  managerName: t.managerName || undefined,
-  leaderId: t.teamLeadId || undefined,
-  leaderName: t.teamLeadName || undefined,
-  status: t.status,
-  memberIds: t.memberIds || [],
-  createdAt: t.createdAt || new Date().toISOString()
+  managerId: t.managerId || t.manager_id || undefined,
+  managerName: t.managerName || t.manager_name || undefined,
+  leaderId: t.leaderId || t.teamLeadId || t.team_lead_id || undefined,
+  leaderName: t.leaderName || t.teamLeadName || t.team_lead_name || undefined,
+  status: t.status || (t.is_active === false ? 'inactive' : 'active'),
+  memberIds: t.memberIds || t.member_ids || [],
+  createdAt: t.createdAt || t.created_at || new Date().toISOString()
 });
 
-const mapServiceDto = (s: ServiceDto): ServiceItem => ({
-  id: s.id,
-  name: s.name,
-  category: s.category,
-  defaultPricePKR: Number(s.defaultPricePKR || 0),
-  basePricePKR: Number(s.defaultPricePKR || 0),
-  pricingModel: (s.pricingModelName || 'Monthly Subscription') as any,
-  description: s.description || '',
-  isActive: s.isActive !== false
-});
+const mapServiceDto = (s: any): ServiceItem => {
+  const price = Number(s.defaultPricePKR ?? s.default_price_pkr ?? s.basePricePKR ?? 0);
+  return {
+    id: s.id,
+    name: s.name,
+    category: s.category,
+    defaultPricePKR: price,
+    basePricePKR: price,
+    pricingModel: (s.pricingModelName || s.pricing_model_name || s.pricingModel || 'Monthly Subscription') as any,
+    description: s.description || '',
+    isActive: s.isActive !== undefined ? s.isActive !== false : (s.is_active !== false)
+  };
+};
 
-const mapPricingModelDto = (pm: PricingModelDto): PricingModelItem => ({
-  id: pm.id,
-  name: pm.name,
-  billingType: pm.billingType as any,
-  description: pm.description || '',
-  isActive: pm.isActive !== false,
-  isSystemDefault: pm.isDefault,
-  createdAt: pm.createdAt,
-  fields: (pm.fieldSchema || []) as any
-});
+const mapPricingModelDto = (pm: any): PricingModelItem => {
+  const defaultVals = pm.defaultValues || pm.default_values || {};
+  const rawFields = pm.fieldSchema || pm.field_schema || pm.fields || [];
+  const fields: PricingModelField[] = Array.isArray(rawFields)
+    ? rawFields.map((f: any, idx: number) => ({
+      id: f.id || `f-${idx}-${Date.now()}`,
+      label: f.label || 'Field',
+      key: f.key || `field_${idx}`,
+      type: f.type || 'text',
+      options: f.options || [],
+      defaultValue: f.defaultValue ?? f.default_value,
+      placeholder: f.placeholder,
+      isRequired: Boolean(f.isRequired ?? f.required),
+      includeInTotal: Boolean(f.includeInTotal ?? f.include_in_total)
+    }))
+    : [];
+
+  return {
+    id: pm.id,
+    name: pm.name,
+    billingType: (pm.billingType || pm.billing_type || 'Recurring') as any,
+    defaultSetupFeePKR: Number(defaultVals.defaultSetupFeePKR ?? pm.defaultSetupFeePKR ?? 0),
+    defaultBillingFrequency: defaultVals.defaultBillingFrequency || pm.defaultBillingFrequency || 'Monthly',
+    description: pm.description || '',
+    isActive: (pm.isActive !== undefined ? pm.isActive : pm.is_active) !== false,
+    isSystemDefault: Boolean(pm.isDefault ?? pm.is_default ?? pm.isSystemDefault),
+    createdAt: pm.createdAt || pm.created_at,
+    fields
+  };
+};
 
 const mapRoleMatrices = (matrices: RolePermissionMatrixDto[]): RolePermission[] => {
   return matrices.map(m => {
@@ -521,12 +555,21 @@ const mapLeadDto = (l: LeadDbDto): Lead => {
     teamName: l.team_name || '',
     createdAt: createdAtIso,
     lastContactDate: createdAtIso.split('T')[0],
-    nextFollowUpDate: l.next_follow_up_date || undefined,
+    nextFollowUpDate: normalizeDateOnly(l.next_follow_up_date) || undefined,
     nextFollowUpTime: l.next_follow_up_time || undefined,
     nextFollowUpType: (l as any).next_follow_up_type || undefined,
     tags: l.tags || [],
     notes: l.notes || '',
-    pricingModel: undefined,
+    pricingModelId: l.pricing_model_id || undefined,
+    pricingModelName: (l as any).pricing_model_name || (l.budget_details as any)?.budgetType || undefined,
+    pricingModel: ((l as any).pricing_model_name || (l.budget_details as any)?.budgetType || undefined) as any,
+    budgetType: ((l.budget_details as any)?.budgetType || (l as any).pricing_model_name || undefined) as any,
+    budgetDetails: {
+      budgetType: ((l.budget_details as any)?.budgetType || (l as any).pricing_model_name || '') as any,
+      budgetNotes: (l.budget_details as any)?.budgetNotes || '',
+      customFieldValues: (l.budget_details as any)?.customFieldValues || {},
+      totalCalculatedValuePKR: Number((l.budget_details as any)?.totalCalculatedValuePKR || l.value_pkr || 0)
+    },
     activities: mappedActivities
   };
 };
@@ -570,14 +613,22 @@ const mapIncomingLeadDto = (il: IncomingLeadDbDto): IncomingLead => {
 };
 
 const mapFollowUpDto = (f: FollowUpDbDto): FollowUp => {
-  const status: 'Pending' | 'Done' = f.status === 'Completed' ? 'Done' : 'Pending';
+  const rawStatus = (f.status || '').toLowerCase();
+  const status: FollowUpStatus =
+    rawStatus === 'completed'
+      ? 'Completed'
+      : rawStatus === 'done'
+        ? 'Done'
+        : rawStatus === 'missed'
+          ? 'Missed'
+          : 'Pending';
   return {
     id: f.id,
     leadId: f.lead_id || '',
     clientName: f.lead_name || f.client_business_snapshot || 'Lead Contact',
     clientBusiness: f.client_business_snapshot || f.lead_name || 'Business',
     phone: f.phone || '',
-    scheduledDate: f.scheduled_date,
+    scheduledDate: f.scheduled_date ? String(f.scheduled_date).slice(0, 10) : '',
     scheduledTime: f.scheduled_time || '14:00',
     type: (f.type || 'Call') as any,
     source: 'Call',
@@ -603,7 +654,7 @@ const mapClientDto = (c: ClientDbDto): Client => {
   const finalVal = Number(c.final_value_pkr || 0);
   const clientStatus: 'Active' | 'Paused' | 'Cancelled' =
     c.status === 'Active' ? 'Active' :
-    c.status === 'Suspended' ? 'Paused' : 'Cancelled';
+      c.status === 'Suspended' ? 'Paused' : 'Cancelled';
 
   return {
     id: c.id,
@@ -615,6 +666,8 @@ const mapClientDto = (c: ClientDbDto): Client => {
     city: c.city || 'Lahore',
     services: serviceList,
     source: normalizeLeadSource(c.source),
+    pricingModelId: c.pricing_model_id || undefined,
+    pricingModelName: c.pricing_model_name || undefined,
     pricingModel: (c.pricing_model_name || 'Monthly Subscription Model') as any,
     finalPrice: finalVal,
     activeRevenuePKR: finalVal,
@@ -729,12 +782,12 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [isDataLoading, setIsDataLoading] = useState(false);
 
   // Core Reference Data States (Cut over to REST API)
-  const [users, setUsers] = useState<User[]>(DEFAULT_USERS);
-  const [teams, setTeams] = useState<Team[]>(DEFAULT_TEAMS);
-  const [services, setServices] = useState<ServiceItem[]>(DEFAULT_SERVICES);
-  const [sources, setSources] = useState<string[]>(DEFAULT_SOURCES);
+  const [users, setUsers] = useState<User[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [sources, setSources] = useState<string[]>([]);
   const [rolePermissions, setRolePermissions] = useState<RolePermission[]>(DEFAULT_ROLE_PERMISSIONS);
-  const [pricingModels, setPricingModels] = useState<PricingModelItem[]>(DEFAULT_PRICING_MODELS);
+  const [pricingModels, setPricingModels] = useState<PricingModelItem[]>([]);
 
   // Phase 2 Operational States (Cut over to PostgreSQL REST APIs - Initialized to empty arrays)
   const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
@@ -776,23 +829,100 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         settingsApi.getSettings()
       ]);
 
-      if (usersRes.status === 'fulfilled' && usersRes.value?.users) {
-        setUsers(usersRes.value.users.map(mapUserDto));
+      let mappedUsers: User[] | null = null;
+      let mappedTeams: Team[] | null = null;
+
+      if (usersRes.status === 'fulfilled') {
+        const rawUsers = Array.isArray(usersRes.value)
+          ? usersRes.value
+          : Array.isArray((usersRes.value as any)?.users)
+            ? (usersRes.value as any).users
+            : [];
+        mappedUsers = rawUsers.map(mapUserDto);
       }
-      if (teamsRes.status === 'fulfilled' && teamsRes.value?.teams) {
-        setTeams(teamsRes.value.teams.map(mapTeamDto));
+
+      if (teamsRes.status === 'fulfilled') {
+        const rawTeams = Array.isArray(teamsRes.value)
+          ? teamsRes.value
+          : Array.isArray((teamsRes.value as any)?.teams)
+            ? (teamsRes.value as any).teams
+            : [];
+        mappedTeams = rawTeams.map(mapTeamDto);
       }
-      if (srvRes.status === 'fulfilled' && Array.isArray(srvRes.value)) {
-        setServices(srvRes.value.map(mapServiceDto));
+
+      // Keep frontend hierarchy fully hydrated from the live PostgreSQL/API records.
+      // The team list endpoint may not always include memberIds, while the users
+      // endpoint carries each user's primary team. Derive the relationship here so
+      // Manager/Team Lead scope calculations receive the complete hierarchy.
+      if (mappedUsers && mappedTeams) {
+        const teamById = new Map(mappedTeams.map(team => [team.id, team]));
+
+        mappedUsers = mappedUsers.map(user => {
+          const team = user.teamId ? teamById.get(user.teamId) : undefined;
+
+          return {
+            ...user,
+            managerId: user.managerId || team?.managerId,
+            managerName: user.managerName || team?.managerName,
+            teamLeadId: user.teamLeadId || team?.leaderId,
+            teamLeadName: user.teamLeadName || team?.leaderName,
+          };
+        });
+
+        mappedTeams = mappedTeams.map(team => {
+          const derivedMemberIds = mappedUsers!
+            .filter(user => user.teamId === team.id)
+            .map(user => user.id);
+
+          return {
+            ...team,
+            memberIds: Array.from(
+              new Set([...(team.memberIds || []), ...derivedMemberIds])
+            ),
+          };
+        });
       }
-      if (srcRes.status === 'fulfilled' && Array.isArray(srcRes.value)) {
-        setSources(srcRes.value.map(s => s.name));
+
+      if (mappedUsers) {
+        setUsers(mappedUsers);
       }
-      if (pmRes.status === 'fulfilled' && Array.isArray(pmRes.value)) {
-        setPricingModels(pmRes.value.map(mapPricingModelDto));
+
+      if (mappedTeams) {
+        setTeams(mappedTeams);
       }
-      if (rolesRes.status === 'fulfilled' && Array.isArray(rolesRes.value) && rolesRes.value.length > 0) {
-        setRolePermissions(mapRoleMatrices(rolesRes.value));
+      if (srvRes.status === 'fulfilled') {
+        const rawServices = Array.isArray(srvRes.value)
+          ? srvRes.value
+          : Array.isArray((srvRes.value as any)?.services)
+            ? (srvRes.value as any).services
+            : [];
+        setServices(rawServices.map(mapServiceDto));
+      }
+      if (srcRes.status === 'fulfilled') {
+        const rawSources = Array.isArray(srcRes.value)
+          ? srcRes.value
+          : Array.isArray((srcRes.value as any)?.sources)
+            ? (srcRes.value as any).sources
+            : [];
+        setSources(rawSources.map((s: any) => (typeof s === 'string' ? s : s.name)));
+      }
+      if (pmRes.status === 'fulfilled') {
+        const rawPms = Array.isArray(pmRes.value)
+          ? pmRes.value
+          : Array.isArray((pmRes.value as any)?.pricingModels)
+            ? (pmRes.value as any).pricingModels
+            : [];
+        setPricingModels(rawPms.map(mapPricingModelDto));
+      }
+      if (rolesRes.status === 'fulfilled') {
+        const rawRoles = Array.isArray(rolesRes.value)
+          ? rolesRes.value
+          : Array.isArray((rolesRes.value as any)?.rolePermissions)
+            ? (rolesRes.value as any).rolePermissions
+            : [];
+        if (rawRoles.length > 0) {
+          setRolePermissions(mapRoleMatrices(rawRoles));
+        }
       }
       if (settingsRes.status === 'fulfilled' && settingsRes.value) {
         setSettings(settingsRes.value);
@@ -807,21 +937,18 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Centralized operational data fetcher from real backend APIs
   const fetchOperationalData = async (userRole?: string) => {
     try {
-      const promises: Promise<any>[] = [
+      const activeRole = userRole || currentUser?.role;
+      const canViewLogs = activeRole === 'Super Admin' || activeRole === 'Admin';
+      const canViewInc = activeRole !== 'Employee';
+
+      const [leadsRes, fuRes, clientsRes, propRes, logsRes, incRes] = await Promise.allSettled([
         leadsApi.listLeads({ limit: 1000 }),
         followUpsApi.listFollowUps(),
         clientsApi.listClients({ limit: 1000 }),
         proposalsApi.listProposals(),
-        activityLogsApi.listLogs({ limit: 200 })
-      ];
-
-      const canViewInc = userRole !== 'Employee';
-      if (canViewInc) {
-        promises.push(incomingLeadsApi.listIncomingLeads());
-      }
-
-      const results = await Promise.allSettled(promises);
-      const [leadsRes, fuRes, clientsRes, propRes, logsRes, incRes] = results;
+        canViewLogs ? activityLogsApi.listLogs({ limit: 200 }) : Promise.resolve({ items: [] }),
+        canViewInc ? incomingLeadsApi.listIncomingLeads() : Promise.resolve([])
+      ]);
 
       if (leadsRes.status === 'fulfilled' && leadsRes.value) {
         const items = (leadsRes.value as any).items || (leadsRes.value as any).leads || [];
@@ -837,7 +964,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (propRes.status === 'fulfilled' && Array.isArray(propRes.value)) {
         setProposals(propRes.value.map(mapProposalDto));
       }
-      if (logsRes.status === 'fulfilled' && logsRes.value) {
+      if (logsRes && logsRes.status === 'fulfilled' && logsRes.value) {
         const items = (logsRes.value as any).items || (logsRes.value as any).logs || [];
         setActivityLogs(items.map(mapActivityLogDto));
       }
@@ -855,7 +982,19 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const restoreSession = async () => {
       try {
         setIsAuthLoading(true);
-        const meRes = await authApi.getMe();
+        let meRes = await authApi.getMe().catch(async () => {
+          try {
+            const refreshed = await authApi.refresh();
+            if (refreshed?.accessToken) {
+              setAuthToken(refreshed.accessToken);
+              return await authApi.getMe();
+            }
+          } catch {
+            // Not authenticated
+          }
+          return null;
+        });
+
         if (meRes?.user && isMounted) {
           const mapped = mapUserDto(meRes.user);
           setCurrentUser(mapped);
@@ -921,6 +1060,10 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         email: email.trim().toLowerCase(),
         password: pass
       });
+
+      if (res?.accessToken) {
+        setAuthToken(res.accessToken);
+      }
 
       if (!res.user) {
         return { success: false, error: 'Login failed: no user data returned.' };
@@ -1184,9 +1327,17 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Dashboard Metrics Calculation
   const metrics = useMemo(() => {
     const totalLeads = scopedLeads.length;
-    const hotLeads = scopedLeads.filter(l => l.priority === 'Urgent' && l.status !== 'Converted' && l.status !== 'Lost').length;
+
+    const hotLeads = scopedLeads.filter(l =>
+      (l.quality === 'Good' || l.priority === 'Urgent') &&
+      l.status !== 'Converted' &&
+      l.status !== 'Lost'
+    ).length;
+
     const convertedLeads = scopedLeads.filter(l => l.status === 'Converted').length;
+
     const lostLeads = scopedLeads.filter(l => l.status === 'Lost').length;
+
     const newLeads = scopedLeads.filter(l => l.status === 'New').length;
 
     const todayStr = getLocalDateString();
@@ -1197,9 +1348,9 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const staleThreshold = new Date();
     staleThreshold.setDate(staleThreshold.getDate() - (settings.staleLeadDays || 7));
     const staleThresholdStr = staleThreshold.toISOString().split('T')[0];
-    const staleLeads = scopedLeads.filter(l => 
-      l.status !== 'Converted' && 
-      l.status !== 'Lost' && 
+    const staleLeads = scopedLeads.filter(l =>
+      l.status !== 'Converted' &&
+      l.status !== 'Lost' &&
       (l.lastContactDate <= staleThresholdStr || l.createdAt.split('T')[0] <= staleThresholdStr)
     ).length;
 
@@ -1238,6 +1389,11 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addLead = async (newLeadData: Omit<Lead, 'id' | 'createdAt' | 'lastContactDate' | 'activities'>): Promise<Lead | null> => {
     try {
       const qualityBackend = newLeadData.quality === 'Good' ? 'High' : newLeadData.quality === 'Poor' ? 'Low' : 'Normal';
+      const resolvedPricingModelId = toValidUuidOrNull(
+        (newLeadData as any).pricingModelId ||
+        pricingModels.find(pm => pm.name === newLeadData.pricingModel || pm.name === newLeadData.budgetType)?.id
+      );
+
       const payload: CreateLeadPayload = {
         name: newLeadData.name.trim(),
         businessName: newLeadData.businessName?.trim() || null,
@@ -1252,9 +1408,11 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         source: newLeadData.source || 'Direct',
         assignedToId: toValidUuidOrNull(newLeadData.assignedToId),
         teamId: toValidUuidOrNull(newLeadData.teamId),
+        pricingModelId: resolvedPricingModelId,
+        budgetDetails: (newLeadData.budgetDetails as any) || {},
         notes: newLeadData.notes?.trim() || null,
         tags: newLeadData.tags || [],
-        nextFollowUpDate: newLeadData.nextFollowUpDate || null,
+        nextFollowUpDate: normalizeDateOnly(newLeadData.nextFollowUpDate),
         nextFollowUpTime: newLeadData.nextFollowUpTime || null
       };
 
@@ -1280,6 +1438,11 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateLead = async (updatedLead: Lead): Promise<boolean> => {
     try {
       const qualityBackend = updatedLead.quality === 'Good' ? 'High' : updatedLead.quality === 'Poor' ? 'Low' : 'Normal';
+      const resolvedPricingModelId = toValidUuidOrNull(
+        (updatedLead as any).pricingModelId ||
+        pricingModels.find(pm => pm.name === updatedLead.pricingModel || pm.name === updatedLead.budgetType)?.id
+      );
+
       const payload: UpdateLeadPayload = {
         name: updatedLead.name.trim(),
         businessName: updatedLead.businessName?.trim() || null,
@@ -1294,15 +1457,25 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         source: updatedLead.source,
         assignedToId: toValidUuidOrNull(updatedLead.assignedToId),
         teamId: toValidUuidOrNull(updatedLead.teamId),
+        pricingModelId: resolvedPricingModelId,
+        budgetDetails: (updatedLead.budgetDetails as any) || {},
         notes: updatedLead.notes?.trim() || null,
         tags: updatedLead.tags || [],
-        nextFollowUpDate: updatedLead.nextFollowUpDate || null,
+        nextFollowUpDate: normalizeDateOnly(updatedLead.nextFollowUpDate),
         nextFollowUpTime: updatedLead.nextFollowUpTime || null
       };
 
       const updatedDto = await leadsApi.updateLead(updatedLead.id, payload);
       const mapped = mapLeadDto(updatedDto);
       setLeads(prev => prev.map(l => (l.id === updatedLead.id ? mapped : l)));
+
+      if (updatedLead.nextFollowUpDate !== undefined) {
+        try {
+          const freshFu = await followUpsApi.listFollowUps();
+          if (Array.isArray(freshFu)) setFollowUps(freshFu.map(mapFollowUpDto));
+        } catch { /* ignore */ }
+      }
+
       logAction('Lead Updated', 'Lead', updatedLead.businessName || updatedLead.name, `Details updated by ${currentUser?.name}`, updatedLead.id);
       return true;
     } catch (err) {
@@ -1551,6 +1724,12 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const completeFollowUp = async (id: string, resultNotes?: string): Promise<boolean> => {
     try {
+      const targetFu = followUps.find(f => f.id === id);
+      if (targetFu && (targetFu.status === 'Done' || (targetFu.status as string) === 'Completed')) {
+        console.warn('Follow-up is already completed');
+        return false;
+      }
+
       const updatedDto = await followUpsApi.completeFollowUp(id, {
         resultOutcome: resultNotes || 'Follow-up marked completed'
       });
@@ -1574,12 +1753,28 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const rescheduleFollowUp = async (id: string, newDate: string, newTime: string, notes?: string): Promise<boolean> => {
+  const rescheduleFollowUp = async (
+    id: string,
+    newDate: string,
+    newTime: string,
+    notes?: string,
+    type?: FollowUpType,
+    assignedToId?: string
+  ): Promise<boolean> => {
     try {
+      const targetFu = followUps.find(f => f.id === id);
+      if (targetFu && (targetFu.status === 'Done' || (targetFu.status as string) === 'Completed')) {
+        console.warn('Cannot reschedule a completed follow-up');
+        return false;
+      }
+
       const updatedDto = await followUpsApi.rescheduleFollowUp(id, {
         scheduledDate: newDate,
         scheduledTime: newTime || '14:00',
-        reason: notes || undefined
+        reason: notes || undefined,
+        notes: notes || undefined,
+        type: (type as any) || undefined,
+        assignedToId: toValidUuidOrNull(assignedToId) || undefined
       });
       const mapped = mapFollowUpDto(updatedDto);
       setFollowUps(prev => prev.map(f => (f.id === id ? mapped : f)));
@@ -1592,6 +1787,16 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return l;
         }));
       }
+
+      try {
+        const [freshFu, freshLeads] = await Promise.all([
+          followUpsApi.listFollowUps(),
+          leadsApi.listLeads({ limit: 1000 })
+        ]);
+        if (Array.isArray(freshFu)) setFollowUps(freshFu.map(mapFollowUpDto));
+        const leadItems = (freshLeads as any).items || (freshLeads as any).leads || [];
+        if (Array.isArray(leadItems)) setLeads(leadItems.map(mapLeadDto));
+      } catch { /* ignore */ }
 
       logAction('Follow-Up Rescheduled', 'FollowUp', mapped.clientBusiness || mapped.clientName, `Moved to ${newDate} at ${newTime}`, id);
       return true;
@@ -1629,7 +1834,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       const backendStatus: 'Active' | 'Inactive' | 'Suspended' | 'Completed' =
         client.status === 'Active' ? 'Active' :
-        client.status === 'Paused' ? 'Suspended' : 'Inactive';
+          client.status === 'Paused' ? 'Suspended' : 'Inactive';
 
       const updatedDto = await clientsApi.updateClient(client.id, {
         businessName: client.businessName,
@@ -1655,6 +1860,13 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const lead = leads.find(l => l.id === leadId);
     const todayStr = getLocalDateString();
 
+    const effectivePricingModel = clientData.pricingModel || lead?.pricingModel || 'Monthly Subscription Model';
+    const resolvedPricingModelId = toValidUuidOrNull(
+      (clientData as any).pricingModelId ||
+      lead?.pricingModelId ||
+      pricingModels.find(pm => pm.name === effectivePricingModel || pm.id === (clientData as any).pricingModelId)?.id
+    );
+
     const newClient: Client = {
       id: `client-${Date.now()}`,
       leadId: leadId,
@@ -1665,7 +1877,9 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       city: clientData.city || lead?.city || 'Lahore',
       services: clientData.services || lead?.services || [],
       source: (clientData.source || lead?.source || 'Call') as LeadSource,
-      pricingModel: clientData.pricingModel || lead?.pricingModel || 'Monthly Subscription Model',
+      pricingModelId: resolvedPricingModelId || undefined,
+      pricingModelName: effectivePricingModel,
+      pricingModel: effectivePricingModel,
       finalPrice: Number(clientData.finalPrice ?? lead?.valuePKR ?? 80000),
       activeRevenuePKR: Number(clientData.finalPrice ?? lead?.valuePKR ?? 80000),
       currency: 'PKR',
@@ -1691,6 +1905,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         city: newClient.city,
         servicesSnapshot: newClient.services,
         source: newClient.source,
+        pricingModelId: resolvedPricingModelId,
         finalValuePKR: newClient.finalPrice,
         assignedOwnerId: toValidUuidOrNull(newClient.assignedToId),
         termsDetails: newClient.notes
@@ -2041,20 +2256,14 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         code: teamData.code?.trim().toUpperCase() || teamData.name.trim().substring(0, 3).toUpperCase(),
         description: teamData.description?.trim(),
         managerId: teamData.managerId || null,
-        teamLeadId: teamData.leaderId || null
+        teamLeadId: teamData.leaderId || null,
+        memberIds: teamData.memberIds || []
       });
       const newTeam = mapTeamDto(createdDto);
-
-      if (teamData.memberIds && teamData.memberIds.length > 0) {
-        for (const mId of teamData.memberIds) {
-          try {
-            await teamsApi.addMember(newTeam.id, mId, false);
-          } catch { /* ignore individual duplicates */ }
-        }
-        newTeam.memberIds = teamData.memberIds;
-      }
+      newTeam.memberIds = (createdDto as any).member_ids || (createdDto as any).memberIds || teamData.memberIds || [];
 
       setTeams(prev => [...prev.filter(t => t.id !== newTeam.id), newTeam]);
+      await fetchReferenceData();
       logAction('Team Created', 'Team', newTeam.name, `Manager: ${newTeam.managerName || '-'}, Lead: ${newTeam.leaderName || '-'}, Members: ${newTeam.memberIds.length}`, newTeam.id);
       return newTeam;
     } catch (err) {
@@ -2071,12 +2280,14 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         description: team.description?.trim(),
         managerId: team.managerId || null,
         teamLeadId: team.leaderId || null,
-        status: (team.status as 'active' | 'inactive' | 'archived') || 'active'
+        status: (team.status as 'active' | 'inactive' | 'archived') || 'active',
+        memberIds: team.memberIds || []
       });
       const updatedTeam = mapTeamDto(updatedDto);
-      updatedTeam.memberIds = team.memberIds || [];
+      updatedTeam.memberIds = (updatedDto as any).member_ids || (updatedDto as any).memberIds || team.memberIds || [];
 
       setTeams(prev => prev.map(t => (t.id === team.id ? updatedTeam : t)));
+      await fetchReferenceData();
       logAction('Team Updated', 'Team', team.name, 'Details and members updated', team.id);
       return updatedTeam;
     } catch (err) {
@@ -2089,6 +2300,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       await teamsApi.deleteTeam(teamId);
       setTeams(prev => prev.filter(t => t.id !== teamId));
+      await fetchReferenceData();
       logAction('Team Deleted', 'Team', `Team ID ${teamId}`, 'Team removed from system', teamId);
     } catch (err) {
       console.error('Failed to delete team via API:', err);
@@ -2273,15 +2485,28 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         description: modelData.description?.trim(),
         isActive: modelData.isActive !== false,
         isDefault: Boolean(modelData.isSystemDefault),
-        fieldSchema: (modelData.fields || []) as any
+        defaultValues: {
+          defaultSetupFeePKR: modelData.defaultSetupFeePKR || 0,
+          defaultBillingFrequency: modelData.defaultBillingFrequency || 'Monthly'
+        },
+        fieldSchema: (modelData.fields || []).map(f => ({
+          ...f,
+          key: f.key?.trim() || f.label?.toLowerCase().replace(/[^a-zA-Z0-9]/g, '') || `field_${Date.now()}`,
+          label: f.label?.trim() || 'Field',
+          type: f.type || 'text',
+          required: Boolean(f.isRequired ?? (f as any).required),
+          isRequired: Boolean(f.isRequired ?? (f as any).required),
+          includeInTotal: Boolean(f.includeInTotal)
+        })) as any
       });
       const newPm = mapPricingModelDto(createdDto);
       setPricingModels(prev => [...prev.filter(m => m.id !== newPm.id), newPm]);
       logAction('Pricing Model Added', 'Setting', newPm.name, `Billing: ${newPm.billingType}`, newPm.id);
       return newPm;
-    } catch (err) {
-      console.error('Failed to add pricing model via API:', err);
-      return null;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to add pricing model';
+      console.error('Failed to add pricing model via API:', message);
+      throw err;
     }
   };
 
@@ -2293,15 +2518,28 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         description: model.description?.trim(),
         isActive: model.isActive !== false,
         isDefault: Boolean(model.isSystemDefault),
-        fieldSchema: (model.fields || []) as any
+        defaultValues: {
+          defaultSetupFeePKR: model.defaultSetupFeePKR || 0,
+          defaultBillingFrequency: model.defaultBillingFrequency || 'Monthly'
+        },
+        fieldSchema: (model.fields || []).map(f => ({
+          ...f,
+          key: f.key?.trim() || f.label?.toLowerCase().replace(/[^a-zA-Z0-9]/g, '') || `field_${Date.now()}`,
+          label: f.label?.trim() || 'Field',
+          type: f.type || 'text',
+          required: Boolean(f.isRequired ?? (f as any).required),
+          isRequired: Boolean(f.isRequired ?? (f as any).required),
+          includeInTotal: Boolean(f.includeInTotal)
+        })) as any
       });
       const updatedPm = mapPricingModelDto(updatedDto);
       setPricingModels(prev => prev.map(m => (m.id === model.id ? updatedPm : m)));
       logAction('Pricing Model Updated', 'Setting', model.name, `Billing: ${model.billingType}`, model.id);
       return updatedPm;
-    } catch (err) {
-      console.error('Failed to update pricing model via API:', err);
-      return null;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update pricing model';
+      console.error('Failed to update pricing model via API:', message);
+      throw err;
     }
   };
 
@@ -2424,7 +2662,6 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addProposal,
         updateProposal,
         deleteProposal,
-        canGenerateProposals,
         incomingLeads,
         assignIncomingLead,
         activityLogs,

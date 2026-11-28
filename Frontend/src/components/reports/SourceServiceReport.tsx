@@ -42,7 +42,7 @@ export const SourceServiceReport: React.FC<SourceServiceReportProps> = ({
   const sourceData = allSources.map(src => {
     const matchedLeads = leads.filter(l => l.source === src);
     const converted = matchedLeads.filter(l => ['Converted', 'Won'].includes(l.status)).length;
-    const value = matchedLeads.reduce((sum, l) => sum + parseAmount(l.value), 0);
+    const value = matchedLeads.reduce((sum, l) => sum + parseAmount(l.valuePKR ?? (l as any).value), 0);
     const conversionRate = matchedLeads.length > 0 ? Math.round((converted / matchedLeads.length) * 100) : 0;
     const shareOfLeads = totalLeads > 0 ? Math.round((matchedLeads.length / totalLeads) * 100) : 0;
 
@@ -67,7 +67,7 @@ export const SourceServiceReport: React.FC<SourceServiceReportProps> = ({
   const serviceData = allServiceNames.map(srvName => {
     const matchedLeads = leads.filter(l => (l.services || []).includes(srvName));
     const converted = matchedLeads.filter(l => ['Converted', 'Won'].includes(l.status)).length;
-    const value = matchedLeads.reduce((sum, l) => sum + parseAmount(l.value), 0);
+    const value = matchedLeads.reduce((sum, l) => sum + parseAmount(l.valuePKR ?? (l as any).value), 0);
     const conversionRate = matchedLeads.length > 0 ? Math.round((converted / matchedLeads.length) * 100) : 0;
 
     return {
@@ -88,22 +88,20 @@ export const SourceServiceReport: React.FC<SourceServiceReportProps> = ({
       <div className="flex items-center gap-2 border-b border-[#E5EAF1] dark:border-slate-800 pb-2">
         <button
           onClick={() => setActiveTab('sources')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'sources'
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'sources'
               ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
+            }`}
         >
           Lead Acquisition Sources ({sourceData.length})
         </button>
 
         <button
           onClick={() => setActiveTab('services')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'services'
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'services'
               ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
+            }`}
         >
           Service &amp; Product Solutions ({serviceData.length})
         </button>

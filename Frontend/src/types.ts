@@ -157,7 +157,7 @@ export interface Activity {
 }
 
 export type FollowUpType = 'Call' | 'Meeting' | 'WhatsApp' | 'Demo' | 'Visit' | 'Email';
-export type FollowUpStatus = 'Pending' | 'Done' | 'Missed' | 'Cancelled';
+export type FollowUpStatus = 'Pending' | 'Done' | 'Completed' | 'Missed' | 'Cancelled';
 
 export interface FollowUp {
   id: string;
@@ -189,6 +189,8 @@ export interface Client {
   services: string[];
   source: LeadSource;
   pricingModel: string;
+  pricingModelId?: string;
+  pricingModelName?: string;
   finalPrice: number;
   activeRevenuePKR?: number;
   currency: string;
@@ -266,6 +268,8 @@ export interface Lead {
   tags: string[];
   notes: string;
   pricingModel?: PricingModel;
+  pricingModelId?: string;
+  pricingModelName?: string;
   budgetType?: BudgetType;
   budgetDetails?: BudgetDetails;
   activities: Activity[];
@@ -284,7 +288,7 @@ export interface LeadFilterState {
   priority: Priority | 'All';
 }
 
-export type SettingsSubTab = 'branding' | 'letterhead' | 'pricing' | 'communication';
+export type SettingsSubTab = 'branding' | 'letterhead' | 'pricing' | 'communication' | 'delete-management';
 
 export interface SystemSettings {
   applicationName: string;

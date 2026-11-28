@@ -9,15 +9,39 @@ export interface ServiceDbRow {
   name: string;
   category: string;
   description: string | null;
-  default_price_pkr: string; // returned as string from numeric column
+  default_price_pkr: string | number;
+  defaultPricePKR?: number;
   pricing_model_id: string | null;
   pricing_model_name?: string | null;
+  pricingModelId?: string | null;
+  pricingModelName?: string | null;
   is_active: boolean;
+  isActive?: boolean;
   created_at: Date;
   updated_at: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export class ServicesService {
+  private static mapRow(row: any): ServiceDbRow {
+    if (!row) return row;
+    const priceNum = parseFloat(row.default_price_pkr) || 0;
+    return {
+      ...row,
+      defaultPricePKR: priceNum,
+      default_price_pkr: priceNum,
+      pricingModelId: row.pricing_model_id || null,
+      pricing_model_id: row.pricing_model_id || null,
+      pricingModelName: row.pricing_model_name || null,
+      pricing_model_name: row.pricing_model_name || null,
+      isActive: row.is_active !== false,
+      is_active: row.is_active !== false,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  }
+
   public static async listServices(activeOnly = false): Promise<ServiceDbRow[]> {
     let sql = `
       SELECT s.*, pm.name as pricing_model_name
@@ -29,8 +53,8 @@ export class ServicesService {
     }
     sql += ' ORDER BY s.name ASC';
 
-    const res = await query<ServiceDbRow>(sql);
-    return res.rows;
+    const res = await query<any>(sql);
+    return res.rows.map(this.mapRow);
   }
 
   public static async getServiceById(id: string): Promise<ServiceDbRow> {
@@ -40,11 +64,11 @@ export class ServicesService {
       LEFT JOIN pricing_models pm ON s.pricing_model_id = pm.id
       WHERE s.id = $1
     `;
-    const res = await query<ServiceDbRow>(sql, [id]);
+    const res = await query<any>(sql, [id]);
     if (res.rows.length === 0) {
       throw AppError.notFound(`Service '${id}' not found`);
     }
-    return res.rows[0];
+    return this.mapRow(res.rows[0]);
   }
 
   public static async createService(actor: AuthUser, input: CreateServiceInput): Promise<ServiceDbRow> {
@@ -60,7 +84,7 @@ export class ServicesService {
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `;
-    const res = await query<ServiceDbRow>(sql, [
+    const res = await query<any>(sql, [
       input.name.trim(),
       input.category.trim(),
       input.description || null,
@@ -70,7 +94,7 @@ export class ServicesService {
     ]);
 
     await AuditService.logFromRequest(actor, 'CREATE_SERVICE', 'SERVICE', res.rows[0].id, res.rows[0].name);
-    return res.rows[0];
+    return this.mapRow(res.rows[0]);
   }
 
   public static async updateService(
@@ -115,10 +139,10 @@ export class ServicesService {
     params.push(id);
 
     const updateSql = `UPDATE services SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`;
-    const res = await query<ServiceDbRow>(updateSql, params);
+    const res = await query<any>(updateSql, params);
 
     await AuditService.logFromRequest(actor, 'UPDATE_SERVICE', 'SERVICE', id, res.rows[0].name);
-    return res.rows[0];
+    return this.mapRow(res.rows[0]);
   }
 
   public static async deleteService(actor: AuthUser, id: string): Promise<void> {

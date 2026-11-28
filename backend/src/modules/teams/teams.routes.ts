@@ -30,6 +30,13 @@ router.put(
   asyncHandler(TeamsController.updateTeam)
 );
 
+router.patch(
+  '/:id',
+  requirePermission('canManageTeams'),
+  validate({ body: updateTeamSchema }),
+  asyncHandler(TeamsController.updateTeam)
+);
+
 router.delete(
   '/:id',
   requirePermission('canManageTeams'),

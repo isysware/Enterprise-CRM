@@ -8,6 +8,7 @@ import {
 import { FollowUpsController } from './follow-ups.controller';
 import {
   createFollowUpSchema,
+  updateFollowUpSchema,
   completeFollowUpSchema,
   rescheduleFollowUpSchema,
   listFollowUpsQuerySchema,
@@ -36,6 +37,18 @@ router.patch(
   '/:id/reschedule',
   validate({ body: rescheduleFollowUpSchema }),
   asyncHandler(FollowUpsController.rescheduleFollowUp)
+);
+
+router.patch(
+  '/:id',
+  validate({ body: updateFollowUpSchema }),
+  asyncHandler(FollowUpsController.updateFollowUp)
+);
+
+router.put(
+  '/:id',
+  validate({ body: updateFollowUpSchema }),
+  asyncHandler(FollowUpsController.updateFollowUp)
 );
 
 router.delete('/:id', asyncHandler(FollowUpsController.deleteFollowUp));

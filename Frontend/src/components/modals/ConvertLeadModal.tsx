@@ -15,7 +15,7 @@ import {
   Calendar,
   Check
 } from 'lucide-react';
-import { formatPKR } from '../../utils/formatters';
+import { formatPKR, getLocalDateString } from '../../utils/formatters';
 import { DynamicPricingFieldsForm } from '../common/DynamicPricingFieldsForm';
 import { ModalShell, FormField, Input, Select, Textarea, Button, Badge } from '../ui';
 
@@ -32,7 +32,7 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
   lead,
   onSuccess
 }) => {
-  const { users, assignableUsers, convertLeadToClient, currentUser, pricingModels, settings } = useCRM();
+  const { users, assignableUsers, convertLeadToClient, currentUser, pricingModels, settings, services } = useCRM();
   const availableReps = assignableUsers && assignableUsers.length > 0 ? assignableUsers : (currentUser ? [currentUser] : users);
 
   // Section A: Closing Info (3 Columns)
@@ -44,28 +44,28 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
 
   // Section C: Dynamic Final Pricing Section
-  const [pricingModel, setPricingModel] = useState<string>('One-Time Project Model');
+  const [pricingModel, setPricingModel] = useState<string>('');
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
-  const [finalPrice, setFinalPrice] = useState<number>(80000);
+  const [finalPrice, setFinalPrice] = useState<number>(0);
   const [currency, setCurrency] = useState<string>(settings?.currency || 'PKR');
 
   // One-Time Project Fields (fallback)
-  const [oneTimeProjectPrice, setOneTimeProjectPrice] = useState<number>(80000);
-  const [advancePayment, setAdvancePayment] = useState<number>(30000);
-  const [remainingPayment, setRemainingPayment] = useState<number>(50000);
+  const [oneTimeProjectPrice, setOneTimeProjectPrice] = useState<number>(0);
+  const [advancePayment, setAdvancePayment] = useState<number>(0);
+  const [remainingPayment, setRemainingPayment] = useState<number>(0);
   const [supportFeeAfterDelivery, setSupportFeeAfterDelivery] = useState<number>(0);
   const [otherFeeAmount, setOtherFeeAmount] = useState<number>(0);
   const [otherFeeDescription, setOtherFeeDescription] = useState<string>('');
   const [pricingNotes, setPricingNotes] = useState<string>('');
 
   // Monthly Subscription Fields (fallback)
-  const [monthlySubscriptionFee, setMonthlySubscriptionFee] = useState<number>(6000);
-  const [oneTimeSetupFee, setOneTimeSetupFee] = useState<number>(15000);
+  const [monthlySubscriptionFee, setMonthlySubscriptionFee] = useState<number>(0);
+  const [oneTimeSetupFee, setOneTimeSetupFee] = useState<number>(0);
   const [monthlySupportFee, setMonthlySupportFee] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Ownership Fields (fallback)
-  const [ownershipPrice, setOwnershipPrice] = useState<number>(250000);
+  const [ownershipPrice, setOwnershipPrice] = useState<number>(0);
 
   // Additional Details
   const [paymentTerms, setPaymentTerms] = useState<string>('');
@@ -77,12 +77,13 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
   // Find active pricing model
   const activePricingModel = useMemo(() => {
     return pricingModels?.find(pm =>
+      pm.id === lead?.pricingModelId ||
       pm.name.toLowerCase() === pricingModel.toLowerCase() ||
       (pricingModel === 'Monthly Subscription Model' && (pm.name.includes('Monthly') || pm.name.includes('Subscription'))) ||
       (pricingModel === 'Ownership Model' && pm.name.includes('Ownership')) ||
       (pricingModel === 'One-Time Project Model' && (pm.name.includes('One-Time') || pm.name.includes('Project')))
     ) || null;
-  }, [pricingModel, pricingModels]);
+  }, [pricingModel, pricingModels, lead?.pricingModelId]);
 
   // Calculate total from dynamic schema fields
   const calculatedTotal = useMemo(() => {
@@ -112,13 +113,9 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
     }));
   };
 
-  const STANDARD_SERVICES = [
-    'Education Management System (premium)',
-    'Education Management System (Lite)',
-    'Salon Management System',
-    'Custom Website Development',
-    'Custom Software Development'
-  ];
+  const availableServiceNames = useMemo(() => {
+    return services.map(s => s.name);
+  }, [services]);
 
   // Initialize modal state when lead changes
   useEffect(() => {
@@ -130,46 +127,31 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
       if (lead.services && lead.services.length > 0) {
         setSelectedServices(lead.services);
       } else {
-        setSelectedServices(['Salon Management System']);
+        setSelectedServices([]);
       }
 
       if (lead.budgetDetails?.customFieldValues) {
         setCustomFieldValues(lead.budgetDetails.customFieldValues);
       } else {
-        setCustomFieldValues({
-          monthly_fee: lead.budgetDetails?.monthlySubscriptionFee ?? 6000,
-          setup_fee: lead.budgetDetails?.oneTimeSetupFee ?? lead.budgetDetails?.setupFee ?? 15000,
-          support_fee: lead.budgetDetails?.monthlySupportFee ?? 0,
-          ownership_price: lead.budgetDetails?.ownershipPrice ?? 250000,
-          project_price: lead.budgetDetails?.totalProjectPrice ?? lead.valuePKR ?? 80000,
-          advance_payment: lead.budgetDetails?.advanceMilestoneAmount ?? 30000,
-          other_fee: lead.budgetDetails?.otherFeeAmount ?? 0,
-          other_fee_desc: lead.budgetDetails?.otherFeeDescription ?? ''
-        });
+        setCustomFieldValues({});
       }
 
-      if (lead.budgetType === 'One-Time Project Model' || lead.pricingModel === 'One-Time Project') {
-        setPricingModel('One-Time Project Model');
-        const projPrice = lead.budgetDetails?.totalProjectPrice || lead.valuePKR || 80000;
-        const adv = lead.budgetDetails?.advanceMilestoneAmount || 30000;
-        setOneTimeProjectPrice(projPrice);
-        setAdvancePayment(adv);
-        setRemainingPayment(Math.max(0, projPrice - adv));
-        setFinalPrice(projPrice);
-      } else if (lead.budgetType === 'Monthly Subscription Model' || lead.pricingModel === 'Monthly Subscription') {
-        setPricingModel('Monthly Subscription Model');
-        setMonthlySubscriptionFee(lead.budgetDetails?.monthlySubscriptionFee || 6000);
-        setOneTimeSetupFee(lead.budgetDetails?.oneTimeSetupFee || 15000);
-        setFinalPrice(lead.budgetDetails?.totalInitialPayment || (15000 + 6000));
-      } else if (lead.budgetType === 'Ownership Model' || lead.pricingModel === 'Ownership Model') {
-        setPricingModel('Ownership Model');
-        const ownPrice = lead.budgetDetails?.ownershipPrice || 250000;
-        setOwnershipPrice(ownPrice);
-        setFinalPrice(ownPrice);
-      } else {
-        setPricingModel('One-Time Project Model');
-        setFinalPrice(lead.valuePKR || 80000);
-      }
+      const matchedPm = pricingModels?.find(pm =>
+        pm.id === lead.pricingModelId ||
+        pm.name === lead.pricingModel ||
+        pm.name === lead.budgetType
+      );
+      const matchedModelName = matchedPm?.name || lead.pricingModel || lead.budgetType || (pricingModels && pricingModels.length > 0 ? pricingModels[0].name : '');
+      setPricingModel(matchedModelName);
+
+      const dealVal = lead.valuePKR || lead.budgetDetails?.totalProjectPrice || lead.budgetDetails?.totalInitialPayment || 0;
+      setFinalPrice(dealVal);
+      setOneTimeProjectPrice(dealVal);
+      setAdvancePayment(lead.budgetDetails?.advanceMilestoneAmount || 0);
+      setRemainingPayment(Math.max(0, dealVal - (lead.budgetDetails?.advanceMilestoneAmount || 0)));
+      setMonthlySubscriptionFee(lead.budgetDetails?.monthlySubscriptionFee || 0);
+      setOneTimeSetupFee(lead.budgetDetails?.oneTimeSetupFee || lead.budgetDetails?.setupFee || 0);
+      setOwnershipPrice(lead.budgetDetails?.ownershipPrice || dealVal);
 
       setErrorMsg('');
     }
@@ -215,6 +197,8 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
       services: selectedServices.length > 0 ? selectedServices : lead.services,
       finalPrice: finalPrice,
       pricingModel: pricingModel,
+      pricingModelId: activePricingModel?.id || lead.pricingModelId,
+      pricingModelName: activePricingModel?.name || pricingModel,
       leadGeneratedById: generatedById,
       leadGeneratedByName: genUser?.name || lead.assignedToName,
       assignedToId: assignedToId,
@@ -223,7 +207,7 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
       teamName: assignedUser?.teamName || lead.teamName,
       closedById: closedById,
       closedByName: closedByUser?.name || currentUser?.name || 'Closer',
-      closingDate: new Date().toISOString().split('T')[0],
+      closingDate: getLocalDateString(),
       source: lead.source,
       status: 'Active',
       dealTerms: paymentTerms,
@@ -379,32 +363,38 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {STANDARD_SERVICES.map(srv => {
-              const isSelected = selectedServices.includes(srv);
-              return (
-                <button
-                  type="button"
-                  key={srv}
-                  onClick={() => toggleService(srv)}
-                  className={`flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200'
-                      : 'bg-white dark:bg-slate-900 border-[#E5EAF1] dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850'
-                  }`}
-                >
-                  <div className="shrink-0">
-                    {isSelected ? (
-                      <div className="w-4 h-4 rounded-md bg-emerald-600 text-white flex items-center justify-center">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </div>
-                    ) : (
-                      <div className="w-4 h-4 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800" />
-                    )}
-                  </div>
-                  <span className="font-semibold text-xs leading-snug">{srv}</span>
-                </button>
-              );
-            })}
+            {availableServiceNames.length === 0 ? (
+              <div className="col-span-full py-4 text-center text-xs text-slate-500 italic bg-slate-50 dark:bg-slate-850 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                No services configured yet. Configure services in Admin &gt; Services.
+              </div>
+            ) : (
+              availableServiceNames.map(srv => {
+                const isSelected = selectedServices.includes(srv);
+                return (
+                  <button
+                    type="button"
+                    key={srv}
+                    onClick={() => toggleService(srv)}
+                    className={`flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200'
+                        : 'bg-white dark:bg-slate-900 border-[#E5EAF1] dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850'
+                    }`}
+                  >
+                    <div className="shrink-0">
+                      {isSelected ? (
+                        <div className="w-4 h-4 rounded-md bg-emerald-600 text-white flex items-center justify-center">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </div>
+                      ) : (
+                        <div className="w-4 h-4 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800" />
+                      )}
+                    </div>
+                    <span className="font-semibold text-xs leading-snug">{srv}</span>
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -438,13 +428,11 @@ export const ConvertLeadModal: React.FC<ConvertLeadModalProps> = ({
                     </option>
                   ))
                 ) : (
-                  <>
-                    <option value="One-Time Project Model">One-Time Project Model</option>
-                    <option value="Monthly Subscription Model">Monthly Subscription Model</option>
-                    <option value="Ownership Model">Ownership Model</option>
-                  </>
+                  <option value="">-- No Pricing Models Configured --</option>
                 )}
-                <option value="Custom Quotation / Hybrid">Custom Quotation / Hybrid</option>
+                {pricingModels && pricingModels.length > 0 && (
+                  <option value="Custom Quotation / Hybrid">Custom Quotation / Hybrid</option>
+                )}
               </Select>
             </FormField>
 

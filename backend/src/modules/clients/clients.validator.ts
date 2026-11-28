@@ -9,9 +9,10 @@ export const convertLeadToClientSchema = z.object({
   city: z.string().optional().nullable(),
   servicesSnapshot: z.array(z.unknown()).default([]),
   source: z.string().optional().nullable(),
-  pricingModelId: z.string().uuid().optional().nullable(),
+  pricingModelId: z.string().uuid().optional().nullable().or(z.literal('').transform(() => null)),
+  pricing_model_id: z.string().uuid().optional().nullable().or(z.literal('').transform(() => null)),
   finalValuePKR: z.number().nonnegative().default(0),
-  assignedOwnerId: z.string().uuid().optional().nullable(),
+  assignedOwnerId: z.string().uuid().optional().nullable().or(z.literal('').transform(() => null)),
   termsDetails: z.string().optional().nullable(),
 });
 

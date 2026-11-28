@@ -82,8 +82,8 @@ export const TeamsAdminView: React.FC = () => {
     setTeamName('');
     setTeamCode('');
     setDescription('');
-    setSelectedManagerId(managerCandidates[0]?.id || '');
-    setSelectedTeamLeadId(teamLeadCandidates[0]?.id || '');
+    setSelectedManagerId('');
+    setSelectedTeamLeadId('');
     setSelectedMemberIds([]);
     setMemberSearchQuery('');
     setFormError('');
@@ -98,10 +98,10 @@ export const TeamsAdminView: React.FC = () => {
     setDescription(team.description || '');
 
     const matchedMgr = users.find(u => u.name === team.managerName || u.id === team.managerId);
-    setSelectedManagerId(matchedMgr?.id || team.managerId || managerCandidates[0]?.id || '');
+    setSelectedManagerId(matchedMgr?.id || team.managerId || '');
 
     const matchedLead = users.find(u => u.name === team.leaderName || u.id === team.leaderId);
-    setSelectedTeamLeadId(matchedLead?.id || team.leaderId || teamLeadCandidates[0]?.id || '');
+    setSelectedTeamLeadId(matchedLead?.id || team.leaderId || '');
 
     const currentMemberIds = Array.from(
       new Set([...(team.memberIds || []), ...users.filter(u => u.teamId === team.id).map(u => u.id)])

@@ -30,6 +30,7 @@ export interface CreateTeamInput {
   description?: string;
   managerId?: string | null;
   teamLeadId?: string | null;
+  memberIds?: string[];
 }
 
 export interface UpdateTeamInput {
@@ -39,6 +40,7 @@ export interface UpdateTeamInput {
   managerId?: string | null;
   teamLeadId?: string | null;
   status?: 'active' | 'inactive' | 'archived';
+  memberIds?: string[];
 }
 
 export const teamsApi = {
@@ -50,7 +52,7 @@ export const teamsApi = {
   createTeam: (data: CreateTeamInput) => apiClient.post<TeamDto>('/teams', data),
 
   updateTeam: (id: string, data: UpdateTeamInput) =>
-    apiClient.patch<TeamDto>(`/teams/${id}`, data),
+    apiClient.put<TeamDto>(`/teams/${id}`, data),
 
   deleteTeam: (id: string) => apiClient.delete<null>(`/teams/${id}`),
 

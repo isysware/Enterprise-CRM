@@ -31,6 +31,8 @@ import {
 import {
   formatPKR,
   formatDate,
+  formatTime,
+  getLocalDateString,
   getWhatsAppUrl,
   getStatusBadgeStyle,
   getPriorityBadge,
@@ -185,16 +187,16 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
       `"${l.quality}"`,
       `"${l.source}"`,
       `"${l.assignedToName}"`,
-      `"${l.createdAt}"`,
-      `"${l.nextFollowUpDate || ''}"`,
-      `"${l.nextFollowUpTime || ''}"`
+      `"${l.createdAt ? formatDate(l.createdAt) : ''}"`,
+      `"${l.nextFollowUpDate ? formatDate(l.nextFollowUpDate) : ''}"`,
+      `"${l.nextFollowUpTime ? formatTime(l.nextFollowUpTime) : ''}"`
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `leads_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `leads_export_${getLocalDateString()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -683,7 +685,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                     const isSelected = selectedLeadIds.includes(lead.id);
                     const waUrl = getWhatsAppUrl(lead.phone, lead.name, lead.businessName);
 
-                    const today = new Date().toISOString().split('T')[0];
+                    const today = getLocalDateString();
                     const isToday = lead.nextFollowUpDate === today;
                     const isPast = lead.nextFollowUpDate && lead.nextFollowUpDate < today;
 
@@ -839,7 +841,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                               isPast ? 'text-rose-600' : isToday ? 'text-amber-600' : 'text-[#0F172A] dark:text-slate-300'
                             }`}>
                               <div>{formatDate(lead.nextFollowUpDate)}</div>
-                              <div className="text-[10px] font-normal text-[#64748B]">{lead.nextFollowUpTime || ''}</div>
+                              <div className="text-[10px] font-normal text-[#64748B]">{lead.nextFollowUpTime ? formatTime(lead.nextFollowUpTime) : ''}</div>
                             </div>
                           ) : (
                             <span className="text-[11px] text-slate-400">None scheduled</span>

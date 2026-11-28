@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useCRM } from '../context/CRMContext';
-import { formatPKR, parseAmount, getClientRevenue } from '../utils/formatters';
+import { formatPKR, parseAmount, getClientRevenue, getLocalDateString, getKarachiDateString, formatDate, formatTime } from '../utils/formatters';
 import { ReportId, ReportFilterState, DatePreset } from './reports/types';
 import { ReportHeader } from './reports/ReportHeader';
 import { ReportFilterBar } from './reports/ReportFilterBar';
@@ -32,7 +32,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
     services,
     sources,
     pricingModels,
-    currentUser
+    currentUser,
+    settings
   } = useCRM();
 
   // Active Report Navigation state (controlled if prop provided, else fallback to internal)
@@ -47,11 +48,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   }, [onChangeReport]);
 
   // Initial reference dates
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayStr = useMemo(() => getLocalDateString(), []);
   const thirtyDaysAgoStr = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
-    return d.toISOString().split('T')[0];
+    return getLocalDateString(d);
   }, []);
 
   // Global Filter State
@@ -91,13 +92,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
   // Date filtering helper
   const isDateWithinRange = useCallback((dateString?: string | null): boolean => {
+    if (filterState.datePreset === 'all_time') return true;
     if (!filterState.fromDate && !filterState.toDate) return true;
     if (!dateString) return true;
-    const d = dateString.substring(0, 10);
+    const d = getKarachiDateString(dateString);
+    if (!d) return true;
     if (filterState.fromDate && d < filterState.fromDate) return false;
     if (filterState.toDate && d > filterState.toDate) return false;
     return true;
-  }, [filterState.fromDate, filterState.toDate]);
+  }, [filterState.datePreset, filterState.fromDate, filterState.toDate]);
 
   // 1. FILTERED LEADS (Strictly from authorized scopedLeads)
   const filteredLeads = useMemo(() => {
@@ -282,24 +285,34 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
   // Standardized export payload generator for both Excel and CSV
   const getActiveReportData = useCallback((): { headers: string[]; rows: (string | number)[][]; baseName: string } => {
+    const filePrefix = (settings.companyName?.trim() || 'CRM').replace(/[^a-zA-Z0-9_-]/g, '_');
     switch (activeReport) {
       case 'sales-pipeline': {
         const headers = ['Lead / Business', 'Contact Name', 'Phone', 'Email', 'Service', 'Source', 'Status', 'Priority', 'Assigned Rep', 'Team', 'Value PKR', 'Created Date'];
-        const rows = filteredLeads.map(l => [
-          l.businessName || l.name,
-          l.name,
-          l.phone,
-          l.email || '',
-          (l.services || []).join('; '),
-          l.source || 'Direct',
-          l.status,
-          l.priority || 'Medium',
-          l.assignedToName || '',
-          l.teamName || '',
-          parseAmount(l.value),
-          l.createdAt ? l.createdAt.substring(0, 10) : ''
-        ]);
-        return { headers, rows, baseName: 'iSysware_Sales_Pipeline' };
+        const rows = filteredLeads.map(l => {
+          const assignedUser = scopedUsers.find(u => u.id === l.assignedToId);
+          const teamName =
+            l.teamName ||
+            (l.teamId ? scopedTeams.find(t => t.id === l.teamId)?.name : '') ||
+            assignedUser?.teamName ||
+            (assignedUser?.teamId ? scopedTeams.find(t => t.id === assignedUser.teamId)?.name : '') ||
+            '';
+          return [
+            l.businessName || l.name,
+            l.name,
+            l.phone,
+            l.email || '',
+            (l.services || []).join('; '),
+            l.source || 'Direct',
+            l.status,
+            l.priority || 'Medium',
+            l.assignedToName || '',
+            teamName,
+            parseAmount(l.valuePKR ?? (l as any).value),
+            l.createdAt ? formatDate(l.createdAt) : ''
+          ];
+        });
+        return { headers, rows, baseName: `${filePrefix}_Sales_Pipeline` };
       }
       case 'team-staff': {
         const headers = ['Representative', 'Email', 'Role', 'Team', 'Total Leads', 'Assigned Leads', 'Converted', 'Conversion Rate %', 'Pipeline Value PKR'];
@@ -308,20 +321,36 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           if (filterState.userId !== 'All' && u.id !== filterState.userId) return false;
           return true;
         });
+        const ROLE_RANK: Record<string, number> = {
+          'Super Admin': 4,
+          'Admin': 3,
+          'Manager': 2,
+          'Team Lead': 1,
+          'Employee': 0
+        };
         const rows = usersForExport.map(u => {
+          const uRank = ROLE_RANK[u.role] ?? 0;
           const uLeads = filteredLeads.filter(l => l.assignedToId === u.id);
           const totalLeadsCount = (u.role === 'Super Admin' || u.role === 'Admin')
             ? filteredLeads.length
-            : filteredLeads.filter(l =>
-                l.assignedToId === u.id ||
-                (u.teamId && (l.teamId === u.teamId || l.teamName === u.teamName))
-              ).length;
+            : filteredLeads.filter(l => {
+                if (l.assignedToId === u.id) return true;
+                if (l.assignedToId) {
+                  const assignee = scopedUsers.find(usr => usr.id === l.assignedToId);
+                  if (assignee && (ROLE_RANK[assignee.role] ?? 0) >= uRank) {
+                    return false;
+                  }
+                }
+                return !!(u.teamId && (l.teamId === u.teamId || l.teamName === u.teamName));
+              }).length;
           const uWon = uLeads.filter(l => ['Converted', 'Won'].includes(l.status)).length;
-          const uVal = uLeads.reduce((s, l) => s + parseAmount(l.value), 0);
-          const rate = uLeads.length > 0 ? Math.round((uWon / uLeads.length) * 100) : 0;
+          const activeULeads = uLeads.filter(l => !['Converted', 'Won', 'Lost'].includes(l.status));
+          const uVal = activeULeads.reduce((s, l) => s + parseAmount(l.valuePKR ?? (l as any).value), 0);
+          const rawRate = uLeads.length > 0 ? (uWon / uLeads.length) * 100 : 0;
+          const rate = Number.isInteger(rawRate) ? rawRate : Number(rawRate.toFixed(2));
           return [u.name, u.email, u.role, u.teamName || '', totalLeadsCount, uLeads.length, uWon, rate, uVal];
         });
-        return { headers, rows, baseName: 'iSysware_Team_Performance' };
+        return { headers, rows, baseName: `${filePrefix}_Team_Performance` };
       }
       case 'followups-activity': {
         const headers = ['Client / Lead', 'Contact Phone', 'Interaction Type', 'Scheduled Date', 'Scheduled Time', 'Assigned Rep', 'Status', 'Notes'];
@@ -329,13 +358,13 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           f.clientName,
           f.phone,
           f.type,
-          f.scheduledDate,
-          f.scheduledTime || '',
+          f.scheduledDate ? formatDate(f.scheduledDate) : '',
+          f.scheduledTime ? formatTime(f.scheduledTime) : '',
           f.assignedToName || '',
           f.status,
           f.notes || ''
         ]);
-        return { headers, rows, baseName: 'iSysware_FollowUps_Activity' };
+        return { headers, rows, baseName: `${filePrefix}_FollowUps_Activity` };
       }
       case 'clients-conversions': {
         const headers = ['Client / Business', 'Contact Name', 'Phone', 'Email', 'Services', 'Origin Source', 'Pricing Model', 'Contract Value PKR', 'Converted Date', 'Assigned Rep', 'Status'];
@@ -348,22 +377,22 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           c.source || 'Direct',
           c.pricingModel || 'SaaS',
           getClientRevenue(c),
-          c.convertedDate || c.startDate || '',
+          (c.convertedDate || c.startDate) ? formatDate(c.convertedDate || c.startDate) : '',
           c.assignedToName || '',
           c.status || 'Active'
         ]);
-        return { headers, rows, baseName: 'iSysware_Clients_Conversions' };
+        return { headers, rows, baseName: `${filePrefix}_Clients_Conversions` };
       }
       case 'source-service': {
         const headers = ['Channel / Source', 'Total Leads', 'Converted Deals', 'Conversion Rate %', 'Generated Pipeline Value PKR'];
         const rows = availableSources.map(src => {
           const matched = filteredLeads.filter(l => l.source === src);
           const won = matched.filter(l => ['Converted', 'Won'].includes(l.status)).length;
-          const val = matched.reduce((s, l) => s + parseAmount(l.value), 0);
+          const val = matched.reduce((s, l) => s + parseAmount(l.valuePKR ?? (l as any).value), 0);
           const rate = matched.length > 0 ? Math.round((won / matched.length) * 100) : 0;
           return [src, matched.length, won, rate, val];
         });
-        return { headers, rows, baseName: 'iSysware_Source_Service' };
+        return { headers, rows, baseName: `${filePrefix}_Source_Service` };
       }
       case 'commercial-revenue': {
         const headers = ['Client / Account', 'Pricing Model', 'Active Revenue PKR', 'Contract Date', 'Assigned Rep'];
@@ -371,17 +400,17 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           c.businessName || c.clientName,
           c.pricingModel || 'Custom',
           getClientRevenue(c),
-          c.convertedDate || c.startDate || '',
+          (c.convertedDate || c.startDate) ? formatDate(c.convertedDate || c.startDate) : '',
           c.assignedToName || ''
         ]);
-        return { headers, rows, baseName: 'iSysware_Commercial_Revenue' };
+        return { headers, rows, baseName: `${filePrefix}_Commercial_Revenue` };
       }
     }
-  }, [activeReport, filteredLeads, scopedUsers, filteredFollowUps, filteredClients, availableSources]);
+  }, [activeReport, filteredLeads, scopedUsers, filteredFollowUps, filteredClients, availableSources, settings.companyName]);
 
   // Real Native Excel (.xlsx) Exporter with SheetJS
   const handleExportExcel = () => {
-    const timestamp = new Date().toISOString().split('T')[0];
+    const timestamp = getLocalDateString();
     const { headers, rows, baseName } = getActiveReportData();
     exportToExcel({
       fileName: `${baseName}_${timestamp}`,
@@ -391,13 +420,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
       generatedBy: `${currentUser?.name || 'CRM User'} (${currentUser?.email || ''})`,
       filterSummary,
       headers,
-      rows
+      rows,
+      companyName: settings.companyName
     });
   };
 
   // CSV Fallback Exporter
   const handleExportCSV = () => {
-    const timestamp = new Date().toISOString().split('T')[0];
+    const timestamp = getLocalDateString();
     const { headers, rows, baseName } = getActiveReportData();
     exportToCSV(`${baseName}_${timestamp}`, headers, rows);
   };
@@ -422,6 +452,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         dateRange={dateRangeLabel}
         filterSummary={filterSummary}
         recordCount={reportMeta.recordCount}
+        companyName={settings.companyName}
       />
 
       {/* Main Single-Hierarchy Report Content Container — Driven by Main CRM Sidebar */}
@@ -446,6 +477,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           {activeReport === 'sales-pipeline' && (
             <SalesPipelineReport
               leads={filteredLeads}
+              users={availableUsers}
+              teams={scopedTeams}
               filterBar={
                 <ReportFilterBar
                   activeReport={activeReport}

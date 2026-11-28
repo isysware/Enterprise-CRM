@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useCRM } from '../../context/CRMContext';
 import { Lead, Proposal, ProposalItem, PaymentMilestone } from '../../types';
-import { formatPKR } from '../../utils/formatters';
+import { formatPKR, getLocalDateString, formatDate } from '../../utils/formatters';
 import {
   X,
   FileSignature,
@@ -63,7 +63,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
     existingProposal?.title || `Commercial Quotation & Proposal for ${lead?.businessName || lead?.name || 'Client'}`
   );
   const [issueDate, setIssueDate] = useState(
-    existingProposal?.issueDate || new Date().toISOString().split('T')[0]
+    existingProposal?.issueDate || getLocalDateString()
   );
   const [validityDays, setValidityDays] = useState(existingProposal?.validityDays || 14);
   const [status, setStatus] = useState<Proposal['status']>(existingProposal?.status || 'Draft');
@@ -74,17 +74,12 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
   const [clientEmail, setClientEmail] = useState(existingProposal?.clientEmail || lead?.email || '');
   const [clientPhone, setClientPhone] = useState(existingProposal?.clientPhone || lead?.phone || '');
   const [clientAddress, setClientAddress] = useState(
-    existingProposal?.clientAddress || (lead?.city ? `${lead.city}, Pakistan` : 'Karachi, Pakistan')
+    existingProposal?.clientAddress || lead?.city || ''
   );
 
   // Scope of Work / Overview
   const [scopeOfWork, setScopeOfWork] = useState(
-    existingProposal?.scopeOfWork ||
-      `1. Executive Summary: Provisioning and full-cycle implementation of ${
-        lead?.servicesOfInterest && lead.servicesOfInterest.length > 0
-          ? lead.servicesOfInterest.join(', ')
-          : 'Enterprise Software & Automation Suite'
-      }.\n2. Implementation Scope: Deployment of dedicated high-availability environment, user role administration, custom pipeline configuration, staff training, and data onboarding.\n3. SLA & Support: 99.9% uptime SLA with dedicated direct escalation channel and automated database backups.`
+    existingProposal?.scopeOfWork || ''
   );
 
   // Line Items
@@ -92,15 +87,18 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
     if (existingProposal?.items && existingProposal.items.length > 0) {
       return existingProposal.items;
     }
-    // Auto-prepopulate from Lead's services of interest
+
     if (lead?.servicesOfInterest && lead.servicesOfInterest.length > 0) {
       return lead.servicesOfInterest.map((serviceName, idx) => {
-        const matchedService = services.find(s => s.name.toLowerCase() === serviceName.toLowerCase());
-        const price = matchedService ? matchedService.basePricePKR : 45000;
+        const matchedService = services.find(
+          s => s.name.toLowerCase() === serviceName.toLowerCase()
+        );
+        const price = Number(matchedService?.defaultPricePKR ?? matchedService?.basePricePKR ?? 0);
+
         return {
           id: `item-${Date.now()}-${idx}`,
           title: serviceName,
-          description: matchedService?.description || `Professional implementation and configuration of ${serviceName}`,
+          description: matchedService?.description || '',
           quantity: 1,
           unitPrice: price,
           discount: 0,
@@ -108,18 +106,8 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
         };
       });
     }
-    // Default initial single item
-    return [
-      {
-        id: `item-${Date.now()}-0`,
-        title: 'Enterprise Software Implementation',
-        description: 'Complete system deployment, configuration, employee training & cloud hosting setup',
-        quantity: 1,
-        unitPrice: 65000,
-        discount: 0,
-        total: 65000
-      }
-    ];
+
+    return [];
   });
 
   // Tax and Discount Rates
@@ -130,44 +118,20 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
     if (existingProposal?.paymentMilestones && existingProposal.paymentMilestones.length > 0) {
       return existingProposal.paymentMilestones;
     }
-    return [
-      {
-        id: 'ms-1',
-        title: '1. Advance Milestone (Contract Signing & Kickoff)',
-        percentage: 40,
-        amount: 0,
-        dueDate: 'Upon Agreement Signing'
-      },
-      {
-        id: 'ms-2',
-        title: '2. Beta Prototype & Core Module Approval',
-        percentage: 30,
-        amount: 0,
-        dueDate: 'Within 14 Days of Kickoff'
-      },
-      {
-        id: 'ms-3',
-        title: '3. Final Deployment & Complete Handover',
-        percentage: 30,
-        amount: 0,
-        dueDate: 'Upon Production Launch'
-      }
-    ];
+    return [];
   });
 
   // Terms & Conditions
   const [termsAndConditions, setTermsAndConditions] = useState(
-    existingProposal?.termsAndConditions ||
-      settings.defaultProposalTerms ||
-      `1. Validity: This commercial quotation is valid for 14 calendar days from the date of issuance.\n2. Payment Terms: 40% advance milestone on contract signing, 30% on beta milestone preview, and 30% upon final delivery & handover.\n3. Taxes: Quoted prices are in Pakistani Rupees (PKR) and exclusive of applicable provincial sales tax (GST/PST) unless explicitly itemized.\n4. Support & Warranty: 3 months of complimentary technical bug-fixing and cloud maintenance support is included post-launch.\n5. Intellectual Property: Complete source code ownership and database rights will be transferred upon settlement of final invoice.`
+    existingProposal?.termsAndConditions || settings.defaultProposalTerms || ''
   );
 
   // Authorized Signatory
   const [signatoryName, setSignatoryName] = useState(
-    existingProposal?.authorizedSignatureName || settings.authorizedSignatureName || 'Abdur Rehman Arain'
+    existingProposal?.authorizedSignatureName || settings.authorizedSignatureName || ''
   );
   const [signatoryTitle, setSignatoryTitle] = useState(
-    existingProposal?.authorizedSignatureTitle || settings.authorizedSignatureTitle || 'Director of Enterprise Solutions'
+    existingProposal?.authorizedSignatureTitle || settings.authorizedSignatureTitle || ''
   );
   const [signatoryImg, setSignatoryImg] = useState(
     existingProposal?.authorizedSignatureImg || settings.authorizedSignatureImg || ''
@@ -180,14 +144,14 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
     if (existingProposal) {
       setRefNumber(existingProposal.refNumber || `PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
       setTitle(existingProposal.title || `Commercial Quotation & Proposal for ${existingProposal.businessName || existingProposal.clientName || lead.businessName || lead.name}`);
-      setIssueDate(existingProposal.issueDate || new Date().toISOString().split('T')[0]);
+      setIssueDate(existingProposal.issueDate || getLocalDateString());
       setValidityDays(existingProposal.validityDays || 14);
       setStatus(existingProposal.status || 'Draft');
       setClientName(existingProposal.clientName || lead.name || '');
       setBusinessName(existingProposal.businessName || lead.businessName || '');
       setClientEmail(existingProposal.clientEmail || lead.email || '');
       setClientPhone(existingProposal.clientPhone || lead.phone || '');
-      setClientAddress(existingProposal.clientAddress || (lead.city ? `${lead.city}, Pakistan` : 'Karachi, Pakistan'));
+      setClientAddress(existingProposal.clientAddress || lead.city || '');
       setScopeOfWork(existingProposal.scopeOfWork || '');
       if (existingProposal.items && existingProposal.items.length > 0) {
         setItems(existingProposal.items);
@@ -197,36 +161,33 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
         setMilestones(existingProposal.paymentMilestones);
       }
       setTermsAndConditions(existingProposal.termsAndConditions || settings.defaultProposalTerms || '');
-      setSignatoryName(existingProposal.authorizedSignatureName || settings.authorizedSignatureName || 'Abdur Rehman Arain');
-      setSignatoryTitle(existingProposal.authorizedSignatureTitle || settings.authorizedSignatureTitle || 'Director of Enterprise Solutions');
+      setSignatoryName(existingProposal.authorizedSignatureName || settings.authorizedSignatureName || '');
+      setSignatoryTitle(existingProposal.authorizedSignatureTitle || settings.authorizedSignatureTitle || '');
       setSignatoryImg(existingProposal.authorizedSignatureImg || settings.authorizedSignatureImg || '');
     } else {
       setRefNumber(`PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
       setTitle(`Commercial Quotation & Proposal for ${lead.businessName || lead.name}`);
-      setIssueDate(new Date().toISOString().split('T')[0]);
+      setIssueDate(getLocalDateString());
       setValidityDays(14);
       setStatus('Draft');
       setClientName(lead.name || '');
       setBusinessName(lead.businessName || '');
       setClientEmail(lead.email || '');
       setClientPhone(lead.phone || '');
-      setClientAddress(lead.city ? `${lead.city}, Pakistan` : 'Karachi, Pakistan');
-      setScopeOfWork(
-        `1. Executive Summary: Provisioning and full-cycle implementation of ${
-          lead.servicesOfInterest && lead.servicesOfInterest.length > 0
-            ? lead.servicesOfInterest.join(', ')
-            : 'Enterprise Software & Automation Suite'
-        }.\n2. Implementation Scope: Deployment of dedicated high-availability environment, user role administration, custom pipeline configuration, staff training, and data onboarding.\n3. SLA & Support: 99.9% uptime SLA with dedicated direct escalation channel and automated database backups.`
-      );
+      setClientAddress(lead.city || '');
+      setScopeOfWork('');
       if (lead.servicesOfInterest && lead.servicesOfInterest.length > 0) {
         setItems(
           lead.servicesOfInterest.map((serviceName, idx) => {
-            const matchedService = services.find(s => s.name.toLowerCase() === serviceName.toLowerCase());
-            const price = matchedService ? matchedService.basePricePKR : 45000;
+            const matchedService = services.find(
+              s => s.name.toLowerCase() === serviceName.toLowerCase()
+            );
+            const price = Number(matchedService?.defaultPricePKR ?? matchedService?.basePricePKR ?? 0);
+
             return {
               id: `item-${Date.now()}-${idx}`,
               title: serviceName,
-              description: matchedService?.description || `Professional implementation and configuration of ${serviceName}`,
+              description: matchedService?.description || '',
               quantity: 1,
               unitPrice: price,
               discount: 0,
@@ -235,48 +196,13 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
           })
         );
       } else {
-        setItems([
-          {
-            id: `item-${Date.now()}-0`,
-            title: 'Enterprise Software Implementation',
-            description: 'Complete system deployment, configuration, employee training & cloud hosting setup',
-            quantity: 1,
-            unitPrice: 65000,
-            discount: 0,
-            total: 65000
-          }
-        ]);
+        setItems([]);
       }
       setTaxRate(0);
-      setMilestones([
-        {
-          id: 'ms-1',
-          title: '1. Advance Milestone (Contract Signing & Kickoff)',
-          percentage: 40,
-          amount: 0,
-          dueDate: 'Upon Agreement Signing'
-        },
-        {
-          id: 'ms-2',
-          title: '2. Beta Prototype & Core Module Approval',
-          percentage: 30,
-          amount: 0,
-          dueDate: 'Within 14 Days of Kickoff'
-        },
-        {
-          id: 'ms-3',
-          title: '3. Final Deployment & Complete Handover',
-          percentage: 30,
-          amount: 0,
-          dueDate: 'Upon Production Launch'
-        }
-      ]);
-      setTermsAndConditions(
-        settings.defaultProposalTerms ||
-          `1. Validity: This commercial quotation is valid for 14 calendar days from the date of issuance.\n2. Payment Terms: 40% advance milestone on contract signing, 30% on beta milestone preview, and 30% upon final delivery & handover.\n3. Taxes: Quoted prices are in Pakistani Rupees (PKR) and exclusive of applicable provincial sales tax (GST/PST) unless explicitly itemized.\n4. Support & Warranty: 3 months of complimentary technical bug-fixing and cloud maintenance support is included post-launch.\n5. Intellectual Property: Complete source code ownership and database rights will be transferred upon settlement of final invoice.`
-      );
-      setSignatoryName(settings.authorizedSignatureName || 'Abdur Rehman Arain');
-      setSignatoryTitle(settings.authorizedSignatureTitle || 'Director of Enterprise Solutions');
+      setMilestones([]);
+      setTermsAndConditions(settings.defaultProposalTerms || '');
+      setSignatoryName(settings.authorizedSignatureName || '');
+      setSignatoryTitle(settings.authorizedSignatureTitle || '');
       setSignatoryImg(settings.authorizedSignatureImg || '');
     }
   }, [isOpen, lead, existingProposal, services, settings]);
@@ -310,7 +236,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
     try {
       const d = new Date(issueDate);
       d.setDate(d.getDate() + Number(validityDays || 14));
-      return d.toISOString().split('T')[0];
+      return getLocalDateString(d);
     } catch {
       return '';
     }
@@ -342,12 +268,12 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
   const handleAddItem = () => {
     const newItem: ProposalItem = {
       id: `item-${Date.now()}-${items.length}`,
-      title: 'New Service Item / Deliverable',
-      description: 'Scope and deliverable specifications',
+      title: '',
+      description: '',
       quantity: 1,
-      unitPrice: 15000,
+      unitPrice: 0,
       discount: 0,
-      total: 15000
+      total: 0
     };
     setItems(prev => [...prev, newItem]);
   };
@@ -360,9 +286,9 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
       title: s.name,
       description: s.description || `${s.category} Service Deliverable`,
       quantity: 1,
-      unitPrice: s.basePricePKR,
+      unitPrice: Number(s.defaultPricePKR ?? s.basePricePKR ?? 0),
       discount: 0,
-      total: s.basePricePKR
+      total: Number(s.defaultPricePKR ?? s.basePricePKR ?? 0)
     };
     setItems(prev => [...prev, newItem]);
   };
@@ -413,6 +339,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
       clientPhone: clientPhone.trim() || lead.phone,
       clientAddress: clientAddress.trim(),
       issueDate,
+      expiryDate,
       validityDays: Number(validityDays) || 14,
       status,
       scopeOfWork,
@@ -427,7 +354,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
       paymentMilestones: computedMilestones,
       termsAndConditions,
       letterheadBg: settings.proposalLetterheadBg || '',
-      companyName: settings.companyName || 'iSysware',
+      companyName: settings.companyName || 'Enterprise CRM',
       companyAddress: settings.companyAddress || '',
       companyTaxId: settings.companyTaxId || '',
       companyPhone: settings.companyPhone || '',
@@ -437,7 +364,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
       authorizedSignatureName: signatoryName,
       authorizedSignatureTitle: signatoryTitle,
       authorizedSignatureImg: signatoryImg,
-      assignedRepName: assignedRep?.name || currentUser?.name || 'Sales Representative'
+      assignedRepName: assignedRep?.name || currentUser?.name || ''
     };
 
     let savedItem: Proposal;
@@ -469,7 +396,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
   // WhatsApp Share Link
   const handleShareWhatsApp = () => {
     const cleanPhone = clientPhone.replace(/[^0-9]/g, '');
-    const message = `*COMMERCIAL PROPOSAL - ${settings.companyName || 'iSysware'}*\n\nDear ${clientName || 'Client'},\n\nWe are pleased to share our commercial proposal *${refNumber}* for *${title}*.\n\n*Key Highlights:*\n- Total Project Value: *${settings.currencySymbol || 'Rs.'} ${(grandTotal || 0).toLocaleString()}*\n- Items Included: ${items.map(i => i.title).join(', ')}\n- Proposal Validity: ${validityDays} Days (Valid until ${expiryDate})\n- Prepared by: ${assignedRep?.name || 'Representative'}\n\nPlease let us know if you have any questions or require adjustments. We look forward to working with you!\n\nBest Regards,\n*${settings.companyName || 'iSysware Enterprise'}*`;
+    const message = `*COMMERCIAL PROPOSAL - ${settings.companyName || 'Enterprise CRM'}*\n\nDear ${clientName || 'Client'},\n\nWe are pleased to share our commercial proposal *${refNumber}* for *${title}*.\n\n*Key Highlights:*\n- Total Project Value: *${settings.currencySymbol || 'Rs.'} ${(grandTotal || 0).toLocaleString()}*\n- Items Included: ${items.map(i => i.title).join(', ')}\n- Proposal Validity: ${validityDays} Days (Valid until ${formatDate(expiryDate)})\n- Prepared by: ${assignedRep?.name || 'Representative'}\n\nPlease let us know if you have any questions or require adjustments. We look forward to working with you!\n\nBest Regards,\n*${settings.companyName || 'Enterprise CRM'}*`;
 
     const encoded = encodeURIComponent(message);
     const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
@@ -484,7 +411,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
 
   // Copy Summary to Clipboard
   const handleCopySummary = () => {
-    const summaryText = `Proposal: ${refNumber}\nClient: ${clientName} (${businessName})\nTotal: PKR ${(grandTotal || 0).toLocaleString()}\nItems: ${items.length}\nValid Until: ${expiryDate}`;
+    const summaryText = `Proposal: ${refNumber}\nClient: ${clientName} (${businessName})\nTotal: PKR ${(grandTotal || 0).toLocaleString()}\nItems: ${items.length}\nValid Until: ${formatDate(expiryDate)}`;
     navigator.clipboard.writeText(summaryText);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
@@ -525,11 +452,10 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('builder')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === 'builder'
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${activeTab === 'builder'
                     ? 'bg-white dark:bg-slate-900 text-[#2563EB] shadow-xs'
                     : 'text-[#64748B] hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 <Sliders className="w-3.5 h-3.5" />
                 <span>Builder &amp; Pricing</span>
@@ -537,11 +463,10 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('preview')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === 'preview'
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${activeTab === 'preview'
                     ? 'bg-white dark:bg-slate-900 text-[#2563EB] shadow-xs'
                     : 'text-[#64748B] hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 <Eye className="w-3.5 h-3.5" />
                 <span>A4 Live Preview &amp; Export</span>
@@ -659,7 +584,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
 
                   <div>
                     <label className="block font-semibold text-[#64748B] dark:text-slate-300 mb-1">
-                      Validity Period (Days) - Expires {expiryDate}
+                      Validity Period (Days) - Expires {formatDate(expiryDate)}
                     </label>
                     <div className="flex items-center gap-2">
                       <input
@@ -1105,7 +1030,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                         )}
                         <div>
                           <h1 className="text-xl font-medium text-slate-950 tracking-tight leading-none uppercase">
-                            {settings.companyName || 'iSysware Enterprise'}
+                            {settings.companyName || 'Enterprise CRM'}
                           </h1>
                           <p className="text-xs font-bold text-[#2563EB] mt-1 uppercase tracking-widest">
                             Enterprise Software &amp; Digital Solutions
@@ -1123,8 +1048,8 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                         COMMERCIAL QUOTATION
                       </div>
                       <p className="font-mono font-medium text-sm text-slate-900">{refNumber}</p>
-                      <p className="text-xs text-slate-600 font-medium">Date: {issueDate}</p>
-                      <p className="text-xs text-emerald-700 font-bold">Valid Until: {expiryDate}</p>
+                      <p className="text-xs text-slate-600 font-medium">Date: {formatDate(issueDate)}</p>
+                      <p className="text-xs text-emerald-700 font-bold">Valid Until: {formatDate(expiryDate)}</p>
                     </div>
                   </div>
 
@@ -1269,7 +1194,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                               <span className="text-[10px] font-bold text-slate-500">{ms.percentage}%</span>
                             </div>
                             {ms.dueDate && (
-                              <p className="text-[10px] text-slate-500 mt-1 italic">{ms.dueDate}</p>
+                              <p className="text-[10px] text-slate-500 mt-1 italic">{formatDate(ms.dueDate)}</p>
                             )}
                           </div>
                         ))}
@@ -1308,7 +1233,7 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                   {/* Company Authorized Signatory */}
                   <div className="space-y-2 text-right">
                     <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 block">
-                      AUTHORIZED BY {settings.companyName?.toUpperCase() || 'ISYSWARE'}:
+                      AUTHORIZED BY {settings.companyName?.toUpperCase() || 'ENTERPRISE CRM'}:
                     </span>
                     {signatoryImg ? (
                       <img

@@ -11,11 +11,9 @@ import { updateSettingsCategorySchema, updateSettingsParamsSchema } from './sett
 
 const router = Router();
 
-// Read all settings (available to all authenticated active users so branding/currency/tz are uniform)
+// Read all settings (publicly accessible so branding, company name, logo, currency and tz load on login & unauthenticated pages)
 router.get(
   '/',
-  authenticate,
-  requireActiveAccount,
   asyncHandler(SettingsController.getAllSettings)
 );
 

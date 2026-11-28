@@ -3,6 +3,39 @@ import { ApiResponse, ApiErrorResponse, AppApiError } from './types';
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:5000/api/v1';
 
+let inMemoryAccessToken: string | null = null;
+
+export const setAuthToken = (token: string | null): void => {
+  inMemoryAccessToken = token;
+  if (typeof window !== 'undefined') {
+    try {
+      if (token) {
+        sessionStorage.setItem('crm_session_token', token);
+      } else {
+        sessionStorage.removeItem('crm_session_token');
+      }
+    } catch {
+      // In-memory fallback
+    }
+  }
+};
+
+export const getAuthToken = (): string | null => {
+  if (inMemoryAccessToken) return inMemoryAccessToken;
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = sessionStorage.getItem('crm_session_token');
+      if (stored) {
+        inMemoryAccessToken = stored;
+        return stored;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
   params?: Record<string, string | number | boolean | undefined | null>;
@@ -13,8 +46,8 @@ export interface RequestOptions extends Omit<RequestInit, 'body'> {
  * Enforces:
  * - Base URL from NEXT_PUBLIC_API_URL
  * - credentials: 'include' for HttpOnly cookie authentication
+ * - Authorization: Bearer fallback for cross-origin or cookie-restricted environments
  * - Standardized error parsing
- * - Zero tokens stored in localStorage
  */
 export async function apiRequest<T>(
   endpoint: string,
@@ -37,16 +70,18 @@ export async function apiRequest<T>(
     }
   }
 
-  const defaultHeaders: HeadersInit = {
+  const token = getAuthToken();
+  const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
   const config: RequestInit = {
     ...customConfig,
     headers: {
       ...defaultHeaders,
-      ...headers,
+      ...(headers as Record<string, string>),
     },
     credentials: 'include', // Essential for HttpOnly cookies (access & refresh tokens)
   };
@@ -58,6 +93,32 @@ export async function apiRequest<T>(
   let response: Response;
   try {
     response = await fetch(url, config);
+
+    // If 401 Unauthorized, transparently attempt a refresh and replay once
+    if (response.status === 401 && !url.includes('/auth/login') && !url.includes('/auth/refresh')) {
+      try {
+        const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        });
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          const newAccessToken = refreshData?.data?.accessToken || refreshData?.accessToken;
+          if (newAccessToken) {
+            setAuthToken(newAccessToken);
+            const retryHeaders = {
+              ...defaultHeaders,
+              ...(headers as Record<string, string>),
+              Authorization: `Bearer ${newAccessToken}`,
+            };
+            response = await fetch(url, { ...config, headers: retryHeaders });
+          }
+        }
+      } catch {
+        // Continue to regular error handling
+      }
+    }
   } catch (networkError: unknown) {
     const message = networkError instanceof Error ? networkError.message : 'Network request failed';
     throw new AppApiError(`Connection error: ${message}. Is the backend running?`, 0, 'NETWORK_ERROR');
@@ -81,10 +142,20 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const errorBody = responseData as ApiErrorResponse | null;
-    const errorMessage =
-      errorBody?.error?.message ||
-      (typeof responseData === 'string' && responseData.length > 0 ? responseData : undefined) ||
-      `HTTP Error ${response.status}: ${response.statusText}`;
+    let errorMessage = errorBody?.error?.message;
+    if (errorBody?.error?.details && Array.isArray(errorBody.error.details)) {
+      const detailMessages = (errorBody.error.details as Array<{ message?: string; error?: string }>)
+        .map((d) => d.message || d.error)
+        .filter(Boolean);
+      if (detailMessages.length > 0) {
+        errorMessage = detailMessages.join('. ');
+      }
+    }
+    if (!errorMessage) {
+      errorMessage =
+        (typeof responseData === 'string' && responseData.length > 0 ? responseData : undefined) ||
+        `HTTP Error ${response.status}: ${response.statusText}`;
+    }
     const errorCode = errorBody?.error?.code || `HTTP_${response.status}`;
     const errorDetails = errorBody?.error?.details;
 

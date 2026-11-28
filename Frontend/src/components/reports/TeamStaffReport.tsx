@@ -10,7 +10,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Lead, FollowUp, User, Team, UserRole } from '../../types';
-import { formatPKR, parseAmount } from '../../utils/formatters';
+import { formatPKR, parseAmount, getLocalDateString } from '../../utils/formatters';
 import { DataTableScrollFrame } from '../ui';
 
 interface TeamStaffReportProps {
@@ -40,7 +40,16 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
   const [subSection, setSubSection] = useState<'reps' | 'teams' | 'managers'>('reps');
 
   // Today reference for follow-ups
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
+
+  // Role hierarchy ranking for strict subordinate validation
+  const ROLE_RANK: Record<string, number> = {
+    'Super Admin': 4,
+    'Admin': 3,
+    'Manager': 2,
+    'Team Lead': 1,
+    'Employee': 0
+  };
 
   // 1. REP PERFORMANCE METRICS
   const repMetrics = useMemo(() => {
@@ -58,29 +67,38 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
     }
 
     return usersToCompute.map(user => {
+      const userRank = ROLE_RANK[user.role] ?? 0;
       const userLeads = scopedLeads.filter(l => l.assignedToId === user.id);
       const converted = userLeads.filter(l => ['Converted', 'Won'].includes(l.status)).length;
-      const pipelineVal = userLeads.reduce((sum, l) => sum + parseAmount(l.value), 0);
-      const convRate = userLeads.length > 0 ? Math.round((converted / userLeads.length) * 100) : 0;
+      const activeLeads = userLeads.filter(l => !['Converted', 'Won', 'Lost'].includes(l.status));
+      const pipelineVal = activeLeads.reduce((sum, l) => sum + parseAmount(l.valuePKR ?? (l as any).value), 0);
+      const rawRate = userLeads.length > 0 ? (converted / userLeads.length) * 100 : 0;
+      const convRate = Number.isInteger(rawRate) ? rawRate : Number(rawRate.toFixed(2));
 
       const userFUs = scopedFollowUps.filter(f => f.assignedToId === user.id);
       const pendingFUs = userFUs.filter(f => f.status === 'Pending').length;
       const missedFUs = userFUs.filter(f => f.status === 'Missed' || (f.status === 'Pending' && f.scheduledDate < todayStr)).length;
 
-      // Total leads: for Super Admin/Admin it includes all scoped leads, for team members it includes team/assigned pool
+      // Total leads: for Super Admin/Admin it includes all scoped leads, for lower roles exclude senior-assigned leads
       const totalLeadsCount = (user.role === 'Super Admin' || user.role === 'Admin')
         ? scopedLeads.length
-        : scopedLeads.filter(l =>
-            l.assignedToId === user.id ||
-            (user.teamId && (l.teamId === user.teamId || l.teamName === user.teamName))
-          ).length;
+        : scopedLeads.filter(l => {
+          if (l.assignedToId === user.id) return true;
+          if (l.assignedToId) {
+            const assignee = scopedUsers.find(u => u.id === l.assignedToId);
+            if (assignee && (ROLE_RANK[assignee.role] ?? 0) >= userRank) {
+              return false;
+            }
+          }
+          return !!(user.teamId && (l.teamId === user.teamId || l.teamName === user.teamName));
+        }).length;
 
       return {
         userId: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
-        teamName: user.teamName || 'Direct',
+        teamName: user.teamName || scopedTeams.find(t => t.id === user.teamId)?.name || 'Direct',
         totalLeads: totalLeadsCount,
         assignedCount: userLeads.length,
         convertedCount: converted,
@@ -90,7 +108,7 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
         missedFollowUps: missedFUs
       };
     });
-  }, [scopedUsers, scopedLeads, scopedFollowUps, isEmployee, currentUser, selectedTeamId, selectedUserId, todayStr]);
+  }, [scopedUsers, scopedTeams, scopedLeads, scopedFollowUps, isEmployee, currentUser, selectedTeamId, selectedUserId, todayStr]);
 
   // 2. TEAM PERFORMANCE METRICS
   const teamMetrics = useMemo(() => {
@@ -110,12 +128,13 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
     }
 
     return teamsToCompute.map(team => {
-      const teamLeads = scopedLeads.filter(l => l.teamId === team.id);
+      const teamUserIds = team.memberIds || [];
+      const teamLeads = scopedLeads.filter(l => l.teamId === team.id || teamUserIds.includes(l.assignedToId));
       const converted = teamLeads.filter(l => ['Converted', 'Won'].includes(l.status)).length;
-      const pipelineVal = teamLeads.reduce((sum, l) => sum + parseAmount(l.value), 0);
+      const activeLeads = teamLeads.filter(l => !['Converted', 'Won', 'Lost'].includes(l.status));
+      const pipelineVal = activeLeads.reduce((sum, l) => sum + parseAmount(l.valuePKR ?? (l as any).value), 0);
       const convRate = teamLeads.length > 0 ? Math.round((converted / teamLeads.length) * 100) : 0;
 
-      const teamUserIds = team.memberIds || [];
       const teamFUs = scopedFollowUps.filter(f => teamUserIds.includes(f.assignedToId));
       const pendingFUs = teamFUs.filter(f => f.status === 'Pending').length;
       const missedFUs = teamFUs.filter(f => f.status === 'Missed' || (f.status === 'Pending' && f.scheduledDate < todayStr)).length;
@@ -150,27 +169,79 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
     }
 
     return leaders.map(leader => {
-      // Leads where assigned or reporting
-      const leaderLeads = scopedLeads.filter(l =>
-        l.assignedToId === leader.id ||
-        (leader.teamId && l.teamId === leader.teamId)
+      const leaderRank = ROLE_RANK[leader.role] ?? 0;
+
+      // Find all teams managed or led by this leader, or leader's assigned team
+      const leaderTeams = scopedTeams.filter(t =>
+        (leader.role === 'Manager' && (t.managerId === leader.id || (t as any).manager_id === leader.id)) ||
+        (leader.role === 'Team Lead' && (t.leaderId === leader.id || (t as any).team_lead_id === leader.id)) ||
+        (leader.teamId && t.id === leader.teamId)
       );
+      const leaderTeamIds = new Set(leaderTeams.map(t => t.id));
+      if (leader.teamId) leaderTeamIds.add(leader.teamId);
+
+      // Find subordinate user IDs: direct reports or members of leader's teams who have strictly lower hierarchy rank
+      const subordinateUserIds = new Set<string>();
+      subordinateUserIds.add(leader.id);
+      scopedUsers.forEach(u => {
+        const uRank = ROLE_RANK[u.role] ?? 0;
+        if (uRank < leaderRank) {
+          if (
+            u.managerId === leader.id ||
+            (u as any).manager_id === leader.id ||
+            (u.teamId && leaderTeamIds.has(u.teamId))
+          ) {
+            subordinateUserIds.add(u.id);
+          }
+        }
+      });
+      leaderTeams.forEach(t => {
+        (t.memberIds || []).forEach(mId => {
+          const mUser = scopedUsers.find(u => u.id === mId);
+          if (mUser && (ROLE_RANK[mUser.role] ?? 0) < leaderRank) {
+            subordinateUserIds.add(mId);
+          }
+        });
+      });
+
+      // Leads where assigned directly to leader, or assigned to an authorized subordinate.
+      // Leads assigned to senior or peer leaders are strictly excluded.
+      const leaderLeads = scopedLeads.filter(l => {
+        if (l.assignedToId === leader.id) return true;
+        if (l.assignedToId) {
+          const assignee = scopedUsers.find(u => u.id === l.assignedToId);
+          if (assignee && assignee.id !== leader.id && (ROLE_RANK[assignee.role] ?? 0) >= leaderRank) {
+            return false;
+          }
+          if (subordinateUserIds.has(l.assignedToId)) return true;
+        }
+        if (l.teamId && leaderTeamIds.has(l.teamId)) {
+          if (!l.assignedToId) return true;
+          return subordinateUserIds.has(l.assignedToId);
+        }
+        return false;
+      });
+
       const converted = leaderLeads.filter(l => ['Converted', 'Won'].includes(l.status)).length;
-      const pipelineVal = leaderLeads.reduce((sum, l) => sum + parseAmount(l.value), 0);
-      const convRate = leaderLeads.length > 0 ? Math.round((converted / leaderLeads.length) * 100) : 0;
+      const activeLeads = leaderLeads.filter(l => !['Converted', 'Won', 'Lost'].includes(l.status));
+      const pipelineVal = activeLeads.reduce((sum, l) => sum + parseAmount(l.valuePKR ?? (l as any).value), 0);
+      const rawRate = leaderLeads.length > 0 ? (converted / leaderLeads.length) * 100 : 0;
+      const convRate = Number.isInteger(rawRate) ? rawRate : Number(rawRate.toFixed(2));
+
+      const teamName = leader.teamName || leaderTeams[0]?.name || (leader.role === 'Manager' ? 'Sales Management' : 'Team Leadership');
 
       return {
         userId: leader.id,
         name: leader.name,
         role: leader.role,
-        teamName: leader.teamName || 'Leadership',
+        teamName,
         totalLeads: leaderLeads.length,
         convertedCount: converted,
         conversionRate: convRate,
         pipelineValue: pipelineVal
       };
     });
-  }, [scopedUsers, scopedLeads, isEmployee, selectedTeamId, selectedUserId]);
+  }, [scopedUsers, scopedTeams, scopedLeads, isEmployee, selectedTeamId, selectedUserId]);
 
   // If Employee role: show single-user "My Performance" card and personal metrics
   if (isEmployee) {
@@ -312,33 +383,30 @@ export const TeamStaffReport: React.FC<TeamStaffReportProps> = ({
       <div className="flex items-center gap-2 border-b border-[#E5EAF1] dark:border-slate-800 pb-2">
         <button
           onClick={() => setSubSection('reps')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            subSection === 'reps'
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${subSection === 'reps'
               ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
+            }`}
         >
           Sales Representatives ({repMetrics.length})
         </button>
 
         <button
           onClick={() => setSubSection('teams')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            subSection === 'teams'
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${subSection === 'teams'
               ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
+            }`}
         >
           Teams &amp; Departments ({teamMetrics.length})
         </button>
 
         <button
           onClick={() => setSubSection('managers')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            subSection === 'managers'
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${subSection === 'managers'
               ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
+            }`}
         >
           Managers &amp; Leads ({managerMetrics.length})
         </button>

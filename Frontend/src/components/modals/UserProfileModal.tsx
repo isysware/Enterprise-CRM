@@ -164,8 +164,24 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
         setErrorMessage('Please enter your new password.');
         return;
       }
-      if (newPassword.length < 6) {
-        setErrorMessage('New password must be at least 6 characters.');
+      if (newPassword.length < 8) {
+        setErrorMessage('New password must be at least 8 characters long.');
+        return;
+      }
+      if (!/[A-Z]/.test(newPassword)) {
+        setErrorMessage('New password must contain at least one uppercase letter (A-Z).');
+        return;
+      }
+      if (!/[a-z]/.test(newPassword)) {
+        setErrorMessage('New password must contain at least one lowercase letter (a-z).');
+        return;
+      }
+      if (!/[0-9]/.test(newPassword)) {
+        setErrorMessage('New password must contain at least one number (0-9).');
+        return;
+      }
+      if (!/[^A-Za-z0-9]/.test(newPassword)) {
+        setErrorMessage('New password must contain at least one special character (e.g. !@#$%^&*).');
         return;
       }
       if (newPassword !== confirmPassword) {
@@ -444,8 +460,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
                 <Input
                   type="text"
                   value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  placeholder="+92 300 0000000"
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                  maxLength={11}
+                  placeholder="03001234567 (11 digits)"
                   className="pl-8 font-mono"
                 />
               </div>
@@ -524,14 +541,17 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <FormField label="New Password">
+            <FormField
+              label="New Password"
+              helperText="Min 8 characters, uppercase, lowercase, number, and symbol"
+            >
               <div className="relative">
                 <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <Input
                   type={showNewPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  placeholder="New password (min 6 chars)"
+                  placeholder="New password (min 8 chars, e.g. Pass@123)"
                   className="pl-8 pr-9 font-mono"
                 />
                 <button

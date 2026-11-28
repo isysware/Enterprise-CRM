@@ -28,7 +28,10 @@ export const completeFollowUpSchema = z.object({
 export const rescheduleFollowUpSchema = z.object({
   scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'New scheduledDate required in YYYY-MM-DD format'),
   scheduledTime: z.string().optional().nullable(),
-  reason: z.string().optional(),
+  reason: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  type: z.enum(['Call', 'Meeting', 'Email', 'WhatsApp', 'Demo', 'Visit']).optional(),
+  assignedToId: z.string().uuid().optional(),
 });
 
 export const listFollowUpsQuerySchema = z.object({

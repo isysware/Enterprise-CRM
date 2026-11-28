@@ -11,7 +11,7 @@ export const AIAssistantLauncher: React.FC<AIAssistantLauncherProps> = ({
   onToggle
 }) => {
   return (
-    <div className="fixed bottom-11 right-4 sm:right-6 z-40 select-none">
+    <div className="fixed bottom-11 right-4 sm:right-6 z-40 select-none no-print">
       <button
         type="button"
         onClick={onToggle}

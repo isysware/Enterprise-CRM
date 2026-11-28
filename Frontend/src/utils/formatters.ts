@@ -69,19 +69,59 @@ export function cleanPhoneForWhatsApp(phone: string): string {
   return digits;
 }
 
-export function getWhatsAppUrl(phone: string, clientName?: string, businessName?: string): string {
+export function getWhatsAppUrl(phone: string, clientName?: string, businessName?: string, serviceName?: string): string {
   const clean = cleanPhoneForWhatsApp(phone);
+  const serviceText = serviceName ? ` regarding ${serviceName}` : ' regarding your inquiry';
   const text = encodeURIComponent(
-    `Assalam-o-Alaikum ${clientName || 'Sir/Madam'} (${businessName || 'Business'}), hope you are doing well! Reaching out from Apex Software regarding your inquiry for the Salon Management System.`
+    `Assalam-o-Alaikum ${clientName || 'Sir/Madam'} (${businessName || 'Business'}), hope you are doing well! Reaching out from Apex Software${serviceText}.`
   );
   return `https://wa.me/${clean}?text=${text}`;
 }
 
-export function getLocalDateString(date: Date = new Date()): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+export const PKT_TIMEZONE = 'Asia/Karachi';
+
+const MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+/**
+ * Returns a date string formatted as YYYY-MM-DD.
+ * Preserves the actual calendar date without timezone shift,
+ * ensuring today matches the user's real calendar day.
+ */
+export function getLocalDateString(dateInput: Date | string | number = new Date()): string {
+  try {
+    if (typeof dateInput === 'string') {
+      const trimmed = dateInput.trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+        return trimmed.slice(0, 10);
+      }
+      const parsed = new Date(trimmed);
+      if (!isNaN(parsed.getTime())) {
+        const year = parsed.getFullYear();
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+    }
+    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (isNaN(d.getTime())) return '';
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Returns a date string formatted as YYYY-MM-DD.
+ * Preserves the actual calendar date without pushing forward to tomorrow.
+ */
+export function getKarachiDateString(dateInput: Date | string | number = new Date()): string {
+  return getLocalDateString(dateInput);
 }
 
 export type FollowUpCategory = 'today' | 'upcoming' | 'missed' | 'completed';
@@ -90,11 +130,16 @@ export function classifyFollowUp(
   followUp: { scheduledDate: string; status: FollowUpStatus | string },
   todayStr: string = getLocalDateString()
 ): FollowUpCategory {
-  if (followUp.status === 'Done') {
+  if (
+    followUp.status === 'Done' ||
+    followUp.status === 'Completed' ||
+    (followUp.status as string)?.toLowerCase() === 'completed' ||
+    (followUp.status as string)?.toLowerCase() === 'done'
+  ) {
     return 'completed';
   }
   const dateStr = (followUp.scheduledDate || '').split('T')[0];
-  if (followUp.status === 'Missed') {
+  if (followUp.status === 'Missed' || (followUp.status as string)?.toLowerCase() === 'missed') {
     return 'missed';
   }
   if (dateStr === todayStr) {
@@ -106,28 +151,94 @@ export function classifyFollowUp(
   return 'missed';
 }
 
-export function formatDate(dateString: string): string {
-  if (!dateString) return '-';
+/**
+ * Format any date into standardized "DD MMM YYYY" (e.g., "28 Nov 2026")
+ * Safely preserves plain calendar dates YYYY-MM-DD and real date values without shifting.
+ */
+export function formatDate(val: string | Date | number | null | undefined): string {
+  if (val === null || val === undefined || val === '') return '-';
   try {
-    const d = new Date(dateString);
-    if (isNaN(d.getTime())) return dateString;
-    return d.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (!trimmed) return '-';
+      const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed);
+      if (match) {
+        const [, year, month, day] = match;
+        const mIdx = parseInt(month, 10) - 1;
+        const monthStr = MONTH_NAMES[mIdx] || month;
+        return `${day.padStart(2, '0')} ${monthStr} ${year}`;
+      }
+    }
+
+    const d = val instanceof Date ? val : new Date(val);
+    if (isNaN(d.getTime())) return String(val);
+
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = MONTH_NAMES[d.getMonth()] || '';
+    const year = String(d.getFullYear());
+
+    return `${day} ${month} ${year}`;
   } catch {
-    return dateString;
+    return String(val);
   }
 }
 
-export function formatDateTime(dateString: string, timeString?: string): string {
-  if (!dateString) return '-';
-  const formattedDate = formatDate(dateString);
-  if (timeString) {
-    return `${formattedDate} at ${timeString}`;
+/**
+ * Format any time into 12-hour AM/PM format (e.g., "03:00 PM")
+ * Safely converts scheduled time strings ("15:00", "15:00:00") and ISO timestamps.
+ */
+export function formatTime(val: string | Date | number | null | undefined): string {
+  if (val === null || val === undefined || val === '') return '-';
+  try {
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (!trimmed) return '-';
+
+      const timeMatch = /^(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(trimmed);
+      if (timeMatch && !trimmed.includes('T') && !trimmed.includes('Z') && !trimmed.includes('-')) {
+        let hour = parseInt(timeMatch[1], 10);
+        const minute = timeMatch[2];
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        hour = hour % 12;
+        if (hour === 0) hour = 12;
+        const hourStr = String(hour).padStart(2, '0');
+        return `${hourStr}:${minute} ${ampm}`;
+      }
+    }
+
+    const d = val instanceof Date ? val : new Date(val);
+    if (isNaN(d.getTime())) return String(val);
+
+    let hour = d.getHours();
+    const minute = String(d.getMinutes()).padStart(2, '0');
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12;
+    if (hour === 0) hour = 12;
+    const hourStr = String(hour).padStart(2, '0');
+
+    return `${hourStr}:${minute} ${ampm}`;
+  } catch {
+    return String(val);
   }
-  return formattedDate;
+}
+
+/**
+ * Format combined date and time into:
+ * "DD MMM YYYY, hh:mm A" (e.g., "28 Nov 2026, 03:00 PM") or
+ * "DD MMM YYYY at hh:mm A" when a separate timeString is provided.
+ */
+export function formatDateTime(
+  dateInput: string | Date | number | null | undefined,
+  timeString?: string | null
+): string {
+  if (!dateInput) return '-';
+  if (timeString) {
+    return `${formatDate(dateInput)} at ${formatTime(timeString)}`;
+  }
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput.trim())) {
+    return formatDate(dateInput);
+  }
+  return `${formatDate(dateInput)}, ${formatTime(dateInput)}`;
 }
 
 export function getRoleBadgeStyle(role: UserRole): { badge: string; dot: string } {

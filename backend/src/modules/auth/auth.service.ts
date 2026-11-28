@@ -112,7 +112,7 @@ export class AuthService {
     userId: string,
     input: ChangePasswordInput,
     userRepo: IUserRepository
-  ): Promise<void> {
+  ): Promise<{ user: AuthUser; tokens: AuthTokens }> {
     const userWithCreds = await userRepo.findUserWithCredentials(userId);
     if (!userWithCreds) {
       throw AppError.notFound('User not found');
@@ -133,6 +133,29 @@ export class AuthService {
     const newHash = await PasswordService.hash(input.newPassword);
     await userRepo.updatePassword(userId, newHash);
     await userRepo.incrementTokenVersion(userId);
+
+    const freshUser = await userRepo.findUserWithCredentials(userId);
+    if (!freshUser) {
+      throw AppError.notFound('User not found after update');
+    }
+
+    const tokens = TokenService.generateAuthTokens(
+      {
+        userId: freshUser.id,
+        email: freshUser.email,
+        role: freshUser.role,
+        status: freshUser.status,
+        teamId: freshUser.teamId,
+      },
+      freshUser.tokenVersion
+    );
+
+    const { passwordHash: _p, tokenVersion: _tv, ...safeUser } = freshUser;
+
+    return {
+      user: safeUser,
+      tokens,
+    };
   }
 
   /**

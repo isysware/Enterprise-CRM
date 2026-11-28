@@ -1,12 +1,4 @@
 import React from 'react';
-import {
-  DollarSign,
-  Layers,
-  TrendingUp,
-  CheckCircle2,
-  Briefcase,
-  PieChart
-} from 'lucide-react';
 import { Client, Lead, PricingModelItem } from '../../types';
 import { formatPKR, parseAmount, getClientRevenue } from '../../utils/formatters';
 import { DataTableScrollFrame } from '../ui';
@@ -21,70 +13,65 @@ interface CommercialRevenueReportProps {
 export const CommercialRevenueReport: React.FC<CommercialRevenueReportProps> = ({
   clients,
   leads,
+  pricingModels = [],
   filterBar
 }) => {
   const totalRevenue = clients.reduce((sum, c) => sum + getClientRevenue(c), 0);
-  const totalPipelineValue = leads.reduce((sum, l) => sum + parseAmount(l.value), 0);
+  const totalLeadValue = leads.reduce((sum, l) => sum + parseAmount(l.valuePKR ?? (l as any).value), 0);
+  const openLeads = leads.filter(l => !['Converted', 'Won', 'Lost'].includes(l.status));
+  const openPipelineValue = openLeads.reduce((sum, l) => sum + parseAmount(l.valuePKR ?? (l as any).value), 0);
   const activeClientsCount = clients.filter(c => c.status === 'Active' || !c.status).length;
   const avgDealSize = clients.length > 0 ? Math.round(totalRevenue / clients.length) : 0;
 
-  // Canonical Pricing Models Breakdown based on real client data
-  const modelDefinitions = [
-    {
-      id: 'saas',
-      name: 'Monthly Subscription (SaaS)',
-      matchKeys: ['monthly', 'subscription', 'saas'],
-      description: 'Recurring monthly licensing, cloud backups, and ongoing support'
-    },
-    {
-      id: 'onetime',
-      name: 'One-Time Project Model',
-      matchKeys: ['one-time', 'project', 'turnkey'],
-      description: 'Milestone-based custom development & hardware POS deployment'
-    },
-    {
-      id: 'ownership',
-      name: 'Ownership Model',
-      matchKeys: ['ownership', 'perpetual', 'license'],
-      description: 'Full perpetual software source code license on private servers'
-    },
-    {
-      id: 'hybrid',
-      name: 'Custom Quotation / Hybrid',
-      matchKeys: ['hybrid', 'custom', 'quotation'],
-      description: 'Tailored enterprise contract combining setup fee with SLA retainers'
-    }
-  ];
+  // Assign every record to exactly one configured model, or Unassigned.
+  // Never infer commercial assignments from service names, tags or notes.
+  const modelDefinitions = Array.from(new Map(pricingModels.map(pm => [pm.id, {
+    id: pm.id,
+    name: pm.name,
+    description: pm.description || 'Configured commercial pricing structure'
+  }])).values());
+  const configuredIds = new Set(modelDefinitions.map(pm => pm.id));
+  const unassignedId = '__unassigned__';
+  const resolveModelId = (record: Client | Lead): string => {
+    const id = record.pricingModelId;
+    return id && configuredIds.has(id) ? id : unassignedId;
+  };
+
+  const clientBuckets = new Map<string, Client[]>();
+  const leadBuckets = new Map<string, Lead[]>();
+  for (const client of clients) {
+    const key = resolveModelId(client);
+    const bucket = clientBuckets.get(key) || [];
+    bucket.push(client);
+    clientBuckets.set(key, bucket);
+  }
+  for (const lead of openLeads) {
+    const key = resolveModelId(lead);
+    const bucket = leadBuckets.get(key) || [];
+    bucket.push(lead);
+    leadBuckets.set(key, bucket);
+  }
+
+  if (clientBuckets.has(unassignedId) || leadBuckets.has(unassignedId)) {
+    modelDefinitions.push({
+      id: unassignedId,
+      name: 'Unassigned Pricing Model',
+      description: 'No valid configured pricing model reference saved'
+    });
+  }
 
   const breakdown = modelDefinitions.map(def => {
-    const matchedClients = clients.filter(c => {
-      const pm = (c.pricingModel || '').toLowerCase();
-      return def.matchKeys.some(k => pm.includes(k));
-    });
-
+    const matchedClients = clientBuckets.get(def.id) || [];
+    const matchedLeads = leadBuckets.get(def.id) || [];
     const revenue = matchedClients.reduce((sum, c) => sum + getClientRevenue(c), 0);
-    const avgDeal = matchedClients.length > 0 ? Math.round(revenue / matchedClients.length) : 0;
-    const shareOfRev = totalRevenue > 0 ? Math.round((revenue / totalRevenue) * 100) : 0;
-
-    // Open pipeline leads interested in this model
-    const matchedLeads = leads.filter(l => {
-      const pm = (l.pricingModel || '').toLowerCase();
-      const srv = (l.services || []).join(' ').toLowerCase();
-      return def.matchKeys.some(k => pm.includes(k) || srv.includes(k));
-    });
-
-    const pipelineVal = matchedLeads.reduce((sum, l) => sum + parseAmount(l.value), 0);
-
     return {
-      id: def.id,
-      name: def.name,
-      description: def.description,
-      clientCount: matchedClients.length,
+      ...def,
+      clientCount: matchedClients.filter(c => c.status === 'Active' || !c.status).length,
       revenue,
-      shareOfRev,
-      avgDeal,
+      shareOfRev: totalRevenue > 0 ? Number(((revenue / totalRevenue) * 100).toFixed(2)) : 0,
+      avgDeal: matchedClients.length > 0 ? Math.round(revenue / matchedClients.length) : 0,
       leadsCount: matchedLeads.length,
-      pipelineVal
+      pipelineVal: matchedLeads.reduce((sum, l) => sum + parseAmount(l.valuePKR ?? (l as any).value), 0)
     };
   });
 
@@ -93,27 +80,27 @@ export const CommercialRevenueReport: React.FC<CommercialRevenueReportProps> = (
       {/* 1. Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Client Revenue</span>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Converted Contract Value</span>
           <div>
             <div className="text-2xl font-medium text-slate-900 dark:text-white leading-none tracking-tight truncate">
               {formatPKR(totalRevenue)}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1 truncate">Realized contract revenue</p>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Closed contract value</p>
           </div>
         </div>
 
         <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Accounts</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Clients</span>
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-              Paying
+              Active
             </span>
           </div>
           <div>
             <div className="text-2xl font-medium text-emerald-600 dark:text-emerald-400 leading-none tracking-tight">
               {activeClientsCount}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1 truncate">Generating active billings</p>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Currently active accounts</p>
           </div>
         </div>
 
@@ -128,12 +115,12 @@ export const CommercialRevenueReport: React.FC<CommercialRevenueReportProps> = (
         </div>
 
         <div className="h-[114px] bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between hover:shadow-xs transition-all">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Open Pipeline Capital</span>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Pipeline Capital</span>
           <div>
             <div className="text-2xl font-medium text-indigo-600 dark:text-indigo-400 leading-none tracking-tight truncate">
-              {formatPKR(totalPipelineValue)}
+              {formatPKR(openPipelineValue)}
             </div>
-            <p className="text-[11px] text-slate-500 mt-1 truncate">Total active deal volume in stage</p>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Total Lead Value: {formatPKR(totalLeadValue)}</p>
           </div>
         </div>
       </div>
@@ -158,8 +145,8 @@ export const CommercialRevenueReport: React.FC<CommercialRevenueReportProps> = (
               <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-[#E5EAF1] dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                 <th className="p-3.5 min-w-[220px]">Pricing Model Structure</th>
                 <th className="p-3.5 min-w-[120px] text-right">Active Accounts</th>
-                <th className="p-3.5 min-w-[150px] text-right">Realized Revenue</th>
-                <th className="p-3.5 min-w-[120px] text-right">Revenue Share</th>
+                <th className="p-3.5 min-w-[150px] text-right">Contract Value</th>
+                <th className="p-3.5 min-w-[120px] text-right">Contract Value Share</th>
                 <th className="p-3.5 min-w-[140px] text-right">Avg Contract Size</th>
                 <th className="p-3.5 min-w-[120px] text-right">Leads in Pipeline</th>
                 <th className="p-3.5 min-w-[150px] text-right">Pipeline Capital</th>

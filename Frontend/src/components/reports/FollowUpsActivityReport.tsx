@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { FollowUp, Lead } from '../../types';
 import { DataTableScrollFrame } from '../ui';
+import { getLocalDateString, formatDate, formatTime } from '../../utils/formatters';
 
 interface FollowUpsActivityReportProps {
   followUps: FollowUp[];
@@ -25,16 +26,18 @@ export const FollowUpsActivityReport: React.FC<FollowUpsActivityReportProps> = (
   leads,
   filterBar
 }) => {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
 
-  const dueToday = followUps.filter(f => f.scheduledDate === todayStr && f.status === 'Pending').length;
+  const isCompleted = (s?: string) => s === 'Done' || s === 'Completed' || s?.toLowerCase() === 'completed' || s?.toLowerCase() === 'done';
+
+  const dueToday = followUps.filter(f => f.scheduledDate === todayStr && (f.status === 'Pending' || (f.status as string) === 'Scheduled')).length;
   const missed = followUps.filter(f =>
-    f.status === 'Missed' || (f.status === 'Pending' && f.scheduledDate < todayStr)
+    f.status === 'Missed' || ((f.status === 'Pending' || (f.status as string) === 'Scheduled') && f.scheduledDate < todayStr)
   ).length;
   const upcoming = followUps.filter(f =>
-    f.status === 'Pending' && f.scheduledDate > todayStr
+    (f.status === 'Pending' || (f.status as string) === 'Scheduled') && f.scheduledDate > todayStr
   ).length;
-  const completed = followUps.filter(f => f.status === 'Done').length;
+  const completed = followUps.filter(f => isCompleted(f.status)).length;
   const total = followUps.length;
 
   const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -43,7 +46,7 @@ export const FollowUpsActivityReport: React.FC<FollowUpsActivityReportProps> = (
   const types = ['Call', 'WhatsApp', 'Meeting', 'Demo', 'Email'];
   const typeBreakdown = types.map(t => {
     const matched = followUps.filter(f => (f.type || '').toLowerCase() === t.toLowerCase());
-    const done = matched.filter(f => f.status === 'Done').length;
+    const done = matched.filter(f => isCompleted(f.status)).length;
     return {
       type: t,
       total: matched.length,
@@ -65,7 +68,7 @@ export const FollowUpsActivityReport: React.FC<FollowUpsActivityReportProps> = (
           </div>
           <div>
             <div className="text-2xl font-medium text-blue-600 dark:text-blue-400 leading-none tracking-tight">{dueToday}</div>
-            <p className="text-[11px] text-slate-500 mt-1 truncate">Scheduled for {todayStr}</p>
+            <p className="text-[11px] text-slate-500 mt-1 truncate">Scheduled for {formatDate(todayStr)}</p>
           </div>
         </div>
 
@@ -194,8 +197,8 @@ export const FollowUpsActivityReport: React.FC<FollowUpsActivityReportProps> = (
                 </tr>
               ) : (
                 followUps.map(fu => {
-                  const isDone = fu.status === 'Done';
-                  const isOverdue = fu.status === 'Missed' || (fu.status === 'Pending' && fu.scheduledDate < todayStr);
+                  const isDone = isCompleted(fu.status);
+                  const isOverdue = !isDone && (fu.status === 'Missed' || fu.scheduledDate < todayStr);
 
                   return (
                     <tr key={fu.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
@@ -211,10 +214,10 @@ export const FollowUpsActivityReport: React.FC<FollowUpsActivityReportProps> = (
                         </span>
                       </td>
                       <td className="p-3.5 font-mono text-[11px] text-slate-700 dark:text-slate-300">
-                        {fu.scheduledDate}
+                        {formatDate(fu.scheduledDate)}
                       </td>
                       <td className="p-3.5 font-mono text-[11px] text-slate-500">
-                        {fu.scheduledTime || '-'}
+                        {formatTime(fu.scheduledTime)}
                       </td>
                       <td className="p-3.5 text-slate-700 dark:text-slate-300 font-medium">
                         {fu.assignedToName || 'Assigned Agent'}
@@ -230,7 +233,7 @@ export const FollowUpsActivityReport: React.FC<FollowUpsActivityReportProps> = (
                           }`}
                         >
                           <span className={`w-1.5 h-1.5 rounded-full ${isDone ? 'bg-emerald-500' : isOverdue ? 'bg-rose-500' : 'bg-blue-500'}`} />
-                          {isOverdue ? 'Overdue' : fu.status}
+                          {isDone ? 'Completed' : isOverdue ? 'Overdue' : fu.status}
                         </span>
                       </td>
                       <td className="p-3.5 text-slate-500 text-[11px] max-w-xs truncate">

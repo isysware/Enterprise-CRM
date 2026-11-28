@@ -15,14 +15,9 @@ router.use(authenticate, requireActiveAccount);
 
 // Accessible by all authenticated active users
 router.get('/', asyncHandler(RolesController.getRoles));
+router.get('/permissions', asyncHandler(RolesController.getAllMatrices));
 
 // Strictly Super Admin only routes (canManageRoles)
-router.get(
-  '/permissions',
-  requirePermission('canManageRoles'),
-  asyncHandler(RolesController.getAllMatrices)
-);
-
 router.put(
   '/:role/permissions',
   requirePermission('canManageRoles'),

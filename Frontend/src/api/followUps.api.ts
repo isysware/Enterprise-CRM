@@ -46,7 +46,10 @@ export interface CompleteFollowUpPayload {
 export interface RescheduleFollowUpPayload {
   scheduledDate: string;
   scheduledTime?: string | null;
-  reason?: string;
+  reason?: string | null;
+  notes?: string | null;
+  type?: 'Call' | 'Meeting' | 'Email' | 'WhatsApp';
+  assignedToId?: string;
 }
 
 export const followUpsApi = {
@@ -60,6 +63,9 @@ export const followUpsApi = {
 
   createFollowUp: (payload: CreateFollowUpPayload) =>
     apiClient.post<FollowUpDbDto>('/follow-ups', payload),
+
+  updateFollowUp: (id: string, payload: Partial<CreateFollowUpPayload>) =>
+    apiClient.patch<FollowUpDbDto>(`/follow-ups/${encodeURIComponent(id)}`, payload),
 
   completeFollowUp: (id: string, payload: CompleteFollowUpPayload) =>
     apiClient.patch<FollowUpDbDto>(`/follow-ups/${encodeURIComponent(id)}/complete`, payload),

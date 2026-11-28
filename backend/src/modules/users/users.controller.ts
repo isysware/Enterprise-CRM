@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
 import { sendSuccess } from '../../utils';
+import { TokenService } from '../../services';
+import { postgresUserRepository } from '../../repositories';
 import { UsersService } from './users.service';
 import {
   CreateUserInput,
@@ -40,7 +42,34 @@ export class UsersController {
 
   public static async resetPassword(req: AuthenticatedRequest, res: Response): Promise<void> {
     const input = req.body as ResetUserPasswordInput;
-    await UsersService.resetPassword(req.user, req.params.id as string, input);
+    const targetUserId = req.params.id as string;
+    await UsersService.resetPassword(req.user, targetUserId, input);
+
+    // If the caller reset their own password (e.g. Super Admin editing self), refresh session tokens
+    if (req.user.id === targetUserId) {
+      const freshUser = await postgresUserRepository.findUserWithCredentials(targetUserId);
+      if (freshUser) {
+        const tokens = TokenService.generateAuthTokens(
+          {
+            userId: freshUser.id,
+            email: freshUser.email,
+            role: freshUser.role,
+            status: freshUser.status,
+            teamId: freshUser.teamId,
+          },
+          freshUser.tokenVersion
+        );
+        TokenService.setAuthCookies(res, tokens);
+        sendSuccess(
+          res,
+          { accessToken: tokens.accessToken, user: freshUser },
+          'Your password was reset successfully. Session credentials updated.',
+          200
+        );
+        return;
+      }
+    }
+
     sendSuccess(res, null, 'User password reset successfully', 200);
   }
 }

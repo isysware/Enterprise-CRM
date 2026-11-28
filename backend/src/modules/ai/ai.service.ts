@@ -45,17 +45,25 @@ export class AiAssistantService {
     const summarySql = `
       SELECT 
         COUNT(*)::int as total_leads,
-        COALESCE(SUM(l.value_pkr), 0)::numeric as total_pipeline_value,
+        COALESCE(SUM(l.value_pkr), 0)::numeric as total_lead_value,
+        COALESCE(SUM(CASE WHEN l.status NOT IN ('Won', 'Converted', 'Lost') THEN l.value_pkr ELSE 0 END), 0)::numeric as active_pipeline_value,
         COUNT(CASE WHEN l.status IN ('Won', 'Converted') THEN 1 END)::int as won_count,
-        COUNT(CASE WHEN l.status = 'Lost' THEN 1 END)::int as lost_count
+        COUNT(CASE WHEN l.status = 'Lost' THEN 1 END)::int as lost_count,
+        COUNT(CASE WHEN l.status IN ('New', 'Contacted', 'Follow-Up Required', 'Qualified') THEN 1 END)::int as open_count,
+        COUNT(CASE WHEN l.status = 'New' THEN 1 END)::int as new_count,
+        COUNT(CASE WHEN l.quality IN ('High', 'Hot') OR l.priority IN ('High', 'Urgent') THEN 1 END)::int as hot_urgent_count
       FROM leads l
       ${leadWhere}
     `;
     const summaryRes = await query<{
       total_leads: number;
-      total_pipeline_value: string;
+      total_lead_value: string;
+      active_pipeline_value: string;
       won_count: number;
       lost_count: number;
+      open_count: number;
+      new_count: number;
+      hot_urgent_count: number;
     }>(summarySql, leadParams);
     const summaryRow = summaryRes.rows[0];
 
@@ -147,6 +155,32 @@ export class AiAssistantService {
 
     const clientWhere = clientConditions.length > 0 ? `WHERE ${clientConditions.join(' AND ')}` : '';
 
+    const clientSummarySql = `
+      SELECT 
+        COUNT(*)::int as total_clients,
+        COALESCE(SUM(c.final_value_pkr), 0)::numeric as total_contract_value
+      FROM clients c
+      ${clientWhere}
+    `;
+    const clientSummaryRes = await query<{
+      total_clients: number;
+      total_contract_value: string;
+    }>(clientSummarySql, clientParams);
+    const clientSummaryRow = clientSummaryRes.rows[0];
+
+    const fuSummarySql = `
+      SELECT
+        COUNT(CASE WHEN fu.status = 'Completed' THEN 1 END)::int as completed_count,
+        COUNT(CASE WHEN fu.status IN ('Scheduled', 'Pending') THEN 1 END)::int as pending_count
+      FROM follow_ups fu
+      ${fuBaseWhere}
+    `;
+    const fuSummaryRes = await query<{
+      completed_count: number;
+      pending_count: number;
+    }>(fuSummarySql, fuParams);
+    const fuSummaryRow = fuSummaryRes.rows[0];
+
     const clientsSql = `
       SELECT c.business_name, c.contact_name, c.final_value_pkr, to_char(c.converted_date, 'YYYY-MM-DD') as converted_date
       FROM clients c
@@ -208,10 +242,23 @@ export class AiAssistantService {
       },
       summary: {
         totalLeads: Number(summaryRow?.total_leads) || 0,
-        pipelineValuePKR: Number(summaryRow?.total_pipeline_value) || 0,
+        openLeadsCount: Number(summaryRow?.open_count) || 0,
+        newLeadsCount: Number(summaryRow?.new_count) || 0,
         wonLeadsCount: Number(summaryRow?.won_count) || 0,
         lostLeadsCount: Number(summaryRow?.lost_count) || 0,
-        conversionsCount: clientsRes.rows.length,
+        conversionRate:
+          (Number(summaryRow?.total_leads) || 0) > 0
+            ? Number((((Number(summaryRow?.won_count) || 0) / (Number(summaryRow?.total_leads) || 1)) * 100).toFixed(2))
+            : 0,
+        totalLeadValuePKR: Number(summaryRow?.total_lead_value) || 0,
+        activePipelineValuePKR: Number(summaryRow?.active_pipeline_value) || 0,
+        hotUrgentLeadsCount: Number(summaryRow?.hot_urgent_count) || 0,
+        totalClientsCount: Number(clientSummaryRow?.total_clients) || 0,
+        convertedContractValuePKR: Number(clientSummaryRow?.total_contract_value) || 0,
+        completedFollowUpsCount: Number(fuSummaryRow?.completed_count) || 0,
+        pendingFollowUpsCount: Number(fuSummaryRow?.pending_count) || 0,
+        pipelineValuePKR: Number(summaryRow?.active_pipeline_value) || 0,
+        conversionsCount: Number(clientSummaryRow?.total_clients) || 0,
       },
       todayLeads: todayRes.rows.map((r) => ({
         id: r.id,

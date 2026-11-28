@@ -208,6 +208,10 @@ export class FollowUpsService {
   ): Promise<FollowUpDbRow> {
     const fu = await this.getFollowUpById(actor, scope, id);
 
+    if (fu.status === 'Completed' || fu.status === 'Done') {
+      throw AppError.badRequest('Follow-up is already completed');
+    }
+
     return await withTransaction(async (client) => {
       const sql = `
         UPDATE follow_ups
@@ -227,13 +231,38 @@ export class FollowUpsService {
         [fu.lead_id, fu.type, fu.notes || null, input.resultOutcome, actor.id]
       );
 
-      // If next follow-up provided, update lead's next date
-      if (input.nextFollowUpDate !== undefined) {
+      // If next follow-up provided, update lead's next date and schedule new follow-up
+      if (input.nextFollowUpDate) {
+        await client.query(
+          `INSERT INTO follow_ups (
+            lead_id, client_business_snapshot, phone, scheduled_date,
+            scheduled_time, type, status, assigned_to_id, notes, created_by
+          ) VALUES ($1, $2, $3, $4, $5, $6, 'Scheduled', $7, $8, $9)`,
+          [
+            fu.lead_id,
+            fu.client_business_snapshot,
+            fu.phone,
+            input.nextFollowUpDate,
+            input.nextFollowUpTime || null,
+            fu.type,
+            fu.assigned_to_id,
+            `Next follow-up scheduled after: ${input.resultOutcome}`,
+            actor.id,
+          ]
+        );
+
         await client.query(
           `UPDATE leads 
            SET next_follow_up_date = $1, next_follow_up_time = $2, updated_at = CURRENT_TIMESTAMP 
            WHERE id = $3`,
           [input.nextFollowUpDate, input.nextFollowUpTime || null, fu.lead_id]
+        );
+      } else if (input.nextFollowUpDate === null) {
+        await client.query(
+          `UPDATE leads 
+           SET next_follow_up_date = NULL, next_follow_up_time = NULL, updated_at = CURRENT_TIMESTAMP 
+           WHERE id = $1`,
+          [fu.lead_id]
         );
       }
 
@@ -262,40 +291,56 @@ export class FollowUpsService {
   ): Promise<FollowUpDbRow> {
     const fu = await this.getFollowUpById(actor, scope, id);
 
+    if (fu.status === 'Completed' || fu.status === 'Done') {
+      throw AppError.badRequest('Cannot reschedule a completed follow-up');
+    }
+
     return await withTransaction(async (client) => {
+      const finalNotes = input.notes !== undefined ? input.notes : (input.reason !== undefined ? input.reason : fu.notes);
+      const finalType = input.type || fu.type;
+      const finalAssignedToId = input.assignedToId || fu.assigned_to_id;
+
       const sql = `
         UPDATE follow_ups
         SET scheduled_date = $1,
             scheduled_time = $2,
+            notes = $3,
+            type = $4,
+            assigned_to_id = $5,
             status = 'Scheduled',
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $3
+        WHERE id = $6
         RETURNING *, to_char(scheduled_date, 'YYYY-MM-DD') as scheduled_date
       `;
       const res = await client.query<FollowUpDbRow>(sql, [
         input.scheduledDate,
         input.scheduledTime || null,
+        finalNotes,
+        finalType,
+        finalAssignedToId,
         id,
       ]);
 
       // Update lead
-      await client.query(
-        `UPDATE leads 
-         SET next_follow_up_date = $1, next_follow_up_time = $2, updated_at = CURRENT_TIMESTAMP 
-         WHERE id = $3`,
-        [input.scheduledDate, input.scheduledTime || null, fu.lead_id]
-      );
+      if (fu.lead_id) {
+        await client.query(
+          `UPDATE leads 
+           SET next_follow_up_date = $1, next_follow_up_time = $2, updated_at = CURRENT_TIMESTAMP 
+           WHERE id = $3`,
+          [input.scheduledDate, input.scheduledTime || null, fu.lead_id]
+        );
 
-      await client.query(
-        `INSERT INTO lead_activities (lead_id, type, title, notes, actor_id)
-         VALUES ($1, $2, 'Follow-up Rescheduled', $3, $4)`,
-        [
-          fu.lead_id,
-          fu.type,
-          `Rescheduled from ${fu.scheduled_date} to ${input.scheduledDate}. Reason: ${input.reason || 'None'}`,
-          actor.id,
-        ]
-      );
+        await client.query(
+          `INSERT INTO lead_activities (lead_id, type, title, notes, actor_id)
+           VALUES ($1, $2, 'Follow-up Rescheduled', $3, $4)`,
+          [
+            fu.lead_id,
+            finalType,
+            `Rescheduled to ${input.scheduledDate}${input.scheduledTime ? ` at ${input.scheduledTime}` : ''}. Notes: ${finalNotes || 'None'}`,
+            actor.id,
+          ]
+        );
+      }
 
       await AuditService.logFromRequest(
         actor,
@@ -303,7 +348,98 @@ export class FollowUpsService {
         'FOLLOW_UP',
         id,
         fu.lead_name,
-        { from: fu.scheduled_date, to: input.scheduledDate },
+        { from: fu.scheduled_date, to: input.scheduledDate, notes: finalNotes, type: finalType },
+        client
+      );
+
+      return res.rows[0];
+    });
+  }
+
+  /**
+   * General Update Follow-up
+   */
+  public static async updateFollowUp(
+    actor: AuthUser,
+    scope: HierarchyScope,
+    id: string,
+    input: UpdateFollowUpInput
+  ): Promise<FollowUpDbRow> {
+    const fu = await this.getFollowUpById(actor, scope, id);
+
+    if (
+      (fu.status === 'Completed' || fu.status === 'Done') &&
+      input.scheduledDate !== undefined
+    ) {
+      throw AppError.badRequest('Cannot reschedule a completed follow-up');
+    }
+
+    return await withTransaction(async (client) => {
+      const fields: string[] = [];
+      const params: unknown[] = [];
+      let idx = 1;
+
+      if (input.scheduledDate !== undefined) {
+        fields.push(`scheduled_date = $${idx++}`);
+        params.push(input.scheduledDate);
+      }
+      if (input.scheduledTime !== undefined) {
+        fields.push(`scheduled_time = $${idx++}`);
+        params.push(input.scheduledTime || null);
+      }
+      if (input.type !== undefined) {
+        fields.push(`type = $${idx++}`);
+        params.push(input.type);
+      }
+      if (input.assignedToId !== undefined) {
+        fields.push(`assigned_to_id = $${idx++}`);
+        params.push(input.assignedToId);
+      }
+      if (input.notes !== undefined) {
+        fields.push(`notes = $${idx++}`);
+        params.push(input.notes || null);
+      }
+
+      if (fields.length === 0) return fu;
+
+      fields.push(`updated_at = CURRENT_TIMESTAMP`);
+      params.push(id);
+
+      const sql = `
+        UPDATE follow_ups
+        SET ${fields.join(', ')}
+        WHERE id = $${idx}
+        RETURNING *, to_char(scheduled_date, 'YYYY-MM-DD') as scheduled_date
+      `;
+      const res = await client.query<FollowUpDbRow>(sql, params);
+
+      if (fu.lead_id && (input.scheduledDate !== undefined || input.scheduledTime !== undefined)) {
+        const leadFields: string[] = [];
+        const leadParams: unknown[] = [];
+        let lIdx = 1;
+        if (input.scheduledDate !== undefined) {
+          leadFields.push(`next_follow_up_date = $${lIdx++}`);
+          leadParams.push(input.scheduledDate);
+        }
+        if (input.scheduledTime !== undefined) {
+          leadFields.push(`next_follow_up_time = $${lIdx++}`);
+          leadParams.push(input.scheduledTime || null);
+        }
+        leadFields.push(`updated_at = CURRENT_TIMESTAMP`);
+        leadParams.push(fu.lead_id);
+        await client.query(
+          `UPDATE leads SET ${leadFields.join(', ')} WHERE id = $${lIdx}`,
+          leadParams
+        );
+      }
+
+      await AuditService.logFromRequest(
+        actor,
+        'UPDATE_FOLLOW_UP',
+        'FOLLOW_UP',
+        id,
+        fu.lead_name,
+        { updatedFields: Object.keys(input) },
         client
       );
 

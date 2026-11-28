@@ -153,7 +153,7 @@ export const DEFAULT_ROLE_PERMISSIONS: RolePermission[] = [
 // Canonical System Branding & Configuration Defaults
 export const DEFAULT_SETTINGS: SystemSettings = {
   applicationName: 'CRM',
-  companyName: 'iSysware',
+  companyName: '',
   companyLogo: '/isysware-logo.png',
   proposalLetterheadBg: '',
   companyAddress: 'Suite #402, Business Executive Center, Main Shahrah-e-Faisal, Karachi, Pakistan',

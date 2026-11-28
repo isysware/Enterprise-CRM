@@ -284,7 +284,7 @@ export const SettingsCommunicationTab: React.FC<SettingsCommunicationTabProps> =
       <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-800 rounded-2xl shadow-xs">
         <div className="text-xs text-[#64748B] dark:text-slate-400 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-          <span>Settings Configuration: Local Browser Session (Cloud storage not connected)</span>
+          <span>Configuration: Connected to PostgreSQL Database</span>
         </div>
 
         <button

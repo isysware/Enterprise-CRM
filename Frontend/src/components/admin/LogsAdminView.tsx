@@ -11,11 +11,11 @@ import {
   ShieldCheck,
   Tag
 } from 'lucide-react';
-import { formatDateTime } from '../../utils/formatters';
+import { formatDateTime, getLocalDateString } from '../../utils/formatters';
 import { DataTableScrollFrame } from '../ui';
 
 export const LogsAdminView: React.FC = () => {
-  const { activityLogs } = useCRM();
+  const { activityLogs, users } = useCRM();
 
   const [search, setSearch] = useState('');
   const [selectedAction, setSelectedAction] = useState('All');
@@ -29,6 +29,18 @@ export const LogsAdminView: React.FC = () => {
   const uniqueUsers = useMemo(() => {
     return Array.from(new Set(activityLogs.map(l => l.userName).filter(Boolean))).sort();
   }, [activityLogs]);
+
+  // Active Actors KPI: Count distinct valid actor_id values that still exist in users table;
+  // strictly exclude actor_name variants and legacy activity_logs rows with actor_id NULL/unmatched.
+  const activeActorsCount = useMemo(() => {
+    const validUserIds = new Set(users.map(u => u.id).filter(Boolean));
+    const distinctValidActorIds = new Set(
+      activityLogs
+        .map(l => l.userId)
+        .filter((actorId): actorId is string => Boolean(actorId && validUserIds.has(actorId)))
+    );
+    return distinctValidActorIds.size;
+  }, [activityLogs, users]);
 
   // Filtered logs
   const filteredLogs = useMemo(() => {
@@ -57,11 +69,9 @@ export const LogsAdminView: React.FC = () => {
   // Derived real metrics
   const totalEvents = activityLogs.length;
   const uniqueUsersCount = uniqueUsers.length;
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const todayStr = getLocalDateString();
   const todayEventsCount = activityLogs.filter(l => {
-    const t = new Date(l.timestamp).getTime();
-    return t >= todayStart;
+    return l.timestamp && getLocalDateString(new Date(l.timestamp)) === todayStr;
   }).length;
 
   const hasActiveFilters = search.trim() !== '' || selectedAction !== 'All' || selectedUser !== 'All';
@@ -147,7 +157,7 @@ export const LogsAdminView: React.FC = () => {
           </p>
           <div className="flex items-baseline justify-between mt-2">
             <span className="text-2xl font-medium text-[#0F172A] dark:text-white">
-              {uniqueUsersCount}
+              {activeActorsCount}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
               Users

@@ -30,6 +30,13 @@ router.put(
   asyncHandler(LeadSourcesController.updateSource)
 );
 
+router.patch(
+  '/:id',
+  requirePermission('canAccessSettings'),
+  validate({ body: updateLeadSourceSchema }),
+  asyncHandler(LeadSourcesController.updateSource)
+);
+
 router.delete(
   '/:id',
   requirePermission('canAccessSettings'),

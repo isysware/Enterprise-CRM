@@ -71,7 +71,7 @@ export const LoginPage: React.FC = () => {
         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full shadow-[0_10px_30px_rgba(11,19,43,0.3)] flex items-center justify-center overflow-hidden mb-4 transition-transform hover:scale-105">
           <img
             src={settings.companyLogo || '/isysware-logo.png'}
-            alt={settings.companyName || 'iSysware Logo'}
+            alt={settings.companyName || 'Logo'}
             className="w-full h-full object-cover"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src = '/isysware-logo.png';
@@ -82,7 +82,7 @@ export const LoginPage: React.FC = () => {
 
         {/* Brand System Title */}
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-          {settings.companyName || 'iSysware'} CRM
+          {settings.companyName ? `${settings.companyName} CRM` : (settings.applicationName || 'Enterprise CRM')}
         </h1>
 
         {/* Subtitle */}
@@ -233,7 +233,7 @@ export const LoginPage: React.FC = () => {
       {/* FOOTER NOTICE BELOW CARD (MATCHING REFERENCE DESIGN)                     */}
       {/* ========================================================================= */}
       <div className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500 space-y-1">
-        <p>iSysware Software Solutions CRM • Strict 5–Portals Role Boundary Enforced.</p>
+        <p>{settings.companyName || 'Enterprise'} Software Solutions CRM • Strict 5–Portals Role Boundary Enforced.</p>
         <p>All reports remain table-based with zero charts per PRD &amp; TRD requirements.</p>
       </div>
 

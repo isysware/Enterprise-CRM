@@ -25,7 +25,7 @@ import {
   Lock,
   Phone
 } from 'lucide-react';
-import { formatDate, getWhatsAppUrl } from '../utils/formatters';
+import { formatDate, formatTime, formatDateTime, getLocalDateString, getWhatsAppUrl } from '../utils/formatters';
 import { PageHeader, Card, CardHeader, CardTitle, CardDescription, CardContent, StatCard, Badge, Button, Input, Select, EmptyState, DataTableScrollFrame, ModalShell, FormField } from './ui';
 
 export const IncomingLeadsView: React.FC = () => {
@@ -119,15 +119,15 @@ export const IncomingLeadsView: React.FC = () => {
   }, [incomingLeads, searchQuery, sourceFilter, statusFilter]);
 
   // KPI Calculations
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
   const todayIncomingCount = incomingLeads.filter(
-    l => l.receivedAt && l.receivedAt.startsWith(todayStr)
+    l => l.receivedAt && getLocalDateString(new Date(l.receivedAt)) === todayStr
   ).length;
 
   const unassignedCount = incomingLeads.filter(l => l.status === 'new').length;
 
   const assignedTodayCount = incomingLeads.filter(
-    l => l.status === 'assigned' && l.assignedAt && l.assignedAt.startsWith(todayStr)
+    l => l.status === 'assigned' && l.assignedAt && getLocalDateString(new Date(l.assignedAt)) === todayStr
   ).length;
 
   // Check role access
@@ -434,7 +434,7 @@ export const IncomingLeadsView: React.FC = () => {
                       <td className="p-3.5 font-mono text-[11px] text-[#64748B] dark:text-slate-400 whitespace-nowrap">
                         <div>{formatDate(lead.receivedAt)}</div>
                         <div className="text-[10px] text-slate-400">
-                          {new Date(lead.receivedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {formatTime(lead.receivedAt)}
                         </div>
                       </td>
 
@@ -519,7 +519,7 @@ export const IncomingLeadsView: React.FC = () => {
                               {getAssignedUserName(lead.assignedToUserId)}
                             </span>
                             <div className="text-[10px] text-slate-400">
-                              {lead.assignedAt ? formatDate(lead.assignedAt) : ''}
+                              {lead.assignedAt ? formatDateTime(lead.assignedAt) : ''}
                             </div>
                           </div>
                         ) : (
@@ -803,9 +803,10 @@ export const IncomingLeadsView: React.FC = () => {
                 <input
                   id="whatsapp-pairing-phone"
                   type="text"
-                  placeholder="+92 300 1234567"
+                  placeholder="03001234567 (11 digits)"
                   value={pairingPhone}
-                  onChange={e => setPairingPhone(e.target.value)}
+                  onChange={e => setPairingPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                  maxLength={11}
                   className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-[#E5EAF1] dark:border-slate-700 text-xs font-mono text-[#0F172A] dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>

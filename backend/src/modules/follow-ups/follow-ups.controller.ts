@@ -40,6 +40,12 @@ export class FollowUpsController {
     sendSuccess(res, followUp, 'Follow-up rescheduled successfully', 200);
   }
 
+  public static async updateFollowUp(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const input = req.body as UpdateFollowUpInput;
+    const followUp = await FollowUpsService.updateFollowUp(req.user, req.scope, req.params.id as string, input);
+    sendSuccess(res, followUp, 'Follow-up updated successfully', 200);
+  }
+
   public static async deleteFollowUp(req: AuthenticatedRequest, res: Response): Promise<void> {
     await FollowUpsService.deleteFollowUp(req.user, req.scope, req.params.id as string);
     sendSuccess(res, null, 'Follow-up deleted successfully', 200);

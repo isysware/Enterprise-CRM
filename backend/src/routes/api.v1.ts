@@ -18,6 +18,7 @@ import { aiRoutes } from '../modules/ai';
 import { integrationRoutes } from '../modules/integrations';
 import { notificationRoutes } from '../modules/notifications/notifications.routes';
 import { settingRoutes } from '../modules/settings';
+import { deleteManagementRoutes } from '../modules/delete-management/delete-management.routes';
 
 const router = Router();
 
@@ -61,5 +62,8 @@ router.use('/notifications', notificationRoutes);
 
 // Shared Organizational Settings
 router.use('/settings', settingRoutes);
+
+// Super Admin Delete Management & Purge
+router.use('/delete-management', deleteManagementRoutes);
 
 export const apiV1Router = router;

@@ -32,7 +32,7 @@ export interface SystemSettingsPayload {
 
 export const DEFAULT_SYSTEM_SETTINGS: SystemSettingsPayload = {
   applicationName: 'CRM',
-  companyName: 'iSysware',
+  companyName: '',
   companyLogo: '',
   proposalLetterheadBg: '',
   companyAddress: 'Suite #402, Business Executive Center, Main Shahrah-e-Faisal, Karachi, Pakistan',

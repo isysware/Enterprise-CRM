@@ -17,7 +17,7 @@ import {
   Sparkles,
   X
 } from 'lucide-react';
-import { formatDate, getWhatsAppUrl, getLocalDateString, classifyFollowUp } from '../utils/formatters';
+import { getWhatsAppUrl, getLocalDateString, classifyFollowUp, formatDate, formatTime } from '../utils/formatters';
 import { PageHeader, Card, CardHeader, CardTitle, CardContent, Badge, Button, Input, Select, EmptyState, DataTableScrollFrame } from './ui';
 
 interface FollowUpsViewProps {
@@ -27,6 +27,8 @@ interface FollowUpsViewProps {
   onOpenLeadDetail: (leadId: string) => void;
   onOpenConvertModal?: (leadId: string) => void;
 }
+
+
 
 export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
   initialTab = 'today',
@@ -151,20 +153,18 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                      isActive
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${isActive
                         ? 'bg-white dark:bg-slate-900 text-[#2563EB] shadow-xs'
                         : 'text-[#64748B] hover:text-[#0F172A] dark:hover:text-white'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
                     <span>{tab.label}</span>
                     <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-medium ${
-                        isActive
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-medium ${isActive
                           ? 'bg-[#EFF6FF] text-[#2563EB] dark:bg-blue-950/60'
                           : 'bg-white/80 dark:bg-slate-700 text-[#64748B] dark:text-slate-300'
-                      }`}
+                        }`}
                     >
                       {tab.count}
                     </span>
@@ -268,8 +268,14 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
               ) : (
                 filteredList.map(fu => {
                   const waUrl = getWhatsAppUrl(fu.phone, fu.clientName, fu.clientBusiness);
-                  const isDone = fu.status === 'Done';
-                  const isMissed = fu.status === 'Missed' || (fu.scheduledDate < todayStr && fu.status === 'Pending');
+                  const isDone =
+                    fu.status === 'Done' ||
+                    fu.status === 'Completed' ||
+                    (fu.status as string)?.toLowerCase() === 'completed' ||
+                    (fu.status as string)?.toLowerCase() === 'done';
+                  const isMissed =
+                    fu.status === 'Missed' ||
+                    (fu.scheduledDate < todayStr && fu.status === 'Pending');
 
                   const assignedUser = users.find(u => u.id === fu.assignedToId || u.name === fu.assignedToName);
 
@@ -280,12 +286,11 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
                     >
                       {/* Due Date & Time */}
                       <td className="p-3.5 whitespace-nowrap">
-                        <div className={`font-mono text-xs font-semibold ${
-                          isMissed ? 'text-rose-600 dark:text-rose-400' : 'text-[#0F172A] dark:text-slate-200'
-                        }`}>
+                        <div className={`font-mono text-xs font-semibold ${isMissed ? 'text-rose-600 dark:text-rose-400' : 'text-[#0F172A] dark:text-slate-200'
+                          }`}>
                           {formatDate(fu.scheduledDate)}
                         </div>
-                        <span className="text-[11px] text-[#64748B] font-mono">at {fu.scheduledTime}</span>
+                        <span className="text-[11px] text-[#64748B] font-mono">at {formatTime(fu.scheduledTime)}</span>
                       </td>
 
                       {/* Lead / Customer */}
@@ -413,14 +418,16 @@ export const FollowUpsView: React.FC<FollowUpsViewProps> = ({
                           )}
 
                           {/* 3. Reschedule Action */}
-                          <button
-                            type="button"
-                            onClick={() => onOpenRescheduleModal(fu)}
-                            title="Reschedule follow-up"
-                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                          </button>
+                          {!isDone && (
+                            <button
+                              type="button"
+                              onClick={() => onOpenRescheduleModal(fu)}
+                              title="Reschedule follow-up"
+                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </button>
+                          )}
 
                           {/* 4. View Lead Action */}
                           {fu.leadId && (

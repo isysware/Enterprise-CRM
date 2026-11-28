@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Team, User, UserRole } from '../../types';
 import { DatePreset, ReportFilterState, ReportId } from './types';
+import { getLocalDateString } from '../../utils/formatters';
 
 interface ReportFilterBarProps {
   activeReport: ReportId;
@@ -45,7 +46,7 @@ export const ReportFilterBar: React.FC<ReportFilterBarProps> = ({
   const showUserFilter = !isEmployee && ['sales-pipeline', 'team-staff', 'followups-activity', 'clients-conversions'].includes(activeReport);
 
   const handlePresetSelect = (preset: DatePreset) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     let from = '';
     let to = today;
 
@@ -56,7 +57,7 @@ export const ReportFilterBar: React.FC<ReportFilterBarProps> = ({
     } else if (preset === 'last_30_days') {
       const d = new Date();
       d.setDate(d.getDate() - 30);
-      from = d.toISOString().split('T')[0];
+      from = getLocalDateString(d);
     } else if (preset === 'all_time') {
       from = '';
       to = '';

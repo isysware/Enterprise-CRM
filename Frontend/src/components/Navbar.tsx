@@ -19,7 +19,7 @@ import {
   CheckCheck,
   Check
 } from 'lucide-react';
-import { getRoleBadgeStyle, getLocalDateString, classifyFollowUp } from '../utils/formatters';
+import { getRoleBadgeStyle, getLocalDateString, classifyFollowUp, formatDate, formatTime, formatDateTime } from '../utils/formatters';
 import { notificationsApi, NotificationDto } from '../api';
 import { UserProfileModal } from './modals/UserProfileModal';
 
@@ -126,7 +126,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           branding: 'Organization Identity',
           letterhead: 'Letterhead & PDF',
           pricing: 'Pricing Models',
-          communication: 'Communication & Alerts'
+          communication: 'Communication & Alerts',
+          'delete-management': 'Delete Management'
         };
         return {
           section: 'Admin',
@@ -171,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       type: n.type as NotificationItem['type'],
       title: n.title,
       message: n.message,
-      time: n.timeLabel || new Date(n.createdAt).toLocaleDateString(),
+      time: n.timeLabel || formatDateTime(n.createdAt),
       targetTab: (n.targetTab as ActiveTab) || undefined,
       targetLeadId: n.targetId || undefined,
       isRead: n.isRead || readNotifIds.has(n.id),
@@ -182,8 +183,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       id: `notif-missed-${f.id}`,
       type: 'missed_followup' as const,
       title: 'Missed Follow-up Alert',
-      message: `Overdue follow-up with ${f.clientBusiness || f.clientName} (${f.scheduledTime})`,
-      time: `Due ${f.scheduledDate}`,
+      message: `Overdue follow-up with ${f.clientBusiness || f.clientName} (${formatTime(f.scheduledTime)})`,
+      time: `Due ${formatDate(f.scheduledDate)}`,
       targetTab: 'followups' as ActiveTab,
       targetLeadId: f.leadId,
       isRead: readNotifIds.has(`notif-missed-${f.id}`),
@@ -194,7 +195,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       id: `notif-today-${f.id}`,
       type: 'today_followup' as const,
       title: "Today's Follow-up Scheduled",
-      message: `${f.type} touchpoint with ${f.clientBusiness || f.clientName} at ${f.scheduledTime}`,
+      message: `${f.type} touchpoint with ${f.clientBusiness || f.clientName} at ${formatTime(f.scheduledTime)}`,
       time: 'Today',
       targetTab: 'followups' as ActiveTab,
       targetLeadId: f.leadId,

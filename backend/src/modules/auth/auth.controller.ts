@@ -97,13 +97,17 @@ export class AuthController {
     const authReq = req as unknown as AuthenticatedRequest;
     const input = req.body as ChangePasswordInput;
 
-    await AuthService.changePassword(authReq.user.id, input, defaultUserRepository);
-    TokenService.clearAuthCookies(res);
+    const result = await AuthService.changePassword(authReq.user.id, input, defaultUserRepository);
+    TokenService.setAuthCookies(res, result.tokens);
 
     sendSuccess(
       res,
-      null,
-      'Password changed successfully. Please log in again with your new credentials.',
+      {
+        user: result.user,
+        accessToken: result.tokens.accessToken,
+        expiresIn: result.tokens.expiresIn,
+      },
+      'Password changed successfully. Your session has been updated.',
       200
     );
   }
