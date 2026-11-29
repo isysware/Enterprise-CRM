@@ -143,8 +143,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const urgentLeadsCount = useMemo(() => {
     return scopedLeads.filter(l =>
-      (l.quality === 'Good' || l.priority === 'Urgent') &&
+      (l.quality === 'Good' || (l.quality as any) === 'High' || (l.quality as any) === 'Hot' || l.priority === 'Urgent') &&
       l.status !== 'Converted' &&
+      l.status !== 'Won' &&
       l.status !== 'Lost'
     ).length;
   }, [scopedLeads]);

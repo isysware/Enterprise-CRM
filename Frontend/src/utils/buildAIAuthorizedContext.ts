@@ -102,7 +102,11 @@ export const buildAIAuthorizedContext = (
   ).length;
 
   const urgentLeadsCount = scopedLeads.filter(
-    l => l.priority === 'Urgent' || l.priority === 'High'
+    l =>
+      (l.quality === 'Good' || (l.quality as any) === 'High' || (l.quality as any) === 'Hot' || l.priority === 'Urgent' || l.priority === 'High') &&
+      l.status !== 'Converted' &&
+      l.status !== 'Won' &&
+      l.status !== 'Lost'
   ).length;
 
   const overdueFollowUpsCount = scopedFollowUps.filter(

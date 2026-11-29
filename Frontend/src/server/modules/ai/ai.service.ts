@@ -51,7 +51,7 @@ export class AiAssistantService {
         COUNT(CASE WHEN l.status = 'Lost' THEN 1 END)::int as lost_count,
         COUNT(CASE WHEN l.status IN ('New', 'Contacted', 'Follow-Up Required', 'Qualified') THEN 1 END)::int as open_count,
         COUNT(CASE WHEN l.status = 'New' THEN 1 END)::int as new_count,
-        COUNT(CASE WHEN l.quality IN ('High', 'Hot') OR l.priority IN ('High', 'Urgent') THEN 1 END)::int as hot_urgent_count
+        COUNT(CASE WHEN (l.quality IN ('High', 'Hot', 'Good') OR l.priority IN ('High', 'Urgent')) AND l.status NOT IN ('Converted', 'Won', 'Lost') THEN 1 END)::int as hot_urgent_count
       FROM leads l
       ${leadWhere}
     `;

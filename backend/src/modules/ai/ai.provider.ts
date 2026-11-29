@@ -268,7 +268,7 @@ export class DeterministicCrmCopilotProvider implements IAiProvider {
     // 6. Single Metric: Hot / Urgent Leads
     if (lower.includes('hot') || lower.includes('urgent')) {
       return {
-        answer: `You have **${context.summary.hotUrgentLeadsCount}** Hot / Urgent priority lead(s) requiring immediate attention in your authorized scope.`,
+        answer: `You have **${context.summary.hotUrgentLeadsCount}** Hot / Urgent priority lead(s) requiring immediate attention in your authorized scope (excluding converted, won, and lost deals).`,
         insights: {
           hotUrgentLeadsCount: context.summary.hotUrgentLeadsCount,
           totalScopedLeads: context.summary.totalLeads,

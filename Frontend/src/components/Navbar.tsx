@@ -162,7 +162,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   const todayFollowUps = scopedFollowUps.filter(
     f => classifyFollowUp(f, todayStr) === 'today'
   );
-  const urgentLeads = scopedLeads.filter(l => l.priority === 'Urgent' && l.status !== 'Converted');
+  const urgentLeads = scopedLeads.filter(l =>
+    (l.priority === 'Urgent' || l.priority === 'High') &&
+    l.status !== 'Converted' &&
+    l.status !== 'Won' &&
+    l.status !== 'Lost'
+  );
 
   // Build notifications array from real database items and real operational events
   const rawNotifications: NotificationItem[] = [

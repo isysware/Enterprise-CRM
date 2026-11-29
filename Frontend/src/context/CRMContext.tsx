@@ -1376,8 +1376,9 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const totalLeads = scopedLeads.length;
 
     const hotLeads = scopedLeads.filter(l =>
-      (l.quality === 'Good' || l.priority === 'Urgent') &&
+      (l.quality === 'Good' || (l.quality as any) === 'High' || (l.quality as any) === 'Hot' || l.priority === 'Urgent') &&
       l.status !== 'Converted' &&
+      l.status !== 'Won' &&
       l.status !== 'Lost'
     ).length;
 
