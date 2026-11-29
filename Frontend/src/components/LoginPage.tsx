@@ -158,7 +158,7 @@ export const LoginPage: React.FC = () => {
                 onChange={e => setEmail(e.target.value)}
                 placeholder={
                   selectedRole === 'Super Admin'
-                    ? 'admin@enterprise.crm or superadmin@isysware.com'
+                    ? 'superadmin@isysware.com'
                     : selectedRole === 'Admin'
                     ? 'admin@isysware.com'
                     : selectedRole === 'Manager'

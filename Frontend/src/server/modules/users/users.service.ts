@@ -214,9 +214,13 @@ export class UsersService {
       }
     }
 
-    // HARD INVARIANT: Super Admin accounts can never be deactivated
+    // HARD INVARIANT: Protect the last authorized active Super Admin
     if (target.role === 'Super Admin' && input.status === 'inactive') {
-      throw AppError.forbidden('Security Invariant: Super Admin accounts cannot be deactivated');
+      const activeSuperAdmins = await postgresUserRepository.find({ role: 'Super Admin', status: 'active' });
+      const remainingActive = activeSuperAdmins.filter(sa => sa.id !== target.id);
+      if (remainingActive.length === 0) {
+        throw AppError.forbidden('Security Invariant: Cannot deactivate the last remaining active Super Admin');
+      }
     }
 
     if (actor.id === target.id && input.status === 'inactive') {

@@ -14,7 +14,9 @@ interface UserDbRow {
   team_id: string | null;
   team_name: string | null;
   manager_id: string | null;
+  manager_name?: string | null;
   team_lead_id: string | null;
+  team_lead_name?: string | null;
   avatar_url: string | null;
   token_version: number;
   last_login: Date | null;
@@ -39,7 +41,9 @@ export class PostgresUserRepository implements IUserRepository {
       teamId: row.team_id || undefined,
       teamName: row.team_name || undefined,
       managerId: row.manager_id || undefined,
+      managerName: row.manager_name || undefined,
       teamLeadId: row.team_lead_id || undefined,
+      teamLeadName: row.team_lead_name || undefined,
       avatarUrl: row.avatar_url || undefined,
       tokenVersion: row.token_version,
       lastLogin: row.last_login ? row.last_login.toISOString() : undefined,
@@ -54,9 +58,11 @@ export class PostgresUserRepository implements IUserRepository {
 
   public async findByEmail(email: string): Promise<UserRecord | null> {
     const sql = `
-      SELECT u.*, t.name as team_name
+      SELECT u.*, t.name as team_name, m.name as manager_name, tl.name as team_lead_name
       FROM users u
       LEFT JOIN teams t ON u.team_id = t.id
+      LEFT JOIN users m ON u.manager_id = m.id
+      LEFT JOIN users tl ON u.team_lead_id = tl.id
       WHERE LOWER(u.email) = LOWER($1)
       LIMIT 1
     `;
@@ -67,9 +73,11 @@ export class PostgresUserRepository implements IUserRepository {
 
   public async findUserWithCredentials(id: string): Promise<UserRecord | null> {
     const sql = `
-      SELECT u.*, t.name as team_name
+      SELECT u.*, t.name as team_name, m.name as manager_name, tl.name as team_lead_name
       FROM users u
       LEFT JOIN teams t ON u.team_id = t.id
+      LEFT JOIN users m ON u.manager_id = m.id
+      LEFT JOIN users tl ON u.team_lead_id = tl.id
       WHERE u.id = $1
       LIMIT 1
     `;
@@ -87,9 +95,11 @@ export class PostgresUserRepository implements IUserRepository {
 
   public async find(filter?: Record<string, unknown>): Promise<AuthUser[]> {
     let sql = `
-      SELECT u.*, t.name as team_name
+      SELECT u.*, t.name as team_name, m.name as manager_name, tl.name as team_lead_name
       FROM users u
       LEFT JOIN teams t ON u.team_id = t.id
+      LEFT JOIN users m ON u.manager_id = m.id
+      LEFT JOIN users tl ON u.team_lead_id = tl.id
     `;
     const params: unknown[] = [];
 

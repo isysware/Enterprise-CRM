@@ -883,22 +883,45 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         mappedTeams = rawTeams.map(mapTeamDto);
       }
 
-      // Keep frontend hierarchy fully hydrated from the live PostgreSQL/API records.
-      // The team list endpoint may not always include memberIds, while the users
-      // endpoint carries each user's primary team. Derive the relationship here so
-      // Manager/Team Lead scope calculations receive the complete hierarchy.
+      // Keep frontend hierarchy strictly bound to actual PostgreSQL user records.
+      // Manager has no Reporting Manager or Team Lead.
+      // Team Lead has Manager but no Team Lead.
+      // Employee has both.
+      // Zero team-level fallbacks.
       if (mappedUsers && mappedTeams) {
-        const teamById = new Map(mappedTeams.map(team => [team.id, team]));
+        const userById = new Map(mappedUsers.map(u => [u.id, u]));
 
         mappedUsers = mappedUsers.map(user => {
-          const team = user.teamId ? teamById.get(user.teamId) : undefined;
+          if (user.role === 'Super Admin' || user.role === 'Admin' || user.role === 'Manager') {
+            return {
+              ...user,
+              managerId: undefined,
+              managerName: undefined,
+              teamLeadId: undefined,
+              teamLeadName: undefined,
+            };
+          }
 
+          if (user.role === 'Team Lead') {
+            const manager = user.managerId ? userById.get(user.managerId) : undefined;
+            return {
+              ...user,
+              managerId: user.managerId || undefined,
+              managerName: user.managerName || manager?.name || undefined,
+              teamLeadId: undefined,
+              teamLeadName: undefined,
+            };
+          }
+
+          // Employee: shows both Reporting Manager and Team Lead
+          const manager = user.managerId ? userById.get(user.managerId) : undefined;
+          const teamLead = user.teamLeadId ? userById.get(user.teamLeadId) : undefined;
           return {
             ...user,
-            managerId: user.managerId || team?.managerId,
-            managerName: user.managerName || team?.managerName,
-            teamLeadId: user.teamLeadId || team?.leaderId,
-            teamLeadName: user.teamLeadName || team?.leaderName,
+            managerId: user.managerId || undefined,
+            managerName: user.managerName || manager?.name || undefined,
+            teamLeadId: user.teamLeadId || undefined,
+            teamLeadName: user.teamLeadName || teamLead?.name || undefined,
           };
         });
 

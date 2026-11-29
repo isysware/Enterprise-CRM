@@ -101,9 +101,6 @@ export class DatabaseSeeder {
         }
       }
 
-      // 3b. Ensure all Super Admin accounts remain active
-      await client.query("UPDATE users SET status = 'active' WHERE role_name = 'Super Admin' AND status != 'active'");
-
       // 4. Seed Canonical System Settings if missing (ON CONFLICT DO NOTHING preserves user customizations)
       const settingsCategories = [
         {
