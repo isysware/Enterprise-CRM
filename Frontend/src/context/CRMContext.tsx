@@ -433,13 +433,17 @@ const mapTeamDto = (t: any): Team => ({
 
 const mapServiceDto = (s: any): ServiceItem => {
   const price = Number(s.defaultPricePKR ?? s.default_price_pkr ?? s.basePricePKR ?? 0);
+  const pmId = s.pricingModelId ?? s.pricing_model_id ?? null;
+  const pmName = s.pricingModelName ?? s.pricing_model_name ?? s.pricingModel ?? null;
   return {
     id: s.id,
     name: s.name,
     category: s.category,
     defaultPricePKR: price,
     basePricePKR: price,
-    pricingModel: (s.pricingModelName || s.pricing_model_name || s.pricingModel || 'Monthly Subscription') as any,
+    pricingModelId: pmId,
+    pricingModelName: pmName,
+    pricingModel: pmName || '',
     description: s.description || '',
     isActive: s.isActive !== undefined ? s.isActive !== false : (s.is_active !== false)
   };
@@ -2323,10 +2327,14 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addService = async (serviceData: Omit<ServiceItem, 'id'>): Promise<ServiceItem | null> => {
     try {
+      const pmId = serviceData.pricingModelId !== undefined
+        ? serviceData.pricingModelId
+        : (pricingModels.find(pm => pm.name === serviceData.pricingModel)?.id || null);
       const createdDto = await servicesApi.createService({
         name: serviceData.name.trim(),
         category: serviceData.category.trim(),
         defaultPricePKR: serviceData.defaultPricePKR ?? serviceData.basePricePKR ?? 0,
+        pricingModelId: pmId,
         description: serviceData.description?.trim(),
         isActive: serviceData.isActive !== false
       });
@@ -2343,10 +2351,14 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateService = async (service: ServiceItem): Promise<ServiceItem | null> => {
     try {
+      const pmId = service.pricingModelId !== undefined
+        ? service.pricingModelId
+        : (pricingModels.find(pm => pm.name === service.pricingModel)?.id || null);
       const updatedDto = await servicesApi.updateService(service.id, {
         name: service.name.trim(),
         category: service.category.trim(),
         defaultPricePKR: service.defaultPricePKR ?? service.basePricePKR ?? 0,
+        pricingModelId: pmId,
         description: service.description?.trim(),
         isActive: service.isActive !== false
       });

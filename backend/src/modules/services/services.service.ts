@@ -79,22 +79,26 @@ export class ServicesService {
       throw AppError.conflict(`Service with name '${input.name}' already exists`);
     }
 
+    const pmId = input.pricingModelId !== undefined 
+      ? input.pricingModelId 
+      : ((input as any).pricing_model_id !== undefined ? (input as any).pricing_model_id : null);
+
     const sql = `
       INSERT INTO services (name, category, description, default_price_pkr, pricing_model_id, is_active)
       VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
+      RETURNING id, name
     `;
     const res = await query<any>(sql, [
       input.name.trim(),
       input.category.trim(),
       input.description || null,
       input.defaultPricePKR,
-      input.pricingModelId || null,
+      pmId || null,
       input.isActive ?? true,
     ]);
 
     await AuditService.logFromRequest(actor, 'CREATE_SERVICE', 'SERVICE', res.rows[0].id, res.rows[0].name);
-    return this.mapRow(res.rows[0]);
+    return this.getServiceById(res.rows[0].id);
   }
 
   public static async updateService(
@@ -124,9 +128,13 @@ export class ServicesService {
       fields.push(`default_price_pkr = $${idx++}`);
       params.push(input.defaultPricePKR);
     }
-    if (input.pricingModelId !== undefined) {
+    const pmId = input.pricingModelId !== undefined 
+      ? input.pricingModelId 
+      : ((input as any).pricing_model_id !== undefined ? (input as any).pricing_model_id : undefined);
+
+    if (pmId !== undefined) {
       fields.push(`pricing_model_id = $${idx++}`);
-      params.push(input.pricingModelId);
+      params.push(pmId || null);
     }
     if (input.isActive !== undefined) {
       fields.push(`is_active = $${idx++}`);
@@ -138,11 +146,11 @@ export class ServicesService {
     fields.push('updated_at = CURRENT_TIMESTAMP');
     params.push(id);
 
-    const updateSql = `UPDATE services SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`;
+    const updateSql = `UPDATE services SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, name`;
     const res = await query<any>(updateSql, params);
 
-    await AuditService.logFromRequest(actor, 'UPDATE_SERVICE', 'SERVICE', id, res.rows[0].name);
-    return this.mapRow(res.rows[0]);
+    await AuditService.logFromRequest(actor, 'UPDATE_SERVICE', 'SERVICE', id, res.rows[0]?.name || existing.name);
+    return this.getServiceById(id);
   }
 
   public static async deleteService(actor: AuthUser, id: string): Promise<void> {

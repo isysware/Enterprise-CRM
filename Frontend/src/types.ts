@@ -69,6 +69,8 @@ export interface ServiceItem {
   defaultPricePKR: number;
   basePricePKR?: number; // legacy alias
   pricingModel: PricingModel;
+  pricingModelId?: string | null;
+  pricingModelName?: string | null;
   description: string;
   isActive: boolean;
 }

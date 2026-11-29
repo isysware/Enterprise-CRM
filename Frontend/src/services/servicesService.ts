@@ -14,7 +14,9 @@ export const servicesService = {
         category: s.category,
         defaultPricePKR: Number(s.defaultPricePKR || 0),
         basePricePKR: Number(s.defaultPricePKR || 0),
-        pricingModel: (s.pricingModelName || 'Monthly Subscription') as any,
+        pricingModelId: s.pricingModelId || null,
+        pricingModelName: s.pricingModelName || null,
+        pricingModel: (s.pricingModelName || '') as any,
         description: s.description || '',
         isActive: s.isActive !== false,
       }));
@@ -30,6 +32,7 @@ export const servicesService = {
         name: service.name,
         category: service.category,
         defaultPricePKR: service.defaultPricePKR ?? service.basePricePKR ?? 0,
+        pricingModelId: service.pricingModelId || null,
         description: service.description,
         isActive: service.isActive,
       };
@@ -40,7 +43,9 @@ export const servicesService = {
         category: created.category,
         defaultPricePKR: Number(created.defaultPricePKR || 0),
         basePricePKR: Number(created.defaultPricePKR || 0),
-        pricingModel: (created.pricingModelName || 'Monthly Subscription') as any,
+        pricingModelId: created.pricingModelId || null,
+        pricingModelName: created.pricingModelName || null,
+        pricingModel: (created.pricingModelName || '') as any,
         description: created.description || '',
         isActive: created.isActive,
       };
@@ -56,6 +61,7 @@ export const servicesService = {
         name: updates.name,
         category: updates.category,
         defaultPricePKR: updates.defaultPricePKR ?? updates.basePricePKR,
+        pricingModelId: updates.pricingModelId !== undefined ? updates.pricingModelId : undefined,
         description: updates.description,
         isActive: updates.isActive,
       };
@@ -66,7 +72,9 @@ export const servicesService = {
         category: updated.category,
         defaultPricePKR: Number(updated.defaultPricePKR || 0),
         basePricePKR: Number(updated.defaultPricePKR || 0),
-        pricingModel: (updated.pricingModelName || 'Monthly Subscription') as any,
+        pricingModelId: updated.pricingModelId || null,
+        pricingModelName: updated.pricingModelName || null,
+        pricingModel: (updated.pricingModelName || '') as any,
         description: updated.description || '',
         isActive: updated.isActive,
       };

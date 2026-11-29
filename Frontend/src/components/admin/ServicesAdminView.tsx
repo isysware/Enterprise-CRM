@@ -41,7 +41,7 @@ export const ServicesAdminView: React.FC = () => {
   // Form state
   const [name, setName] = useState('');
   const [category, setCategory] = useState('ERP');
-  const [pricingModel, setPricingModel] = useState<PricingModel>('Monthly Subscription');
+  const [pricingModelId, setPricingModelId] = useState<string>('');
   const [defaultPricePKR, setDefaultPricePKR] = useState<number | string>(25000);
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -59,7 +59,7 @@ export const ServicesAdminView: React.FC = () => {
         const matchName = srv.name.toLowerCase().includes(q);
         const matchCat = srv.category.toLowerCase().includes(q);
         const matchDesc = (srv.description || '').toLowerCase().includes(q);
-        const matchPricing = (srv.pricingModel || '').toLowerCase().includes(q);
+        const matchPricing = (srv.pricingModelName || srv.pricingModel || '').toLowerCase().includes(q);
         if (!matchName && !matchCat && !matchDesc && !matchPricing) return false;
       }
 
@@ -67,8 +67,9 @@ export const ServicesAdminView: React.FC = () => {
         return false;
       }
 
-      if (pricingModelFilter !== 'All' && srv.pricingModel !== pricingModelFilter) {
-        return false;
+      if (pricingModelFilter !== 'All') {
+        const srvPmName = srv.pricingModelName || srv.pricingModel || '';
+        if (srvPmName !== pricingModelFilter) return false;
       }
 
       if (statusFilter !== 'All') {
@@ -106,7 +107,8 @@ export const ServicesAdminView: React.FC = () => {
     setEditingService(null);
     setName('');
     setCategory('ERP');
-    setPricingModel('Monthly Subscription');
+    const defaultPm = pricingModels.find(pm => pm.isSystemDefault) || pricingModels[0];
+    setPricingModelId(defaultPm?.id || '');
     setDefaultPricePKR('');
     setDescription('');
     setIsActive(true);
@@ -117,7 +119,10 @@ export const ServicesAdminView: React.FC = () => {
     setEditingService(srv);
     setName(srv.name);
     setCategory(srv.category);
-    setPricingModel(srv.pricingModel);
+    const matchedPm = pricingModels.find(
+      p => p.id === srv.pricingModelId || p.name === srv.pricingModel || p.name === srv.pricingModelName
+    );
+    setPricingModelId(srv.pricingModelId || matchedPm?.id || '');
     setDefaultPricePKR(srv.defaultPricePKR ?? srv.basePricePKR ?? 0);
     setDescription(srv.description || '');
     setIsActive(srv.isActive !== false);
@@ -128,13 +133,17 @@ export const ServicesAdminView: React.FC = () => {
     if (!name.trim()) return;
 
     const parsedPrice = Number(defaultPricePKR) || 0;
+    const selectedPm = pricingModels.find(pm => pm.id === pricingModelId);
+    const pmName = selectedPm ? selectedPm.name : '';
 
     if (editingService) {
       await updateService({
         ...editingService,
         name: name.trim(),
         category: category.trim(),
-        pricingModel,
+        pricingModelId: pricingModelId || null,
+        pricingModelName: pmName || null,
+        pricingModel: pmName,
         defaultPricePKR: parsedPrice,
         basePricePKR: parsedPrice,
         description: description.trim(),
@@ -145,7 +154,9 @@ export const ServicesAdminView: React.FC = () => {
       await addService({
         name: name.trim(),
         category: category.trim(),
-        pricingModel,
+        pricingModelId: pricingModelId || null,
+        pricingModelName: pmName || null,
+        pricingModel: pmName,
         defaultPricePKR: parsedPrice,
         basePricePKR: parsedPrice,
         description: description.trim(),
@@ -322,19 +333,11 @@ export const ServicesAdminView: React.FC = () => {
               className="w-full bg-[#F7F9FC] dark:bg-slate-800 border border-[#E5EAF1] dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-[#0F172A] dark:text-white focus:outline-hidden focus:ring-1 focus:ring-[#2563EB]"
             >
               <option value="All">All Pricing Models</option>
-              {pricingModels && pricingModels.length > 0 ? (
-                pricingModels.map(pm => (
-                  <option key={pm.id} value={pm.name}>
-                    {pm.name}
-                  </option>
-                ))
-              ) : (
-                <>
-                  <option value="Monthly Subscription">Monthly Subscription</option>
-                  <option value="One-Time Project">One-Time Project</option>
-                  <option value="Ownership Model">Ownership Model</option>
-                </>
-              )}
+              {pricingModels && pricingModels.map(pm => (
+                <option key={pm.id} value={pm.name}>
+                  {pm.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -399,7 +402,7 @@ export const ServicesAdminView: React.FC = () => {
                     </span>
                     <div className="flex items-center gap-1">
                       <span className="text-[11px] font-semibold text-[#64748B] dark:text-slate-400">
-                        {srv.pricingModel}
+                        {srv.pricingModelName || srv.pricingModel || 'No Pricing Model'}
                       </span>
                       <button
                         onClick={() => handleOpenEdit(srv)}
@@ -512,22 +515,15 @@ export const ServicesAdminView: React.FC = () => {
 
             <FormField label="Pricing Model" required>
               <Select
-                value={pricingModel}
-                onChange={e => setPricingModel(e.target.value as PricingModel)}
+                value={pricingModelId}
+                onChange={e => setPricingModelId(e.target.value)}
               >
-                {pricingModels && pricingModels.length > 0 ? (
-                  pricingModels.filter(pm => pm.isActive).map(pm => (
-                    <option key={pm.id} value={pm.name}>
-                      {pm.name}
-                    </option>
-                  ))
-                ) : (
-                  <>
-                    <option value="Monthly Subscription">Monthly Subscription</option>
-                    <option value="One-Time Project">One-Time Project</option>
-                    <option value="Ownership Model">Ownership Model</option>
-                  </>
-                )}
+                <option value="">-- Select Pricing Model --</option>
+                {pricingModels && pricingModels.filter(pm => pm.isActive).map(pm => (
+                  <option key={pm.id} value={pm.id}>
+                    {pm.name} ({pm.billingType})
+                  </option>
+                ))}
               </Select>
             </FormField>
           </div>
