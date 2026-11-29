@@ -4,6 +4,13 @@ import { CANONICAL_CAPABILITIES } from '../constants/rbac.constants';
 import { AppError } from '../utils/AppError';
 
 export class PostgresRolePermissionRepository {
+  private static cachedMatrices: RolePermission[] | null = null;
+  private static cacheExpiresAt: number = 0;
+
+  public static clearCache(): void {
+    this.cachedMatrices = null;
+    this.cacheExpiresAt = 0;
+  }
   /**
    * Fetch all 21 capabilities for a specific canonical role
    */
@@ -44,6 +51,11 @@ export class PostgresRolePermissionRepository {
    * Fetch permission matrix for all 5 canonical roles
    */
   public async getAllRolePermissions(): Promise<RolePermission[]> {
+    const now = Date.now();
+    if (PostgresRolePermissionRepository.cachedMatrices && PostgresRolePermissionRepository.cacheExpiresAt > now) {
+      return PostgresRolePermissionRepository.cachedMatrices;
+    }
+
     const rolesSql = 'SELECT name FROM roles ORDER BY created_at ASC';
     const rolesRes = await query<{ name: string }>(rolesSql);
 
@@ -53,6 +65,8 @@ export class PostgresRolePermissionRepository {
       matrices.push(perm);
     }
 
+    PostgresRolePermissionRepository.cachedMatrices = matrices;
+    PostgresRolePermissionRepository.cacheExpiresAt = now + 15000; // 15s cache
     return matrices;
   }
 
@@ -116,6 +130,8 @@ export class PostgresRolePermissionRepository {
       [roleId, capability, isGranted, validChangedBy]
     );
 
+    // Invalidate cache immediately on update
+    PostgresRolePermissionRepository.clearCache();
     return this.getRolePermissions(roleName);
   }
 }

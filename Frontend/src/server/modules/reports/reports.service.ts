@@ -19,19 +19,11 @@ export class ReportsService {
     // 1. Organizational Scope Ceiling
     if (actor.role === 'Super Admin' || actor.role === 'Admin') {
       // Organization-wide
-    } else if (actor.role === 'Manager') {
+    } else if (actor.role === 'Manager' || actor.role === 'Team Lead') {
       const allowedUsers = [actor.id, ...(scope.subordinateUserIds || [])];
       const allowedTeams = scope.managedTeamIds || [];
       conditions.push(
-        `(${alias}.assigned_to_id = ANY($${idx}::uuid[]) OR ${alias}.team_id = ANY($${idx + 1}::uuid[]))`
-      );
-      params.push(allowedUsers, allowedTeams);
-      idx += 2;
-    } else if (actor.role === 'Team Lead') {
-      const allowedUsers = [actor.id, ...(scope.subordinateUserIds || [])];
-      const allowedTeams = scope.managedTeamIds || [];
-      conditions.push(
-        `(${alias}.assigned_to_id = ANY($${idx}::uuid[]) OR ${alias}.team_id = ANY($${idx + 1}::uuid[]))`
+        `(${alias}.assigned_to_id = ANY($${idx}::uuid[]) OR (${alias}.assigned_to_id IS NULL AND ${alias}.team_id = ANY($${idx + 1}::uuid[])))`
       );
       params.push(allowedUsers, allowedTeams);
       idx += 2;
@@ -175,12 +167,17 @@ export class ReportsService {
       LEFT JOIN leads l ON u.id = l.assigned_to_id
       ${clause ? clause.replace(/WHERE\s+l\./g, 'AND l.').replace(/WHERE\s+\(l\./g, 'AND (l.') : ''}
       WHERE u.status = 'active'
-        ${actor.role === 'Employee' ? 'AND u.id = $' + (params.length + 1) : ''}
+        ${actor.role === 'Employee' ? 'AND u.id = $' + (params.length + 1) : actor.role === 'Manager' || actor.role === 'Team Lead' ? 'AND u.id = ANY($' + (params.length + 1) + '::uuid[])' : ''}
       GROUP BY u.id, u.name, u.role_name, t.name
       ORDER BY assigned_leads DESC, won_leads DESC
     `;
 
-    const staffParams = actor.role === 'Employee' ? [...params, actor.id] : params;
+    const staffParams =
+      actor.role === 'Employee'
+        ? [...params, actor.id]
+        : actor.role === 'Manager' || actor.role === 'Team Lead'
+        ? [...params, [actor.id, ...(scope.subordinateUserIds || [])]]
+        : params;
     const res = await query(staffSql, staffParams);
 
     return {
@@ -414,15 +411,32 @@ export class ReportsService {
       'l'
     );
 
-    // Active Clients Realized Revenue
+    // Active Clients Realized Revenue (Scoped)
+    const clientConditions: string[] = ["c.status = 'Active'"];
+    const clientParams: unknown[] = [];
+    let cIdx = 1;
+
+    if (actor.role === 'Super Admin' || actor.role === 'Admin') {
+      // Organization-wide
+    } else if (actor.role === 'Manager' || actor.role === 'Team Lead') {
+      const allowedUsers = [actor.id, ...(scope.subordinateUserIds || [])];
+      clientConditions.push(`c.assigned_owner_id = ANY($${cIdx++}::uuid[])`);
+      clientParams.push(allowedUsers);
+    } else {
+      clientConditions.push(`c.assigned_owner_id = $${cIdx++}`);
+      clientParams.push(actor.id);
+    }
+
+    const clientWhere = `WHERE ${clientConditions.join(' AND ')}`;
+
     const clientSql = `
       SELECT 
-        COALESCE(SUM(final_value_pkr), 0)::numeric as realized_revenue,
+        COALESCE(SUM(c.final_value_pkr), 0)::numeric as realized_revenue,
         COUNT(*)::int as client_count
-      FROM clients
-      WHERE status = 'Active'
+      FROM clients c
+      ${clientWhere}
     `;
-    const clientRes = await query(clientSql);
+    const clientRes = await query(clientSql, clientParams);
     const realizedRevenue = Number(clientRes.rows[0]?.realized_revenue) || 0;
     const activeClientsCount = Number(clientRes.rows[0]?.client_count) || 0;
 
@@ -447,11 +461,11 @@ export class ReportsService {
         COALESCE(SUM(c.final_value_pkr), 0)::numeric as total_revenue
       FROM clients c
       JOIN pricing_models pm ON c.pricing_model_id = pm.id
-      WHERE c.status = 'Active'
+      ${clientWhere}
       GROUP BY pm.name, pm.billing_type
       ORDER BY total_revenue DESC
     `;
-    const pmRes = await query(pmSql);
+    const pmRes = await query(pmSql, clientParams);
 
     return {
       realizedRevenuePKR: realizedRevenue,

@@ -261,7 +261,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       alt={settings.companyName || 'Logo'}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = '/isysware-logo.png';
+                        (e.currentTarget as HTMLImageElement).src = '/isysware-logo.svg';
                       }}
                       referrerPolicy="no-referrer"
                     />
@@ -509,7 +509,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     alt={settings.companyName || 'Logo'}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/isysware-logo.png';
+                      (e.currentTarget as HTMLImageElement).src = '/isysware-logo.svg';
                     }}
                     referrerPolicy="no-referrer"
                   />
@@ -525,7 +525,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     alt={settings.companyName || 'Logo'}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/isysware-logo.png';
+                      (e.currentTarget as HTMLImageElement).src = '/isysware-logo.svg';
                     }}
                     referrerPolicy="no-referrer"
                   />

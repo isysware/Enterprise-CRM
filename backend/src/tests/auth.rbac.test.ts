@@ -1,5 +1,5 @@
 import { PasswordService, TokenService, RbacService } from '../services';
-import { AuthUser, UserRole, RolePermission } from '../types';
+import { AuthUser, UserRole, RolePermission, HierarchyScope } from '../types';
 import { DEFAULT_ROLE_PERMISSIONS, CANONICAL_CAPABILITIES } from '../constants';
 import { RuntimeUserRepository } from '../repositories';
 import { AuthService } from '../modules/auth/auth.service';
@@ -201,6 +201,35 @@ export async function runAuthRbacTests(): Promise<{ passed: boolean; results: Te
       mgrAccessibleReports.includes('rec-1') && mgrAccessibleReports.includes('rec-2') && !mgrAccessibleReports.includes('rec-3'),
       'Manager with canViewReports sees managed hierarchy records, strictly excluding outside departments'
     );
+
+    // Team Lead with canViewTeamLeads sees self + subordinate records, strictly excluding Manager personal records
+    const tlActor: AuthUser = {
+      id: 'tl-1',
+      name: 'Team Lead',
+      email: 'tl@test.com',
+      role: 'Team Lead',
+      status: 'active',
+      isActive: true,
+      teamId: 'team-1',
+      createdAt: '2026-01-01',
+    };
+    const tlScope: HierarchyScope = {
+      managedTeamIds: ['team-1'],
+      subordinateUserIds: ['tl-1', 'emp-1'],
+      scopedTeamIds: ['team-1'],
+      assignableUserIds: ['tl-1', 'emp-1'],
+    };
+    const teamRecords = [
+      { id: 'lead-tl', assignedToId: 'tl-1', teamId: 'team-1' },
+      { id: 'lead-emp', assignedToId: 'emp-1', teamId: 'team-1' },
+      { id: 'lead-mgr-personal', assignedToId: 'mgr-1', teamId: 'team-1' }, // Manager personal lead in same team
+      { id: 'lead-unassigned', assignedToId: undefined, teamId: 'team-1' },
+    ];
+    const tlScopedLeadIds = RbacService.getHardScopedLeadIds(tlActor, teamRecords, tlScope);
+    assert(tlScopedLeadIds.includes('lead-tl'), 'Team Lead sees self lead');
+    assert(tlScopedLeadIds.includes('lead-emp'), 'Team Lead sees subordinate employee lead');
+    assert(tlScopedLeadIds.includes('lead-unassigned'), 'Team Lead sees unassigned team lead');
+    assert(!tlScopedLeadIds.includes('lead-mgr-personal'), 'Team Lead MUST NOT see Manager personal lead');
 
     // =========================================================================
     // 6. Target User Management Authority Rules

@@ -14,12 +14,12 @@ import {
 export class LeadsController {
   public static async listLeads(req: AuthenticatedRequest, res: Response): Promise<void> {
     const queryInput = req.query as unknown as ListLeadsQuery;
-    const result = await LeadsService.listLeads(req.user, req.scope, queryInput);
+    const result = await LeadsService.listLeads(req.user, req.scope, queryInput, req.permissions);
     sendSuccess(res, result, 'Leads retrieved successfully', 200);
   }
 
   public static async getLeadById(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const lead = await LeadsService.getLeadById(req.user, req.scope, req.params.id as string);
+    const lead = await LeadsService.getLeadById(req.user, req.scope, req.params.id as string, req.permissions);
     sendSuccess(res, lead, 'Lead details retrieved', 200);
   }
 
@@ -31,30 +31,30 @@ export class LeadsController {
 
   public static async updateLead(req: AuthenticatedRequest, res: Response): Promise<void> {
     const input = req.body as UpdateLeadInput;
-    const lead = await LeadsService.updateLead(req.user, req.scope, req.params.id as string, input);
+    const lead = await LeadsService.updateLead(req.user, req.scope, req.params.id as string, input, req.permissions);
     sendSuccess(res, lead, 'Lead updated successfully', 200);
   }
 
   public static async changeStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
     const input = req.body as ChangeLeadStatusInput;
-    const lead = await LeadsService.changeStatus(req.user, req.scope, req.params.id as string, input);
+    const lead = await LeadsService.changeStatus(req.user, req.scope, req.params.id as string, input, req.permissions);
     sendSuccess(res, lead, 'Lead status updated successfully', 200);
   }
 
   public static async reassignLead(req: AuthenticatedRequest, res: Response): Promise<void> {
     const input = req.body as ReassignLeadInput;
-    const lead = await LeadsService.reassignLead(req.user, req.scope, req.params.id as string, input);
+    const lead = await LeadsService.reassignLead(req.user, req.scope, req.params.id as string, input, req.permissions);
     sendSuccess(res, lead, 'Lead reassigned successfully', 200);
   }
 
   public static async addActivity(req: AuthenticatedRequest, res: Response): Promise<void> {
     const input = req.body as AddLeadActivityInput;
-    const activity = await LeadsService.addActivity(req.user, req.scope, req.params.id as string, input);
+    const activity = await LeadsService.addActivity(req.user, req.scope, req.params.id as string, input, req.permissions);
     sendSuccess(res, activity, 'Activity recorded successfully', 201);
   }
 
   public static async deleteLead(req: AuthenticatedRequest, res: Response): Promise<void> {
-    await LeadsService.deleteLead(req.user, req.scope, req.params.id as string);
+    await LeadsService.deleteLead(req.user, req.scope, req.params.id as string, req.permissions);
     sendSuccess(res, null, 'Lead deleted successfully', 200);
   }
 }

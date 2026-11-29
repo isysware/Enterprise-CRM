@@ -29,7 +29,7 @@ export class AiAssistantService {
       const allowedUsers = [actor.id, ...(scope.subordinateUserIds || [])];
       const allowedTeams = scope.managedTeamIds || [];
       leadConditions.push(
-        `(l.assigned_to_id = ANY($${idx}::uuid[]) OR l.team_id = ANY($${idx + 1}::uuid[]))`
+        `(l.assigned_to_id = ANY($${idx}::uuid[]) OR (l.assigned_to_id IS NULL AND l.team_id = ANY($${idx + 1}::uuid[])))`
       );
       leadParams.push(allowedUsers, allowedTeams);
       idx += 2;

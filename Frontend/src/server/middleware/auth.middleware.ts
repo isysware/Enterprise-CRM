@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { AuthenticatedRequest, CapabilityKey, UserRole, AuthUser, AccountStatus } from '../types';
+import { AuthenticatedRequest, CapabilityKey, UserRole, AuthUser, AccountStatus, RolePermission } from '../types';
 import { AUTH_COOKIES } from '../constants';
 import { TokenService, RbacService } from '../services';
 import { AppError } from '../utils';
 import { query } from '../database/connection';
+import { postgresRolePermissionRepository } from '../repositories/postgres.role-permission.repository';
 
 export const authenticate: RequestHandler = async (
   req: Request,
@@ -53,8 +54,14 @@ export const authenticate: RequestHandler = async (
       createdAt: new Date().toISOString(),
     };
 
-    // 6. Compute Effective RBAC Permissions & Organizational Hierarchy Scope
-    authReq.permissions = RbacService.getEffectivePermissions(decoded.role);
+    // 6. Compute Effective RBAC Permissions (from DB dynamic matrix) & Organizational Hierarchy Scope
+    let dynamicMatrix: RolePermission[] | undefined;
+    try {
+      dynamicMatrix = await postgresRolePermissionRepository.getAllRolePermissions();
+    } catch {
+      // fallback to canonical defaults if db temporarily unreachable
+    }
+    authReq.permissions = RbacService.getEffectivePermissions(decoded.role, dynamicMatrix);
     if (decoded.role === 'Manager' || decoded.role === 'Team Lead') {
       try {
         const [usersRes, teamsRes] = await Promise.all([

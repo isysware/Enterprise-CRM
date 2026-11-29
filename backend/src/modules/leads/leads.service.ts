@@ -1,5 +1,5 @@
 import { query, withTransaction } from '../../database/connection';
-import { AuthUser, HierarchyScope } from '../../types';
+import { AuthUser, HierarchyScope, RolePermission } from '../../types';
 import { AuditService } from '../../services/audit.service';
 import { AppError } from '../../utils/AppError';
 import {
@@ -55,16 +55,20 @@ export class LeadsService {
   private static buildScopeCondition(
     actor: AuthUser,
     scope: HierarchyScope,
-    paramOffset: number
+    paramOffset: number,
+    permissions?: RolePermission
   ): { clause: string; params: unknown[] } {
     if (actor.role === 'Super Admin' || actor.role === 'Admin') {
+      return { clause: '', params: [] };
+    }
+    if (permissions?.canViewAllLeads && actor.role !== 'Employee') {
       return { clause: '', params: [] };
     }
     if (actor.role === 'Manager' || actor.role === 'Team Lead') {
       const allowedUsers = [actor.id, ...(scope.subordinateUserIds || [])];
       const allowedTeams = scope.managedTeamIds || [];
       return {
-        clause: `(l.assigned_to_id = ANY($${paramOffset}) OR (l.team_id IS NOT NULL AND l.team_id = ANY($${paramOffset + 1})))`,
+        clause: `(l.assigned_to_id = ANY($${paramOffset}) OR (l.assigned_to_id IS NULL AND l.team_id IS NOT NULL AND l.team_id = ANY($${paramOffset + 1})))`,
         params: [allowedUsers, allowedTeams],
       };
     }
@@ -74,12 +78,13 @@ export class LeadsService {
   public static async listLeads(
     actor: AuthUser,
     scope: HierarchyScope,
-    queryInput: ListLeadsQuery
+    queryInput: ListLeadsQuery,
+    permissions?: RolePermission
   ): Promise<{ items: LeadDbRow[]; total: number; page: number; limit: number; totalPages: number }> {
     const whereConditions: string[] = [];
     const params: unknown[] = [];
     let idx = 1;
-    const scopeCond = this.buildScopeCondition(actor, scope, idx);
+    const scopeCond = this.buildScopeCondition(actor, scope, idx, permissions);
     if (scopeCond.clause) {
       whereConditions.push(scopeCond.clause);
       params.push(...scopeCond.params);
@@ -137,7 +142,7 @@ export class LeadsService {
   }
 
   public static async getLeadById(
-    actor: AuthUser, scope: HierarchyScope, id: string
+    actor: AuthUser, scope: HierarchyScope, id: string, permissions?: RolePermission
   ): Promise<LeadDbRow & { activities: unknown[]; followUps: unknown[] }> {
     const res = await query<LeadDbRow>(`
       SELECT l.*, to_char(l.next_follow_up_date, 'YYYY-MM-DD') as next_follow_up_date,
@@ -150,7 +155,7 @@ export class LeadsService {
     `, [id]);
     if (res.rows.length === 0) throw AppError.notFound(`Lead '${id}' not found`);
     const lead = res.rows[0];
-    this.verifyLeadScope(actor, scope, lead);
+    this.verifyLeadScope(actor, scope, lead, permissions);
     const actRes = await query(`SELECT la.*, u.name as actor_name FROM lead_activities la
       LEFT JOIN users u ON la.actor_id = u.id WHERE la.lead_id = $1 ORDER BY la.timestamp DESC`, [id]);
     const fuRes = await query(`SELECT fu.*, to_char(fu.scheduled_date, 'YYYY-MM-DD') as scheduled_date,
@@ -159,13 +164,19 @@ export class LeadsService {
     return { ...lead, activities: actRes.rows, followUps: fuRes.rows };
   }
 
-  public static verifyLeadScope(actor: AuthUser, scope: HierarchyScope, lead: LeadDbRow): void {
+  public static verifyLeadScope(
+    actor: AuthUser,
+    scope: HierarchyScope,
+    lead: LeadDbRow,
+    permissions?: RolePermission
+  ): void {
     if (actor.role === 'Super Admin' || actor.role === 'Admin') return;
+    if (permissions?.canViewAllLeads && actor.role !== 'Employee') return;
     if (actor.role === 'Manager' || actor.role === 'Team Lead') {
       const allowedUsers = new Set([actor.id, ...(scope.subordinateUserIds || [])]);
       const allowedTeams = new Set(scope.managedTeamIds || []);
       if (lead.assigned_to_id && allowedUsers.has(lead.assigned_to_id)) return;
-      if (lead.team_id && allowedTeams.has(lead.team_id)) return;
+      if (!lead.assigned_to_id && lead.team_id && allowedTeams.has(lead.team_id)) return;
       throw AppError.forbidden('Forbidden: Lead is outside your authorized organizational scope');
     }
     if (lead.assigned_to_id !== actor.id) throw AppError.forbidden('Forbidden: You can only access leads assigned to you');
@@ -209,14 +220,14 @@ export class LeadsService {
     });
   }
 
-  public static async updateLead(actor: AuthUser, scope: HierarchyScope, id: string, input: UpdateLeadInput): Promise<LeadDbRow> {
+  public static async updateLead(actor: AuthUser, scope: HierarchyScope, id: string, input: UpdateLeadInput, permissions?: RolePermission): Promise<LeadDbRow> {
     // Lock the lead before comparing schedules so concurrent lead edits cannot both create a follow-up.
     return await withTransaction(async (client) => {
       const existing = await client.query<LeadDbRow>(`SELECT l.*, to_char(l.next_follow_up_date, 'YYYY-MM-DD') as next_follow_up_date
         FROM leads l WHERE l.id = $1 FOR UPDATE`, [id]);
       if (!existing.rows.length) throw AppError.notFound(`Lead '${id}' not found`);
       const lead = existing.rows[0];
-      this.verifyLeadScope(actor, scope, lead);
+      this.verifyLeadScope(actor, scope, lead, permissions);
       const previousDate = lead.next_follow_up_date || null;
       const previousTime = lead.next_follow_up_time || null;
       const requestedDate = input.nextFollowUpDate !== undefined ? input.nextFollowUpDate || null : previousDate;
@@ -288,8 +299,8 @@ export class LeadsService {
     });
   }
 
-  public static async changeStatus(actor: AuthUser, scope: HierarchyScope, id: string, input: ChangeLeadStatusInput): Promise<LeadDbRow> {
-    const lead = await this.getLeadById(actor, scope, id);
+  public static async changeStatus(actor: AuthUser, scope: HierarchyScope, id: string, input: ChangeLeadStatusInput, permissions?: RolePermission): Promise<LeadDbRow> {
+    const lead = await this.getLeadById(actor, scope, id, permissions);
     const actorId = toUuidOrNull(actor.id);
     return await withTransaction(async (client) => {
       const res = await client.query<LeadDbRow>(`UPDATE leads SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`, [input.status, id]);
@@ -300,8 +311,8 @@ export class LeadsService {
     });
   }
 
-  public static async reassignLead(actor: AuthUser, scope: HierarchyScope, id: string, input: ReassignLeadInput): Promise<LeadDbRow> {
-    const lead = await this.getLeadById(actor, scope, id);
+  public static async reassignLead(actor: AuthUser, scope: HierarchyScope, id: string, input: ReassignLeadInput, permissions?: RolePermission): Promise<LeadDbRow> {
+    const lead = await this.getLeadById(actor, scope, id, permissions);
     const actorId = toUuidOrNull(actor.id);
     const newAssigneeId = toUuidOrNull(input.assignedToId);
     return await withTransaction(async (client) => {
@@ -316,8 +327,8 @@ export class LeadsService {
     });
   }
 
-  public static async addActivity(actor: AuthUser, scope: HierarchyScope, leadId: string, input: AddLeadActivityInput): Promise<unknown> {
-    await this.getLeadById(actor, scope, leadId);
+  public static async addActivity(actor: AuthUser, scope: HierarchyScope, leadId: string, input: AddLeadActivityInput, permissions?: RolePermission): Promise<unknown> {
+    await this.getLeadById(actor, scope, leadId, permissions);
     const actorId = toUuidOrNull(actor.id);
     const res = await query(`INSERT INTO lead_activities (lead_id, type, title, notes, outcome, duration_minutes, actor_id)
       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
@@ -325,8 +336,8 @@ export class LeadsService {
     return res.rows[0];
   }
 
-  public static async deleteLead(actor: AuthUser, scope: HierarchyScope, id: string): Promise<void> {
-    const lead = await this.getLeadById(actor, scope, id);
+  public static async deleteLead(actor: AuthUser, scope: HierarchyScope, id: string, permissions?: RolePermission): Promise<void> {
+    const lead = await this.getLeadById(actor, scope, id, permissions);
     if (actor.role !== 'Super Admin' && actor.role !== 'Admin') throw AppError.forbidden('Only Super Admin and Admin can delete leads');
     await query('DELETE FROM leads WHERE id = $1', [id]);
     await AuditService.logFromRequest(actor, 'DELETE_LEAD', 'LEAD', id, lead.name, { status: lead.status });

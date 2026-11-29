@@ -1,7 +1,8 @@
 import { query, withTransaction } from '../../database/connection';
-import { AuthUser, HierarchyScope } from '../../types';
+import { AuthUser, HierarchyScope, RolePermission } from '../../types';
 import { AuditService } from '../../services/audit.service';
 import { AppError } from '../../utils/AppError';
+import { LeadsService } from '../leads/leads.service';
 import {
   CreateFollowUpInput,
   UpdateFollowUpInput,
@@ -139,21 +140,39 @@ export class FollowUpsService {
    */
   public static async createFollowUp(
     actor: AuthUser,
-    input: CreateFollowUpInput
+    scopeOrInput: HierarchyScope | CreateFollowUpInput,
+    input?: CreateFollowUpInput,
+    permissions?: RolePermission
   ): Promise<FollowUpDbRow> {
-    const assignedId = input.assignedToId || actor.id;
+    let scope: HierarchyScope;
+    let actualInput: CreateFollowUpInput;
+    if (input) {
+      scope = scopeOrInput as HierarchyScope;
+      actualInput = input;
+    } else {
+      actualInput = scopeOrInput as CreateFollowUpInput;
+      scope = {
+        managedTeamIds: actor.teamId ? [actor.teamId] : [],
+        subordinateUserIds: [actor.id],
+        scopedTeamIds: actor.teamId ? [actor.teamId] : [],
+        assignableUserIds: [actor.id],
+      };
+    }
+    const assignedId = actualInput.assignedToId || actor.id;
 
     return await withTransaction(async (client) => {
-      // Fetch lead to get snapshot
-      const leadRes = await client.query('SELECT name, business_name, phone FROM leads WHERE id = $1', [
-        input.leadId,
+      // Fetch lead to get snapshot and verify lead scope
+      const leadRes = await client.query('SELECT * FROM leads WHERE id = $1', [
+        actualInput.leadId,
       ]);
       if (leadRes.rows.length === 0) {
-        throw AppError.notFound(`Lead '${input.leadId}' not found`);
+        throw AppError.notFound(`Lead '${actualInput.leadId}' not found`);
       }
       const lead = leadRes.rows[0];
-      const snapshot = input.clientBusinessSnapshot || lead.business_name || lead.name;
-      const phone = input.phone || lead.phone;
+      LeadsService.verifyLeadScope(actor, scope, lead, permissions);
+
+      const snapshot = actualInput.clientBusinessSnapshot || lead.business_name || lead.name;
+      const phone = actualInput.phone || lead.phone;
 
       const sql = `
         INSERT INTO follow_ups (
@@ -164,14 +183,14 @@ export class FollowUpsService {
       `;
 
       const res = await client.query<FollowUpDbRow>(sql, [
-        input.leadId,
+        actualInput.leadId,
         snapshot,
         phone,
-        input.scheduledDate,
-        input.scheduledTime || null,
-        input.type || 'Call',
+        actualInput.scheduledDate,
+        actualInput.scheduledTime || null,
+        actualInput.type || 'Call',
         assignedId,
-        input.notes || null,
+        actualInput.notes || null,
         actor.id,
       ]);
 
@@ -180,7 +199,7 @@ export class FollowUpsService {
         `UPDATE leads 
          SET next_follow_up_date = $1, next_follow_up_time = $2, updated_at = CURRENT_TIMESTAMP 
          WHERE id = $3`,
-        [input.scheduledDate, input.scheduledTime || null, input.leadId]
+        [actualInput.scheduledDate, actualInput.scheduledTime || null, actualInput.leadId]
       );
 
       await AuditService.logFromRequest(
@@ -189,7 +208,7 @@ export class FollowUpsService {
         'FOLLOW_UP',
         res.rows[0].id,
         lead.name,
-        { scheduledDate: input.scheduledDate, type: input.type },
+        { scheduledDate: actualInput.scheduledDate, type: actualInput.type },
         client
       );
 

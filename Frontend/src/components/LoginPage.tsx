@@ -74,7 +74,7 @@ export const LoginPage: React.FC = () => {
             alt={settings.companyName || 'Logo'}
             className="w-full h-full object-cover"
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = '/isysware-logo.png';
+              (e.currentTarget as HTMLImageElement).src = '/isysware-logo.svg';
             }}
             referrerPolicy="no-referrer"
           />
@@ -155,7 +155,17 @@ export const LoginPage: React.FC = () => {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="e.g. superadmin@isysware.com"
+                placeholder={
+                  selectedRole === 'Super Admin'
+                    ? 'admin@enterprise.crm or superadmin@isysware.com'
+                    : selectedRole === 'Admin'
+                    ? 'admin@isysware.com'
+                    : selectedRole === 'Manager'
+                    ? 'manager@isysware.com'
+                    : selectedRole === 'Team Lead'
+                    ? 'sale@isysware.com'
+                    : 'employee@isysware.com'
+                }
                 className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563EB] transition-all"
               />
             </div>

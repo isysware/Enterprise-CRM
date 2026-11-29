@@ -469,6 +469,10 @@ export function runAuthorizationTests(): { passed: boolean; results: string[] } 
   assert(tlALeads.some(l => l.id === 'lead-ea'), 'Team Lead A sees direct Employee A lead');
   assert(!tlALeads.some(l => l.id === 'lead-tlb'), 'Team Lead A CANNOT see Team Lead B lead');
   assert(!tlALeads.some(l => l.id === 'lead-eb'), 'Team Lead A CANNOT see Employee B lead');
+  assert(!tlALeads.some(l => l.id === 'lead-mga'), 'Team Lead A MUST NOT see Manager A personally assigned lead');
+  assert(!canEditLead(leadMgA, teamLeadA, teamLeadPerms, tlAHierarchy), 'Team Lead A CANNOT edit Manager A lead');
+  assert(!canDeleteLead(leadMgA, teamLeadA, teamLeadPerms, tlAHierarchy), 'Team Lead A CANNOT delete Manager A lead');
+  assert(!canReassignLead(leadMgA, teamLeadA, teamLeadPerms, tlAHierarchy), 'Team Lead A CANNOT reassign Manager A lead');
 
   // 6. TEAM LEAD A with canViewAllLeads = true MUST STILL NOT ESCAPE SUB-TEAM CEILING
   const tlAPermsAllOn: RolePermission = { ...teamLeadPerms, canViewAllLeads: true };

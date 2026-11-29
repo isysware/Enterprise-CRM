@@ -24,7 +24,7 @@ export class FollowUpsController {
 
   public static async createFollowUp(req: AuthenticatedRequest, res: Response): Promise<void> {
     const input = req.body as CreateFollowUpInput;
-    const followUp = await FollowUpsService.createFollowUp(req.user, input);
+    const followUp = await FollowUpsService.createFollowUp(req.user, req.scope, input, req.permissions);
     sendSuccess(res, followUp, 'Follow-up scheduled successfully', 201);
   }
 

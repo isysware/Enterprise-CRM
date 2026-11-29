@@ -213,8 +213,8 @@ export function getHardScopedLeads(
   if (currentUser.role === 'Manager' || currentUser.role === 'Team Lead') {
     return leads.filter(l =>
       l.assignedToId === currentUser.id ||
-      hierarchy.subordinateUserIds.includes(l.assignedToId) ||
-      (Boolean(l.teamId) && hierarchy.managedTeamIds.includes(l.teamId))
+      (Boolean(l.assignedToId) && hierarchy.subordinateUserIds.includes(l.assignedToId)) ||
+      (!l.assignedToId && Boolean(l.teamId) && hierarchy.managedTeamIds.includes(l.teamId))
     );
   }
 
@@ -235,6 +235,11 @@ export function getScopedLeads(
   hierarchy: HierarchyScope
 ): Lead[] {
   if (!currentUser || !rolePerms) return [];
+
+  // Super Admin & Admin have global pipeline visibility
+  if (currentUser.role === 'Super Admin' || currentUser.role === 'Admin') {
+    return leads;
+  }
 
   // 1. Constrain to hard organizational scope ceiling first
   const hardScopedLeads = getHardScopedLeads(leads, currentUser, hierarchy);
@@ -278,8 +283,8 @@ export function canEditLead(
   if (currentUser.role === 'Manager' || currentUser.role === 'Team Lead') {
     return (
       lead.assignedToId === currentUser.id ||
-      hierarchy.subordinateUserIds.includes(lead.assignedToId) ||
-      Boolean(lead.teamId && hierarchy.managedTeamIds.includes(lead.teamId))
+      (Boolean(lead.assignedToId) && hierarchy.subordinateUserIds.includes(lead.assignedToId)) ||
+      (!lead.assignedToId && Boolean(lead.teamId && hierarchy.managedTeamIds.includes(lead.teamId)))
     );
   }
 
@@ -311,8 +316,8 @@ export function canDeleteLead(
   if (currentUser.role === 'Manager' || currentUser.role === 'Team Lead') {
     return (
       lead.assignedToId === currentUser.id ||
-      hierarchy.subordinateUserIds.includes(lead.assignedToId) ||
-      Boolean(lead.teamId && hierarchy.managedTeamIds.includes(lead.teamId))
+      (Boolean(lead.assignedToId) && hierarchy.subordinateUserIds.includes(lead.assignedToId)) ||
+      (!lead.assignedToId && Boolean(lead.teamId && hierarchy.managedTeamIds.includes(lead.teamId)))
     );
   }
 
@@ -346,8 +351,8 @@ export function canReassignLead(
   if (currentUser.role === 'Manager' || currentUser.role === 'Team Lead') {
     return (
       lead.assignedToId === currentUser.id ||
-      hierarchy.subordinateUserIds.includes(lead.assignedToId) ||
-      Boolean(lead.teamId && hierarchy.managedTeamIds.includes(lead.teamId))
+      (Boolean(lead.assignedToId) && hierarchy.subordinateUserIds.includes(lead.assignedToId)) ||
+      (!lead.assignedToId && Boolean(lead.teamId && hierarchy.managedTeamIds.includes(lead.teamId)))
     );
   }
 

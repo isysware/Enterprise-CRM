@@ -37,7 +37,7 @@ export class UsersService {
       const allowedTeamIds = new Set(scope.managedTeamIds || []);
       return all.filter((u) => {
         if (allowedUserIds.has(u.id)) return true;
-        if (u.teamId && allowedTeamIds.has(u.teamId)) return true;
+        if (u.teamId && allowedTeamIds.has(u.teamId) && u.role === 'Employee') return true;
         return false;
       });
     }
@@ -62,10 +62,14 @@ export class UsersService {
     // Verify object-level visibility
     if (actor.role !== 'Super Admin' && actor.role !== 'Admin') {
       if (actor.id !== target.id) {
+        if (actor.role === 'Team Lead' && (target.role === 'Manager' || target.role === 'Admin' || target.role === 'Super Admin')) {
+          throw AppError.forbidden('Forbidden: User is outside your authorized organizational scope');
+        }
         const allowedIds = new Set(scope.subordinateUserIds || []);
         const allowedTeams = new Set(scope.managedTeamIds || []);
         const inScope =
-          allowedIds.has(target.id) || (target.teamId && allowedTeams.has(target.teamId));
+          allowedIds.has(target.id) ||
+          (target.teamId && allowedTeams.has(target.teamId) && target.role === 'Employee');
 
         if (!inScope) {
           throw AppError.forbidden('Forbidden: User is outside your authorized organizational scope');

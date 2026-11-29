@@ -305,8 +305,8 @@ export class RbacService {
         .filter(
           (l) =>
             l.assignedToId === actor.id ||
-            (l.assignedToId && hierarchy.subordinateUserIds.includes(l.assignedToId)) ||
-            (l.teamId && hierarchy.managedTeamIds.includes(l.teamId))
+            (Boolean(l.assignedToId) && hierarchy.subordinateUserIds.includes(l.assignedToId as string)) ||
+            (!l.assignedToId && Boolean(l.teamId) && hierarchy.managedTeamIds.includes(l.teamId as string))
         )
         .map((l) => l.id);
     }
