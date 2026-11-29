@@ -646,6 +646,21 @@ const mapFollowUpDto = (f: FollowUpDbDto): FollowUp => {
   };
 };
 
+const deduplicateProposals = (items: Proposal[]): Proposal[] => {
+  const seenIds = new Set<string>();
+  const seenNumbers = new Set<string>();
+  const result: Proposal[] = [];
+  for (const p of items) {
+    const num = (p.refNumber || p.proposalNumber || '').trim();
+    if (p.id && seenIds.has(p.id)) continue;
+    if (num && seenNumbers.has(num)) continue;
+    if (p.id) seenIds.add(p.id);
+    if (num) seenNumbers.add(num);
+    result.push(p);
+  }
+  return result;
+};
+
 const mapClientDto = (c: ClientDbDto): Client => {
   const serviceList: string[] = [];
   if (Array.isArray(c.services_snapshot) && c.services_snapshot.length > 0) {
@@ -669,16 +684,16 @@ const mapClientDto = (c: ClientDbDto): Client => {
     email: c.email || '',
     city: c.city || 'Lahore',
     services: serviceList,
-    source: normalizeLeadSource(c.source || undefined),
+    source: (c.source || 'Direct') as LeadSource,
     pricingModelId: c.pricing_model_id || undefined,
     pricingModelName: c.pricing_model_name || undefined,
-    pricingModel: (c.pricing_model_name || 'Monthly Subscription Model') as any,
+    pricingModel: (c.pricing_model_name || 'Custom') as any,
     finalPrice: finalVal,
     activeRevenuePKR: finalVal,
     currency: 'PKR',
-    assignedToName: c.assigned_owner_name || 'Staff',
+    assignedToName: c.assigned_owner_name || 'Unassigned',
     assignedToId: c.assigned_owner_id || '',
-    generatedByName: c.assigned_owner_name || 'Staff',
+    generatedByName: c.assigned_owner_name || 'Unassigned',
     closedByName: c.closed_by_name || 'Super Admin',
     convertedDate: c.converted_date || c.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
     startDate: c.converted_date || c.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
@@ -689,6 +704,7 @@ const mapClientDto = (c: ClientDbDto): Client => {
 
 const mapProposalDto = (p: ProposalDbDto): Proposal => {
   const clientSnap = (p.client_snapshot || {}) as Record<string, any>;
+  const letterheadSnap = ((p as any).letterhead_snapshot || {}) as Record<string, any>;
   const total = Number(p.total_pkr || 0);
   const discount = Number(p.discount_pkr || 0);
   const tax = Number(p.tax_pkr || 0);
@@ -707,7 +723,7 @@ const mapProposalDto = (p: ProposalDbDto): Proposal => {
     title: `Proposal ${p.proposal_number}`,
     issueDate: p.issue_date,
     expiryDate: p.expiry_date || undefined,
-    validityDays: 14,
+    validityDays: Number(letterheadSnap.validityDays || 14),
     clientName: clientSnap.clientName || clientSnap.contactName || 'Client',
     businessName: clientSnap.businessName || 'Business',
     clientPhone: clientSnap.phone || clientSnap.clientPhone || '',
@@ -715,6 +731,8 @@ const mapProposalDto = (p: ProposalDbDto): Proposal => {
     clientCity: clientSnap.city || clientSnap.clientCity || '',
     assignedRepName: p.assigned_rep_name || 'Sales Representative',
     assignedRepId: p.assigned_rep_id || undefined,
+    createdById: (p as any).created_by || undefined,
+    createdByName: (p as any).created_by_name || undefined,
     scopeOfWork: p.scope_deliverables || '',
     items: ((p.line_items || []) as any[]).map((item, idx) => ({
       id: item.id || `item-${idx}`,
@@ -741,6 +759,17 @@ const mapProposalDto = (p: ProposalDbDto): Proposal => {
       amount: Number(m.amountPKR || m.amount || 0),
       dueDate: m.dueDate || undefined,
     })),
+    letterheadBg: letterheadSnap.letterheadBg || (letterheadSnap as any).letterhead_bg || '',
+    companyName: letterheadSnap.companyName || (letterheadSnap as any).company_name || '',
+    companyAddress: letterheadSnap.companyAddress || (letterheadSnap as any).company_address || '',
+    companyPhone: letterheadSnap.companyPhone || (letterheadSnap as any).company_phone || '',
+    companyEmail: letterheadSnap.companyEmail || (letterheadSnap as any).company_email || '',
+    companyTaxId: letterheadSnap.companyTaxId || (letterheadSnap as any).company_tax_id || '',
+    companyWebsite: letterheadSnap.companyWebsite || (letterheadSnap as any).company_website || '',
+    companyLogo: letterheadSnap.companyLogo || (letterheadSnap as any).company_logo || '',
+    authorizedSignatureName: letterheadSnap.authorizedSignatureName || (letterheadSnap as any).authorized_signature_name || '',
+    authorizedSignatureTitle: letterheadSnap.authorizedSignatureTitle || (letterheadSnap as any).authorized_signature_title || '',
+    authorizedSignatureImg: letterheadSnap.authorizedSignatureImg || (letterheadSnap as any).authorized_signature_img || '',
     status: mappedStatus,
     createdAt: p.created_at,
   };
@@ -966,7 +995,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setClients(items.map(mapClientDto));
       }
       if (propRes.status === 'fulfilled' && Array.isArray(propRes.value)) {
-        setProposals(propRes.value.map(mapProposalDto));
+        setProposals(deduplicateProposals(propRes.value.map(mapProposalDto)));
       }
       if (logsRes && logsRes.status === 'fulfilled' && logsRes.value) {
         const items = (logsRes.value as any).items || (logsRes.value as any).logs || [];
@@ -1878,12 +1907,19 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const lead = leads.find(l => l.id === leadId);
     const todayStr = getLocalDateString();
 
-    const effectivePricingModel = clientData.pricingModel || lead?.pricingModel || 'Monthly Subscription Model';
     const resolvedPricingModelId = toValidUuidOrNull(
       (clientData as any).pricingModelId ||
       lead?.pricingModelId ||
-      pricingModels.find(pm => pm.name === effectivePricingModel || pm.id === (clientData as any).pricingModelId)?.id
+      pricingModels.find(pm => pm.name === clientData.pricingModel || pm.name === lead?.pricingModel)?.id
     );
+    const resolvedPricingModelObj = pricingModels.find(pm => pm.id === resolvedPricingModelId);
+    const effectivePricingModel = clientData.pricingModel || lead?.pricingModel || resolvedPricingModelObj?.name || (pricingModels[0]?.name || 'Custom');
+
+    const assignedOwnerId = toValidUuidOrNull(clientData.assignedToId) || toValidUuidOrNull(lead?.assignedToId) || toValidUuidOrNull(currentUser?.id);
+    const assignedOwnerObj = users.find(u => u.id === assignedOwnerId);
+    const assignedOwnerName = clientData.assignedToName || lead?.assignedToName || assignedOwnerObj?.name || currentUser?.name || 'Staff';
+
+    const effectiveSource = (clientData.source || lead?.source || 'Direct') as LeadSource;
 
     const newClient: Client = {
       id: `client-${Date.now()}`,
@@ -1894,21 +1930,21 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       email: clientData.email || lead?.email || '',
       city: clientData.city || lead?.city || 'Lahore',
       services: clientData.services || lead?.services || [],
-      source: (clientData.source || lead?.source || 'Call') as LeadSource,
+      source: effectiveSource,
       pricingModelId: resolvedPricingModelId || undefined,
       pricingModelName: effectivePricingModel,
       pricingModel: effectivePricingModel,
       finalPrice: Number(clientData.finalPrice ?? lead?.valuePKR ?? 80000),
       activeRevenuePKR: Number(clientData.finalPrice ?? lead?.valuePKR ?? 80000),
       currency: 'PKR',
-      assignedToName: clientData.assignedToName || lead?.assignedToName || 'Super Admin',
-      assignedToId: clientData.assignedToId || lead?.assignedToId || 'u-1',
-      generatedByName: lead?.assignedToName || 'Super Admin',
+      assignedToName: assignedOwnerName,
+      assignedToId: assignedOwnerId || '',
+      generatedByName: lead?.assignedToName || assignedOwnerName,
       closedByName: currentUser?.name || 'Super Admin',
       convertedDate: todayStr,
       startDate: todayStr,
       status: 'Active',
-      notes: clientData.notes || `Converted from ${lead?.source || 'Call'} lead on ${todayStr}.`
+      notes: clientData.notes || `Converted from ${effectiveSource} lead on ${todayStr}.`
     };
 
     setClients(prev => [newClient, ...prev]);
@@ -1925,7 +1961,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         source: newClient.source,
         pricingModelId: resolvedPricingModelId,
         finalValuePKR: newClient.finalPrice,
-        assignedOwnerId: toValidUuidOrNull(newClient.assignedToId),
+        assignedOwnerId: assignedOwnerId,
         termsDetails: newClient.notes
       };
 
@@ -1983,13 +2019,37 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const nowIso = new Date().toISOString();
     const propTotal = Number(propData.grandTotal ?? propData.grandTotalPKR ?? 0);
 
+    const resolvedLead = leads.find(l => l.id === propData.leadId);
+    const resolvedRepId = toValidUuidOrNull(propData.assignedRepId) || toValidUuidOrNull(resolvedLead?.assignedToId) || toValidUuidOrNull(currentUser?.id);
+    const resolvedRepObj = users.find(u => u.id === resolvedRepId);
+    const resolvedRepName = propData.assignedRepName || resolvedLead?.assignedToName || resolvedRepObj?.name || currentUser?.name || 'Sales Representative';
+
+    const letterheadSnapshot = {
+      letterheadBg: propData.letterheadBg || settings.proposalLetterheadBg || '',
+      companyName: propData.companyName || settings.companyName || 'Enterprise CRM',
+      companyAddress: propData.companyAddress || settings.companyAddress || '',
+      companyPhone: propData.companyPhone || settings.companyPhone || '',
+      companyEmail: propData.companyEmail || settings.companyEmail || '',
+      companyTaxId: propData.companyTaxId || settings.companyTaxId || '',
+      companyWebsite: propData.companyWebsite || settings.companyWebsite || '',
+      companyLogo: propData.companyLogo || settings.companyLogo || '',
+      authorizedSignatureName: propData.authorizedSignatureName || '',
+      authorizedSignatureTitle: propData.authorizedSignatureTitle || '',
+      authorizedSignatureImg: propData.authorizedSignatureImg || '',
+      validityDays: Number(propData.validityDays || 14)
+    };
+
     const newProposal: Proposal = {
       ...propData,
       id: newId,
+      assignedRepId: resolvedRepId || undefined,
+      assignedRepName: resolvedRepName,
+      createdById: currentUser?.id,
+      createdByName: currentUser?.name,
       createdAt: nowIso
     };
 
-    setProposals(prev => [newProposal, ...prev]);
+    setProposals(prev => deduplicateProposals([newProposal, ...prev]));
 
     const validLeadId = toValidUuidOrNull(propData.leadId);
     const payload: CreateProposalPayload = {
@@ -2004,7 +2064,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         email: propData.clientEmail,
         city: propData.clientCity
       },
-      assignedRepId: toValidUuidOrNull(propData.assignedRepId),
+      assignedRepId: resolvedRepId,
       scopeDeliverables: propData.scopeOfWork || null,
       lineItems: (propData.items || []).map(i => ({
         id: i.id,
@@ -2024,12 +2084,13 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         dueDate: m.dueDate || null
       })),
       terms: propData.termsAndConditions || null,
+      letterheadSnapshot,
       status: (propData.status === 'Declined' ? 'Rejected' : propData.status) as any
     };
 
     proposalsApi.createProposal(payload).then(createdDto => {
       const mapped = mapProposalDto(createdDto);
-      setProposals(prev => prev.map(p => p.id === newId ? mapped : p));
+      setProposals(prev => deduplicateProposals(prev.map(p => (p.id === newId || (p.refNumber && p.refNumber === mapped.refNumber) ? mapped : p))));
     }).catch(err => {
       console.error('Failed to persist proposal to API:', err);
     });
@@ -2051,6 +2112,21 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateProposal = async (updated: Proposal): Promise<boolean> => {
     try {
       const propTotal = Number(updated.grandTotal ?? updated.grandTotalPKR ?? 0);
+      const letterheadSnapshot = {
+        letterheadBg: updated.letterheadBg || settings.proposalLetterheadBg || '',
+        companyName: updated.companyName || settings.companyName || 'Enterprise CRM',
+        companyAddress: updated.companyAddress || settings.companyAddress || '',
+        companyPhone: updated.companyPhone || settings.companyPhone || '',
+        companyEmail: updated.companyEmail || settings.companyEmail || '',
+        companyTaxId: updated.companyTaxId || settings.companyTaxId || '',
+        companyWebsite: updated.companyWebsite || settings.companyWebsite || '',
+        companyLogo: updated.companyLogo || settings.companyLogo || '',
+        authorizedSignatureName: updated.authorizedSignatureName || '',
+        authorizedSignatureTitle: updated.authorizedSignatureTitle || '',
+        authorizedSignatureImg: updated.authorizedSignatureImg || '',
+        validityDays: Number(updated.validityDays || 14)
+      };
+
       const payload: UpdateProposalPayload = {
         expiryDate: updated.expiryDate || null,
         clientSnapshot: {
@@ -2080,12 +2156,13 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           dueDate: m.dueDate || null
         })),
         terms: updated.termsAndConditions || null,
+        letterheadSnapshot,
         status: (updated.status === 'Declined' ? 'Rejected' : updated.status) as any
       };
 
       const updatedDto = await proposalsApi.updateProposal(updated.id, payload);
       const mapped = mapProposalDto(updatedDto);
-      setProposals(prev => prev.map(p => (p.id === updated.id ? mapped : p)));
+      setProposals(prev => deduplicateProposals(prev.map(p => (p.id === updated.id ? mapped : p))));
       logAction('Updated Proposal', 'Lead', updated.businessName || updated.clientName, `Updated proposal ${updated.refNumber} (PKR ${propTotal.toLocaleString()})`, updated.id);
       return true;
     } catch (err) {

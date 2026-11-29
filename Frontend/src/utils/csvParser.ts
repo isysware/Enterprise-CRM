@@ -67,16 +67,21 @@ export const VALID_LEAD_SOURCES: LeadSource[] = [
   'Inbound',
   'Direct Walk-in',
   'Event',
+  'Follow-Up',
+  'Facebook Ads',
+  'Instagram Ads',
+  'Direct',
   'CSV Import'
 ];
 
 export function normalizeLeadSource(sourceStr?: string): LeadSource {
   if (!sourceStr || !sourceStr.trim()) {
-    return 'CSV Import';
+    return 'Direct';
   }
-  const clean = sourceStr.trim().toLowerCase();
+  const trimmed = sourceStr.trim();
+  const clean = trimmed.toLowerCase();
   const match = VALID_LEAD_SOURCES.find(s => s.toLowerCase() === clean);
-  return match || 'CSV Import';
+  return match || (trimmed as LeadSource);
 }
 
 export const VALID_LEAD_STATUSES: LeadStatus[] = [

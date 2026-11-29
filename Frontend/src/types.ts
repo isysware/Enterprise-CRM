@@ -114,7 +114,11 @@ export type LeadSource =
   | 'Direct Walk-in' 
   | 'Event'
   | 'Follow-Up'
-  | 'CSV Import';
+  | 'Facebook Ads'
+  | 'Instagram Ads'
+  | 'Direct'
+  | 'CSV Import'
+  | (string & {});
 
 export type ActivityType = 'call' | 'whatsapp' | 'email' | 'meeting' | 'note' | 'stage_change' | 'reassign' | 'demo';
 

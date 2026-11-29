@@ -17,6 +17,7 @@ export interface ProposalDbRow {
   client_snapshot: Record<string, unknown>;
   assigned_rep_id: string | null;
   assigned_rep_name?: string | null;
+  created_by_name?: string | null;
   scope_deliverables: string | null;
   line_items: unknown[];
   discount_pkr: string;
@@ -64,9 +65,11 @@ export class ProposalsService {
       SELECT p.*,
              to_char(p.issue_date, 'YYYY-MM-DD') as issue_date,
              to_char(p.expiry_date, 'YYYY-MM-DD') as expiry_date,
-             u.name as assigned_rep_name
+             u.name as assigned_rep_name,
+             cb.name as created_by_name
       FROM proposals p
       LEFT JOIN users u ON p.assigned_rep_id = u.id
+      LEFT JOIN users cb ON p.created_by = cb.id
       ${whereClause}
       ORDER BY p.created_at DESC
     `;
@@ -84,9 +87,11 @@ export class ProposalsService {
       SELECT p.*,
              to_char(p.issue_date, 'YYYY-MM-DD') as issue_date,
              to_char(p.expiry_date, 'YYYY-MM-DD') as expiry_date,
-             u.name as assigned_rep_name
+             u.name as assigned_rep_name,
+             cb.name as created_by_name
       FROM proposals p
       LEFT JOIN users u ON p.assigned_rep_id = u.id
+      LEFT JOIN users cb ON p.created_by = cb.id
       WHERE p.id = $1
     `;
     const res = await query<ProposalDbRow>(sql, [id]);
@@ -129,8 +134,20 @@ export class ProposalsService {
     const toUuidOrNull = (id?: string | null): string | null =>
       Boolean(id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) ? id! : null;
 
-    const repId = toUuidOrNull(input.assignedRepId || actor.id);
     const validLeadId = toUuidOrNull(input.leadId);
+    let repId = toUuidOrNull(input.assignedRepId);
+    if (!repId && validLeadId) {
+      const leadRes = await query<{ assigned_to_id: string | null }>(
+        'SELECT assigned_to_id FROM leads WHERE id = $1',
+        [validLeadId]
+      );
+      if (leadRes.rows.length > 0 && leadRes.rows[0].assigned_to_id) {
+        repId = toUuidOrNull(leadRes.rows[0].assigned_to_id);
+      }
+    }
+    if (!repId) {
+      repId = toUuidOrNull(actor.id);
+    }
     const validCreatedBy = toUuidOrNull(actor.id);
 
     const sql = `
@@ -141,12 +158,10 @@ export class ProposalsService {
         milestones, terms, letterhead_snapshot, status, created_by
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
-      ) RETURNING *,
-        to_char(issue_date, 'YYYY-MM-DD') as issue_date,
-        to_char(expiry_date, 'YYYY-MM-DD') as expiry_date
+      ) RETURNING id
     `;
 
-    const res = await query<ProposalDbRow>(sql, [
+    const res = await query<{ id: string }>(sql, [
       validLeadId,
       propNumber,
       input.issueDate,
@@ -165,16 +180,30 @@ export class ProposalsService {
       validCreatedBy,
     ]);
 
+    const createdId = res.rows[0].id;
+    const fullRes = await query<ProposalDbRow>(`
+      SELECT p.*,
+             to_char(p.issue_date, 'YYYY-MM-DD') as issue_date,
+             to_char(p.expiry_date, 'YYYY-MM-DD') as expiry_date,
+             u.name as assigned_rep_name,
+             cb.name as created_by_name
+      FROM proposals p
+      LEFT JOIN users u ON p.assigned_rep_id = u.id
+      LEFT JOIN users cb ON p.created_by = cb.id
+      WHERE p.id = $1
+    `, [createdId]);
+    const createdProposal = fullRes.rows[0];
+
     await AuditService.logFromRequest(
       actor,
       'CREATE_PROPOSAL',
       'PROPOSAL',
-      res.rows[0].id,
-      res.rows[0].proposal_number,
-      { totalPKR: res.rows[0].total_pkr, leadId: input.leadId }
+      createdProposal.id,
+      createdProposal.proposal_number,
+      { totalPKR: createdProposal.total_pkr, leadId: input.leadId }
     );
 
-    return res.rows[0];
+    return createdProposal;
   }
 
   public static async updateProposal(

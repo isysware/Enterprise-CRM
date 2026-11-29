@@ -181,7 +181,12 @@ export class ClientsService {
       );
 
       // 3. Create client record
-      const ownerId = input.assignedOwnerId || lead.assigned_to_id || actor.id;
+      const ownerId = toUuidOrNull(input.assignedOwnerId) || toUuidOrNull(lead.assigned_to_id) || actor.id;
+      const effectiveSource = (input.source && input.source.trim() && input.source !== 'CSV Import')
+        ? input.source.trim()
+        : (lead.source || 'Direct');
+      const pricingModelId = toUuidOrNull(input.pricingModelId) || toUuidOrNull((input as any).pricing_model_id) || toUuidOrNull(lead.pricing_model_id) || null;
+
       const clientSql = `
         INSERT INTO clients (
           originating_lead_id, business_name, contact_name, email,
@@ -190,10 +195,10 @@ export class ClientsService {
           converted_date, status
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_DATE, 'Active'
-        ) RETURNING *, to_char(converted_date, 'YYYY-MM-DD') as converted_date
+        ) RETURNING id
       `;
 
-      const clientRes = await client.query<ClientDbRow>(clientSql, [
+      const insertRes = await client.query<{ id: string }>(clientSql, [
         input.leadId,
         input.businessName.trim(),
         input.contactName.trim(),
@@ -201,14 +206,29 @@ export class ClientsService {
         input.phone.trim(),
         input.city?.trim() || null,
         JSON.stringify(input.servicesSnapshot || lead.service_snapshot || []),
-        input.source || lead.source,
-        toUuidOrNull(input.pricingModelId) || toUuidOrNull(lead.pricing_model_id) || null,
+        effectiveSource,
+        pricingModelId,
         input.finalValuePKR || lead.value_pkr || 0,
         ownerId,
         actor.id,
         input.termsDetails || null,
       ]);
-      const createdClient = clientRes.rows[0];
+      const newClientId = insertRes.rows[0].id;
+
+      const fullClientSql = `
+        SELECT c.*,
+               to_char(c.converted_date, 'YYYY-MM-DD') as converted_date,
+               u.name as assigned_owner_name,
+               cb.name as closed_by_name,
+               pm.name as pricing_model_name
+        FROM clients c
+        LEFT JOIN users u ON c.assigned_owner_id = u.id
+        LEFT JOIN users cb ON c.closed_by_id = cb.id
+        LEFT JOIN pricing_models pm ON c.pricing_model_id = pm.id
+        WHERE c.id = $1
+      `;
+      const fullRes = await client.query<ClientDbRow>(fullClientSql, [newClientId]);
+      const createdClient = fullRes.rows[0];
 
       // 4. Record conversion activity in lead_activities
       await client.query(

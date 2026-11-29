@@ -364,7 +364,10 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
       authorizedSignatureName: signatoryName,
       authorizedSignatureTitle: signatoryTitle,
       authorizedSignatureImg: signatoryImg,
-      assignedRepName: assignedRep?.name || currentUser?.name || ''
+      assignedRepId: assignedRep?.id || lead?.assignedToId || currentUser?.id,
+      assignedRepName: assignedRep?.name || currentUser?.name || '',
+      createdById: currentUser?.id,
+      createdByName: currentUser?.name || ''
     };
 
     let savedItem: Proposal;

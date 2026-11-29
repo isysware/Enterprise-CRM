@@ -36,6 +36,8 @@ export interface ProposalDbDto {
   created_at: string;
   updated_at: string;
   assigned_rep_name?: string | null;
+  created_by?: string | null;
+  created_by_name?: string | null;
 }
 
 export interface CreateProposalPayload {

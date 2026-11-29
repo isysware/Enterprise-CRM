@@ -481,7 +481,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       {/* Pricing Model */}
                       <td className="p-3.5">
                         <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                          {client.pricingModel || 'Subscription'}
+                          {client.pricingModelName || client.pricingModel || 'Custom'}
                         </span>
                       </td>
 
@@ -582,7 +582,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   Pricing Model
                 </span>
                 <span className="font-semibold text-[#2563EB] dark:text-blue-400 block mt-0.5">
-                  {selectedClientDetail.pricingModel || 'Subscription'}
+                  {selectedClientDetail.pricingModelName || selectedClientDetail.pricingModel || 'Custom'}
                 </span>
                 <span className="block font-mono font-medium text-emerald-600 dark:text-emerald-400 mt-0.5">
                   {formatPKR(getClientRevenue(selectedClientDetail))}
