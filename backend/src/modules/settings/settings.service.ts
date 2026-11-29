@@ -103,7 +103,7 @@ export class SettingsService {
   public static async updateCategory(
     category: string,
     data: Record<string, unknown>,
-    actor: AuthUser
+    actor?: AuthUser
   ): Promise<SystemSettingsPayload> {
     const sql = `
       INSERT INTO settings (category, data, updated_by, updated_at)
@@ -115,35 +115,96 @@ export class SettingsService {
       RETURNING *
     `;
 
-    await query(sql, [category, JSON.stringify(data), actor.id]);
+    await query(sql, [category, JSON.stringify(data), actor?.id || null]);
 
-    await AuditService.logFromRequest(
-      actor,
-      'UPDATE_SYSTEM_SETTINGS',
-      'SETTINGS',
-      category,
-      `Updated settings for category: ${category}`,
-      { category, updatedFields: Object.keys(data) }
-    );
+    if (actor) {
+      await AuditService.logFromRequest(
+        actor,
+        'UPDATE_SYSTEM_SETTINGS',
+        'SETTINGS',
+        category,
+        `Updated settings for category: ${category}`,
+        { category, updatedFields: Object.keys(data) }
+      );
+    }
 
     return this.getAllSettings();
   }
 
   /**
-   * Reset settings to factory defaults
+   * Reset settings to factory defaults in PostgreSQL
    */
-  public static async resetToDefaults(actor: AuthUser): Promise<SystemSettingsPayload> {
+  public static async resetToDefaults(actor?: AuthUser): Promise<SystemSettingsPayload> {
     await query('DELETE FROM settings');
 
-    await AuditService.logFromRequest(
-      actor,
-      'RESET_SYSTEM_SETTINGS',
-      'SETTINGS',
-      'all',
-      'Reset system configurations to factory defaults',
-      {}
-    );
+    const baselineSettings = [
+      {
+        category: 'branding',
+        data: {
+          applicationName: 'CRM',
+          companyName: 'iSysware',
+          companyLogo: '/isysware-logo.svg',
+          currency: 'PKR',
+          currencySymbol: 'Rs.',
+          timezone: 'Asia/Karachi (UTC+5)',
+        },
+      },
+      {
+        category: 'communication',
+        data: {
+          staleLeadDays: 7,
+          followUpReminderMinutes: 30,
+          enableWhatsAppDirect: true,
+          enableNotifications: true,
+          whatsappGreetingTemplate:
+            'Assalam-o-Alaikum {{clientName}}, this is {{repName}} from {{companyName}}. We are following up regarding your inquiry for {{serviceName}}. How can we assist you today?',
+        },
+      },
+      {
+        category: 'letterhead',
+        data: {
+          proposalLetterheadBg: '',
+          companyAddress: 'Suite #402, Business Executive Center, Main Shahrah-e-Faisal, Karachi, Pakistan',
+          companyTaxId: 'NTN: 8294719-4 | STRN: 3277876123456',
+          companyPhone: '+92 300 1234567',
+          companyEmail: 'proposals@isysware.com',
+          companyWebsite: 'https://isysware.com',
+          defaultProposalValidityDays: 14,
+          defaultProposalTerms: `1. Validity: This commercial quotation is valid for 14 calendar days from the date of issuance.\n2. Payment Terms: 40% advance milestone on contract signing, 30% on beta milestone preview, and 30% upon final delivery & handover.\n3. Taxes: Quoted prices are in Pakistani Rupees (PKR) and exclusive of applicable provincial sales tax (GST/PST) unless explicitly itemized.\n4. Support & Warranty: 3 months of complimentary technical bug-fixing and cloud maintenance support is included post-launch.\n5. Intellectual Property: Complete source code ownership and database rights will be transferred upon settlement of final invoice.`,
+          authorizedSignatureName: 'Abdur Rehman Arain',
+          authorizedSignatureTitle: 'Director of Enterprise Solutions',
+          authorizedSignatureImg: '',
+        },
+      },
+      {
+        category: 'pricing_config',
+        data: {
+          defaultPricingModel: 'one_time',
+        },
+      },
+    ];
 
-    return { ...DEFAULT_SYSTEM_SETTINGS };
+    for (const item of baselineSettings) {
+      await query(
+        `INSERT INTO settings (category, data)
+         VALUES ($1, $2::jsonb)
+         ON CONFLICT (category) DO UPDATE
+         SET data = EXCLUDED.data, updated_at = CURRENT_TIMESTAMP`,
+        [item.category, JSON.stringify(item.data)]
+      );
+    }
+
+    if (actor) {
+      await AuditService.logFromRequest(
+        actor,
+        'RESET_SYSTEM_SETTINGS',
+        'SETTINGS',
+        'all',
+        'Reset system configurations to factory defaults in PostgreSQL',
+        {}
+      );
+    }
+
+    return this.getAllSettings();
   }
 }

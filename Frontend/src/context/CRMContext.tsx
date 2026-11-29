@@ -979,6 +979,20 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Restore authenticated session on mount via /api/v1/auth/me
   useEffect(() => {
     let isMounted = true;
+
+    // 1. Immediately fetch public settings from PostgreSQL so branding, logo, company name and currency load on login page
+    const loadPublicSettings = async () => {
+      try {
+        const fetchedSettings = await settingsApi.getSettings();
+        if (fetchedSettings && isMounted) {
+          setSettings(fetchedSettings);
+        }
+      } catch (err) {
+        console.warn('Initial public settings fetch warning:', err);
+      }
+    };
+    loadPublicSettings();
+
     const restoreSession = async () => {
       try {
         setIsAuthLoading(true);
@@ -2458,6 +2472,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     moduleKey?: string,
     moduleTitle?: string
   ): Promise<void> => {
+    const prevSettings = settings;
     // Optimistic UI update
     setSettings(prev => ({ ...prev, ...newSettings }));
     try {
@@ -2466,15 +2481,18 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (updated) {
         setSettings(updated);
       }
+      logAction(
+        moduleTitle ? `${moduleTitle} Saved` : 'System Settings Saved',
+        'Setting',
+        moduleTitle || 'Company Config',
+        'Updated settings configuration'
+      );
     } catch (err) {
+      // Revert optimistic update on failure
+      setSettings(prevSettings);
       console.error('Failed to update settings in PostgreSQL:', err);
+      throw err;
     }
-    logAction(
-      moduleTitle ? `${moduleTitle} Saved` : 'System Settings Saved',
-      'Setting',
-      moduleTitle || 'Company Config',
-      'Updated settings configuration'
-    );
   };
 
   const addPricingModel = async (modelData: Omit<PricingModelItem, 'id'>): Promise<PricingModelItem | null> => {
@@ -2564,17 +2582,6 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } catch {
       setSettings(DEFAULT_SETTINGS);
     }
-    setUsers([]);
-    setTeams([]);
-    setServices([]);
-    setSources([]);
-    setPricingModels([]);
-    setLeads([]);
-    setFollowUps([]);
-    setClients([]);
-    setProposals([]);
-    setActivityLogs([]);
-    setIncomingLeads([]);
     setFilterState({
       search: '',
       status: 'All',
@@ -2587,9 +2594,10 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       quality: 'All',
       priority: 'All'
     });
-    fetchReferenceData();
+    // Refetch reference data so all portals and components receive reset settings without wiping business entities
+    await fetchReferenceData();
     if (currentUser) {
-      fetchOperationalData(currentUser.role);
+      await fetchOperationalData(currentUser.role);
     }
   };
 

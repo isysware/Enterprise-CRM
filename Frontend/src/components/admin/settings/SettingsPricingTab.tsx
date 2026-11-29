@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCRM } from '../../../context/CRMContext';
 import {
   Layers,
@@ -48,6 +48,13 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
   const [defaultPricingModel, setDefaultPricingModel] = useState<string>(
     settings.defaultPricingModel || ''
   );
+  const hasUnsavedEdits = useRef(false);
+
+  useEffect(() => {
+    if (!hasUnsavedEdits.current) {
+      setDefaultPricingModel(settings.defaultPricingModel || '');
+    }
+  }, [settings.defaultPricingModel]);
 
   // Pricing Model Modal State
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
@@ -284,6 +291,7 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
         'pricing_config',
         'Software Pricing Configuration'
       );
+      hasUnsavedEdits.current = false;
 
       const targetModel = pricingModels.find(m => m.name === defaultPricingModel);
       if (targetModel && !targetModel.isSystemDefault) {
@@ -363,7 +371,10 @@ export const SettingsPricingTab: React.FC<SettingsPricingTabProps> = ({ onSaveSu
           <div className="flex items-center gap-2">
             <select
               value={defaultPricingModel}
-              onChange={e => setDefaultPricingModel(e.target.value)}
+              onChange={e => {
+                hasUnsavedEdits.current = true;
+                setDefaultPricingModel(e.target.value);
+              }}
               className="px-3 py-1.5 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white font-medium focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden cursor-pointer"
             >
               <option value="">-- Select Default Pricing Model --</option>

@@ -1038,8 +1038,8 @@ export const ProposalBuilderModal: React.FC<ProposalBuilderModalProps> = ({
                         </div>
                       </div>
                       <div className="text-xs text-slate-600 leading-relaxed max-w-md">
-                        <p>{settings.companyAddress || 'Suite #402, Business Center, Shahrah-e-Faisal, Karachi'}</p>
-                        <p className="font-semibold text-slate-800">{settings.companyTaxId || 'NTN: 8294719-4'}</p>
+                        {settings.companyAddress && <p>{settings.companyAddress}</p>}
+                        {settings.companyTaxId && <p className="font-semibold text-slate-800">{settings.companyTaxId}</p>}
                       </div>
                     </div>
 

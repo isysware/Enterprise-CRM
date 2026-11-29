@@ -78,25 +78,19 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
   const { settings, updateSettings } = useCRM();
 
   // Form State
-  const [proposalLetterheadBg, setProposalLetterheadBg] = useState(settings.proposalLetterheadBg || '');
-  const [companyAddress, setCompanyAddress] = useState(
-    settings.companyAddress || 'Suite #402, Business Executive Center, Main Shahrah-e-Faisal, Karachi, Pakistan'
-  );
-  const [companyTaxId, setCompanyTaxId] = useState(settings.companyTaxId || 'NTN: 8294719-4 | STRN: 3277876123456');
-  const [companyPhone, setCompanyPhone] = useState(settings.companyPhone || '+92 300 1234567');
-  const [companyEmail, setCompanyEmail] = useState(settings.companyEmail || 'proposals@isysware.com');
-  const [companyWebsite, setCompanyWebsite] = useState(settings.companyWebsite || 'https://isysware.com');
-  const [defaultProposalValidityDays, setDefaultProposalValidityDays] = useState(settings.defaultProposalValidityDays || 14);
+  const [proposalLetterheadBg, setProposalLetterheadBg] = useState(settings.proposalLetterheadBg ?? '');
+  const [companyAddress, setCompanyAddress] = useState(settings.companyAddress ?? '');
+  const [companyTaxId, setCompanyTaxId] = useState(settings.companyTaxId ?? '');
+  const [companyPhone, setCompanyPhone] = useState(settings.companyPhone ?? '');
+  const [companyEmail, setCompanyEmail] = useState(settings.companyEmail ?? '');
+  const [companyWebsite, setCompanyWebsite] = useState(settings.companyWebsite ?? '');
+  const [defaultProposalValidityDays, setDefaultProposalValidityDays] = useState(settings.defaultProposalValidityDays ?? 14);
   const [defaultProposalTerms, setDefaultProposalTerms] = useState(
-    settings.defaultProposalTerms || PRESET_TERMS_TEMPLATES[0].content
+    settings.defaultProposalTerms ?? PRESET_TERMS_TEMPLATES[0].content
   );
-  const [authorizedSignatureName, setAuthorizedSignatureName] = useState(
-    settings.authorizedSignatureName || 'Abdur Rehman Arain'
-  );
-  const [authorizedSignatureTitle, setAuthorizedSignatureTitle] = useState(
-    settings.authorizedSignatureTitle || 'Director of Enterprise Solutions'
-  );
-  const [authorizedSignatureImg, setAuthorizedSignatureImg] = useState(settings.authorizedSignatureImg || '');
+  const [authorizedSignatureName, setAuthorizedSignatureName] = useState(settings.authorizedSignatureName ?? '');
+  const [authorizedSignatureTitle, setAuthorizedSignatureTitle] = useState(settings.authorizedSignatureTitle ?? '');
+  const [authorizedSignatureImg, setAuthorizedSignatureImg] = useState(settings.authorizedSignatureImg ?? '');
 
   // UI helpers
   const [letterheadInputTab, setLetterheadInputTab] = useState<'upload' | 'preset' | 'url'>('upload');
@@ -109,19 +103,22 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
 
   const letterheadFileInputRef = useRef<HTMLInputElement>(null);
   const signatureFileInputRef = useRef<HTMLInputElement>(null);
+  const hasUnsavedEdits = useRef(false);
 
   useEffect(() => {
-    setProposalLetterheadBg(settings.proposalLetterheadBg || '');
-    setCompanyAddress(settings.companyAddress || 'Suite #402, Business Executive Center, Main Shahrah-e-Faisal, Karachi, Pakistan');
-    setCompanyTaxId(settings.companyTaxId || 'NTN: 8294719-4 | STRN: 3277876123456');
-    setCompanyPhone(settings.companyPhone || '+92 300 1234567');
-    setCompanyEmail(settings.companyEmail || 'proposals@isysware.com');
-    setCompanyWebsite(settings.companyWebsite || 'https://isysware.com');
-    setDefaultProposalValidityDays(settings.defaultProposalValidityDays || 14);
-    setDefaultProposalTerms(settings.defaultProposalTerms || PRESET_TERMS_TEMPLATES[0].content);
-    setAuthorizedSignatureName(settings.authorizedSignatureName || 'Abdur Rehman Arain');
-    setAuthorizedSignatureTitle(settings.authorizedSignatureTitle || 'Director of Enterprise Solutions');
-    setAuthorizedSignatureImg(settings.authorizedSignatureImg || '');
+    if (!hasUnsavedEdits.current) {
+      setProposalLetterheadBg(settings.proposalLetterheadBg ?? '');
+      setCompanyAddress(settings.companyAddress ?? '');
+      setCompanyTaxId(settings.companyTaxId ?? '');
+      setCompanyPhone(settings.companyPhone ?? '');
+      setCompanyEmail(settings.companyEmail ?? '');
+      setCompanyWebsite(settings.companyWebsite ?? '');
+      setDefaultProposalValidityDays(settings.defaultProposalValidityDays ?? 14);
+      setDefaultProposalTerms(settings.defaultProposalTerms ?? PRESET_TERMS_TEMPLATES[0].content);
+      setAuthorizedSignatureName(settings.authorizedSignatureName ?? '');
+      setAuthorizedSignatureTitle(settings.authorizedSignatureTitle ?? '');
+      setAuthorizedSignatureImg(settings.authorizedSignatureImg ?? '');
+    }
   }, [settings]);
 
   // Handle Letterhead Background File Upload
@@ -142,6 +139,7 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
+        hasUnsavedEdits.current = true;
         setProposalLetterheadBg(reader.result);
       }
     };
@@ -169,6 +167,7 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
+        hasUnsavedEdits.current = true;
         setAuthorizedSignatureImg(reader.result);
       }
     };
@@ -178,9 +177,10 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
     reader.readAsDataURL(file);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setLetterheadError(null);
 
     const letterheadData = {
       proposalLetterheadBg,
@@ -196,14 +196,18 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
       authorizedSignatureImg
     };
 
-    updateSettings(letterheadData, 'letterhead', 'Proposal Letterhead & PDF Settings');
-
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      await updateSettings(letterheadData, 'letterhead', 'Proposal Letterhead & PDF Settings');
+      hasUnsavedEdits.current = false;
       setIsSaved(true);
       onSaveSuccess('Proposal Letterhead, Corporate Identity & PDF settings saved successfully!');
       setTimeout(() => setIsSaved(false), 3000);
-    }, 400);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to save letterhead settings';
+      setLetterheadError(msg);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -251,7 +255,10 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
               <input
                 type="text"
                 value={companyAddress}
-                onChange={e => setCompanyAddress(e.target.value)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setCompanyAddress(e.target.value);
+                }}
                 placeholder="Suite #, Building, Street, City, Country"
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden"
               />
@@ -265,7 +272,10 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
               <input
                 type="text"
                 value={companyTaxId}
-                onChange={e => setCompanyTaxId(e.target.value)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setCompanyTaxId(e.target.value);
+                }}
                 placeholder="e.g. NTN: 8294719-4 | STRN: 3277876..."
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden"
               />
@@ -279,7 +289,10 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
               <input
                 type="text"
                 value={companyPhone}
-                onChange={e => setCompanyPhone(e.target.value)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setCompanyPhone(e.target.value);
+                }}
                 placeholder="+92 300 1234567 / +92 21 34567890"
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden"
               />
@@ -293,7 +306,10 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
               <input
                 type="email"
                 value={companyEmail}
-                onChange={e => setCompanyEmail(e.target.value)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setCompanyEmail(e.target.value);
+                }}
                 placeholder="proposals@isysware.com"
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden"
               />
@@ -307,7 +323,10 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
               <input
                 type="url"
                 value={companyWebsite}
-                onChange={e => setCompanyWebsite(e.target.value)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setCompanyWebsite(e.target.value);
+                }}
                 placeholder="https://isysware.com"
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden"
               />
@@ -497,7 +516,10 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
                   <input
                     type="text"
                     value={authorizedSignatureName}
-                    onChange={e => setAuthorizedSignatureName(e.target.value)}
+                    onChange={e => {
+                      hasUnsavedEdits.current = true;
+                      setAuthorizedSignatureName(e.target.value);
+                    }}
                     placeholder="e.g. Abdur Rehman Arain"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden"
                   />
@@ -510,7 +532,10 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
                   <input
                     type="text"
                     value={authorizedSignatureTitle}
-                    onChange={e => setAuthorizedSignatureTitle(e.target.value)}
+                    onChange={e => {
+                      hasUnsavedEdits.current = true;
+                      setAuthorizedSignatureTitle(e.target.value);
+                    }}
                     placeholder="e.g. Director of Solutions"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden"
                   />
@@ -612,7 +637,10 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
                 min="1"
                 max="365"
                 value={defaultProposalValidityDays}
-                onChange={e => setDefaultProposalValidityDays(Number(e.target.value) || 14)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setDefaultProposalValidityDays(Number(e.target.value) || 14);
+                }}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden"
               />
               <p className="text-[10px] text-[#64748B] mt-1">
@@ -627,7 +655,10 @@ export const SettingsLetterheadTab: React.FC<SettingsLetterheadTabProps> = ({ on
               <textarea
                 rows={5}
                 value={defaultProposalTerms}
-                onChange={e => setDefaultProposalTerms(e.target.value)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setDefaultProposalTerms(e.target.value);
+                }}
                 placeholder="Enter standard clauses (milestones, warranty, payment terms, IP)..."
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white font-mono placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden leading-relaxed"
               />

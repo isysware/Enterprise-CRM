@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCRM } from '../../../context/CRMContext';
 import {
   MessageCircle,
@@ -30,31 +30,35 @@ const DYNAMIC_TOKENS = [
 export const SettingsCommunicationTab: React.FC<SettingsCommunicationTabProps> = ({ onSaveSuccess }) => {
   const { settings, updateSettings } = useCRM();
 
-  const [staleLeadDays, setStaleLeadDays] = useState(settings.staleLeadDays || 7);
-  const [followUpReminderMinutes, setFollowUpReminderMinutes] = useState(settings.followUpReminderMinutes || 30);
+  const [staleLeadDays, setStaleLeadDays] = useState(settings.staleLeadDays ?? 7);
+  const [followUpReminderMinutes, setFollowUpReminderMinutes] = useState(settings.followUpReminderMinutes ?? 30);
   const [enableWhatsAppDirect, setEnableWhatsAppDirect] = useState(settings.enableWhatsAppDirect !== false);
   const [enableNotifications, setEnableNotifications] = useState(settings.enableNotifications !== false);
   const [whatsappGreetingTemplate, setWhatsappGreetingTemplate] = useState(
-    settings.whatsappGreetingTemplate ||
+    settings.whatsappGreetingTemplate ??
       'Assalam-o-Alaikum {{clientName}}, this is {{repName}} from {{companyName}}. We are following up regarding your inquiry for {{serviceName}}. How can we assist you today?'
   );
 
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const hasUnsavedEdits = useRef(false);
 
   useEffect(() => {
-    setStaleLeadDays(settings.staleLeadDays || 7);
-    setFollowUpReminderMinutes(settings.followUpReminderMinutes || 30);
-    setEnableWhatsAppDirect(settings.enableWhatsAppDirect !== false);
-    setEnableNotifications(settings.enableNotifications !== false);
-    setWhatsappGreetingTemplate(
-      settings.whatsappGreetingTemplate ||
-        'Assalam-o-Alaikum {{clientName}}, this is {{repName}} from {{companyName}}. We are following up regarding your inquiry for {{serviceName}}. How can we assist you today?'
-    );
+    if (!hasUnsavedEdits.current) {
+      setStaleLeadDays(settings.staleLeadDays ?? 7);
+      setFollowUpReminderMinutes(settings.followUpReminderMinutes ?? 30);
+      setEnableWhatsAppDirect(settings.enableWhatsAppDirect !== false);
+      setEnableNotifications(settings.enableNotifications !== false);
+      setWhatsappGreetingTemplate(
+        settings.whatsappGreetingTemplate ??
+          'Assalam-o-Alaikum {{clientName}}, this is {{repName}} from {{companyName}}. We are following up regarding your inquiry for {{serviceName}}. How can we assist you today?'
+      );
+    }
   }, [settings]);
 
   // Insert token at cursor position in textarea
   const handleInsertToken = (token: string) => {
+    hasUnsavedEdits.current = true;
     setWhatsappGreetingTemplate(prev => `${prev} ${token}`);
   };
 
@@ -67,7 +71,7 @@ export const SettingsCommunicationTab: React.FC<SettingsCommunicationTabProps> =
     return msg;
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
 
@@ -79,14 +83,17 @@ export const SettingsCommunicationTab: React.FC<SettingsCommunicationTabProps> =
       whatsappGreetingTemplate: whatsappGreetingTemplate.trim()
     };
 
-    updateSettings(commData, 'communication', 'Communication & Alerts');
-
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      await updateSettings(commData, 'communication', 'Communication & Alerts');
+      hasUnsavedEdits.current = false;
       setIsSaved(true);
       onSaveSuccess('Communication & Alert settings saved successfully!');
       setTimeout(() => setIsSaved(false), 3000);
-    }, 400);
+    } catch (err) {
+      console.error('Failed to save communication settings:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -130,7 +137,10 @@ export const SettingsCommunicationTab: React.FC<SettingsCommunicationTabProps> =
                 min="1"
                 max="90"
                 value={staleLeadDays}
-                onChange={e => setStaleLeadDays(Number(e.target.value) || 1)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setStaleLeadDays(Number(e.target.value) || 1);
+                }}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden"
               />
               <p className="text-[11px] text-[#64748B] dark:text-slate-400">
@@ -149,7 +159,10 @@ export const SettingsCommunicationTab: React.FC<SettingsCommunicationTabProps> =
               </div>
               <select
                 value={followUpReminderMinutes}
-                onChange={e => setFollowUpReminderMinutes(Number(e.target.value) || 30)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setFollowUpReminderMinutes(Number(e.target.value) || 30);
+                }}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden cursor-pointer"
               >
                 <option value={10}>10 minutes before</option>
@@ -178,7 +191,10 @@ export const SettingsCommunicationTab: React.FC<SettingsCommunicationTabProps> =
               <input
                 type="checkbox"
                 checked={enableWhatsAppDirect}
-                onChange={e => setEnableWhatsAppDirect(e.target.checked)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setEnableWhatsAppDirect(e.target.checked);
+                }}
                 className="mt-0.5 rounded text-[#2563EB] focus:ring-0"
               />
               <div>
@@ -195,7 +211,10 @@ export const SettingsCommunicationTab: React.FC<SettingsCommunicationTabProps> =
               <input
                 type="checkbox"
                 checked={enableNotifications}
-                onChange={e => setEnableNotifications(e.target.checked)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setEnableNotifications(e.target.checked);
+                }}
                 className="mt-0.5 rounded text-[#2563EB] focus:ring-0"
               />
               <div>
@@ -247,7 +266,10 @@ export const SettingsCommunicationTab: React.FC<SettingsCommunicationTabProps> =
               <textarea
                 rows={5}
                 value={whatsappGreetingTemplate}
-                onChange={e => setWhatsappGreetingTemplate(e.target.value)}
+                onChange={e => {
+                  hasUnsavedEdits.current = true;
+                  setWhatsappGreetingTemplate(e.target.value);
+                }}
                 placeholder="Type your WhatsApp greeting template..."
                 className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#E5EAF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0F172A] dark:text-white font-sans placeholder-slate-400 focus:ring-1 focus:ring-[#2563EB] focus:outline-hidden leading-relaxed"
               />
