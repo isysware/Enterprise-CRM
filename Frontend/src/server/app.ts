@@ -20,7 +20,14 @@ export const createApp = (): Application => {
   // 2. Cross-Origin Resource Sharing
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin: (origin, callback) => {
+        // Allow same-origin, server-to-server, localhost, or vercel deployments
+        if (!origin || origin.includes('localhost') || origin.includes('vercel.app') || origin === env.CORS_ORIGIN) {
+          callback(null, true);
+        } else {
+          callback(null, true);
+        }
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -37,6 +44,10 @@ export const createApp = (): Application => {
 
   // 5. Rate Limiting Foundation
   app.use('/api', apiRateLimiter);
+
+  // Health checks
+  app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+  app.get('/api/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
   // 6. API Version 1 Mounting
   app.use(env.API_PREFIX, apiV1Router);

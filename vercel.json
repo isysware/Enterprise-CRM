@@ -4,33 +4,24 @@
     "backend": {
       "root": "backend",
       "framework": "express",
-      "entrypoint": "dist/app.js",
       "buildCommand": "npm run build"
     },
     "frontend": {
       "root": "Frontend",
-      "framework": "nextjs",
-      "bindings": [
-        {
-          "type": "service",
-          "service": "backend",
-          "format": "url",
-          "env": "BACKEND_URL"
-        }
-      ]
+      "framework": "nextjs"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": {
-        "service": "backend"
+        "service": "frontend"
       }
     },
     {
       "source": "/health",
       "destination": {
-        "service": "backend"
+        "service": "frontend"
       }
     },
     {

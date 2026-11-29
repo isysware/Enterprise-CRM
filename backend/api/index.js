@@ -1,3 +1,5 @@
 const app = require('../dist/app');
-module.exports = app;
-module.exports.default = app;
+
+module.exports = function handler(req, res) {
+  return app(req, res);
+};
