@@ -32,8 +32,7 @@ export const PrintableReportHeader: React.FC<PrintableReportHeaderProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xl font-medium tracking-tight text-slate-900 uppercase">
-              {companyName ? `${companyName} CRM` : 'Enterprise CRM'}
-            </span>
+              {companyName || 'Enterprise CRM'}            </span>
             <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">
               Executive Report
             </span>
