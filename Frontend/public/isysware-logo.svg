@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background linear gradient from dark midnight to rich royal blue -->
+    <linearGradient id="bgGrad" x1="15%" y1="10%" x2="85%" y2="90%">
+      <stop offset="0%" stop-color="#040816" />
+      <stop offset="40%" stop-color="#081438" />
+      <stop offset="75%" stop-color="#0D3594" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+
+    <!-- Radial accent glow on lower right -->
+    <radialGradient id="glowAccent" cx="75%" cy="80%" r="60%">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.45" />
+      <stop offset="60%" stop-color="#2563EB" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Subtle inner rim highlight -->
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35" />
+      <stop offset="50%" stop-color="#93C5FD" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.4" />
+    </linearGradient>
+
+    <!-- Soft text drop shadow -->
+    <filter id="subtleShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Outer Circle with Gradient and Glow -->
+  <circle cx="256" cy="256" r="250" fill="url(#bgGrad)" />
+  <circle cx="256" cy="256" r="250" fill="url(#glowAccent)" />
+
+  <!-- Crisp Outer Ring Border -->
+  <circle cx="256" cy="256" r="248" fill="none" stroke="url(#rimGrad)" stroke-width="3" />
+
+  <!-- Main Brand Typography: iSysware -->
+  <text 
+    x="256" 
+    y="256" 
+    text-anchor="middle" 
+    font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" 
+    filter="url(#subtleShadow)"
+  >
+    <tspan fill="#FFFFFF" font-weight="800" font-size="78" letter-spacing="-1.5">iSys</tspan><tspan fill="#FFFFFF" font-weight="400" font-size="78" letter-spacing="-0.5">ware</tspan>
+  </text>
+
+  <!-- Subtitle: SOFTWARE SOLUTIONS -->
+  <text 
+    x="256" 
+    y="298" 
+    text-anchor="middle" 
+    font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" 
+    font-size="16" 
+    font-weight="600" 
+    fill="#93C5FD" 
+    letter-spacing="5"
+    opacity="0.9"
+  >
+    SOFTWARE SOLUTIONS
+  </text>
+</svg>

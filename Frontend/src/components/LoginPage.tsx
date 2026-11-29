@@ -70,7 +70,7 @@ export const LoginPage: React.FC = () => {
         {/* Brand Circular Logo Badge */}
         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full shadow-[0_10px_30px_rgba(11,19,43,0.3)] flex items-center justify-center overflow-hidden mb-4 transition-transform hover:scale-105">
           <img
-            src={settings.companyLogo || '/isysware-logo.png'}
+            src={settings.companyLogo || '/isysware-logo.svg'}
             alt={settings.companyName || 'Logo'}
             className="w-full h-full object-cover"
             onError={(e) => {

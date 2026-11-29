@@ -257,7 +257,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
                     <img
-                      src={settings.companyLogo || '/isysware-logo.png'}
+                      src={settings.companyLogo || '/isysware-logo.svg'}
                       alt={settings.companyName || 'Logo'}
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -505,7 +505,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
                   <img
-                    src={settings.companyLogo || '/isysware-logo.png'}
+                    src={settings.companyLogo || '/isysware-logo.svg'}
                     alt={settings.companyName || 'Logo'}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -521,7 +521,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="flex items-center gap-2.5 min-w-0 overflow-hidden">
                 <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
                   <img
-                    src={settings.companyLogo || '/isysware-logo.png'}
+                    src={settings.companyLogo || '/isysware-logo.svg'}
                     alt={settings.companyName || 'Logo'}
                     className="w-full h-full object-cover"
                     onError={(e) => {
