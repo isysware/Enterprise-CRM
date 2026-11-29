@@ -214,6 +214,11 @@ export class UsersService {
       }
     }
 
+    // HARD INVARIANT: Super Admin accounts can never be deactivated
+    if (target.role === 'Super Admin' && input.status === 'inactive') {
+      throw AppError.forbidden('Security Invariant: Super Admin accounts cannot be deactivated');
+    }
+
     if (actor.id === target.id && input.status === 'inactive') {
       throw AppError.badRequest('You cannot deactivate your own logged-in account');
     }

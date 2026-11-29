@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useCRM } from '../context/CRMContext';
-import { formatPKR, parseAmount, getClientRevenue, getLocalDateString, getKarachiDateString, formatDate, formatTime } from '../utils/formatters';
+import { formatPKR, parseAmount, getClientRevenue, getLocalDateString, getKarachiDateString, formatDate, formatTime, formatBrandTitle } from '../utils/formatters';
 import { ReportId, ReportFilterState, DatePreset } from './reports/types';
 import { ReportHeader } from './reports/ReportHeader';
 import { ReportFilterBar } from './reports/ReportFilterBar';
@@ -285,7 +285,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
   // Standardized export payload generator for both Excel and CSV
   const getActiveReportData = useCallback((): { headers: string[]; rows: (string | number)[][]; baseName: string } => {
-    const filePrefix = (settings.companyName?.trim() || 'CRM').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filePrefix = formatBrandTitle(settings.companyName, settings.applicationName).replace(/[^a-zA-Z0-9_-]/g, '_');
     switch (activeReport) {
       case 'sales-pipeline': {
         const headers = ['Lead / Business', 'Contact Name', 'Phone', 'Email', 'Service', 'Source', 'Status', 'Priority', 'Assigned Rep', 'Team', 'Value PKR', 'Created Date'];
@@ -421,7 +421,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
       filterSummary,
       headers,
       rows,
-      companyName: settings.companyName
+      companyName: settings.companyName,
+      applicationName: settings.applicationName
     });
   };
 
@@ -453,6 +454,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         filterSummary={filterSummary}
         recordCount={reportMeta.recordCount}
         companyName={settings.companyName}
+        applicationName={settings.applicationName}
       />
 
       {/* Main Single-Hierarchy Report Content Container — Driven by Main CRM Sidebar */}

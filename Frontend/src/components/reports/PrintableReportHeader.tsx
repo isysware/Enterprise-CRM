@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserRole } from '../../types';
-import { formatDateTime } from '../../utils/formatters';
+import { formatDateTime, formatBrandTitle, formatCompanyOnly } from '../../utils/formatters';
 
 interface PrintableReportHeaderProps {
   reportTitle: string;
@@ -11,6 +11,7 @@ interface PrintableReportHeaderProps {
   filterSummary: string[];
   recordCount?: number;
   companyName?: string;
+  applicationName?: string;
 }
 
 export const PrintableReportHeader: React.FC<PrintableReportHeaderProps> = ({
@@ -21,9 +22,12 @@ export const PrintableReportHeader: React.FC<PrintableReportHeaderProps> = ({
   dateRange,
   filterSummary,
   recordCount,
-  companyName
+  companyName,
+  applicationName
 }) => {
   const generatedAt = formatDateTime(new Date());
+  const brandTitle = formatBrandTitle(companyName, applicationName);
+  const companyTitle = formatCompanyOnly(companyName);
 
   return (
     <div className="hidden print:block mb-6 border-b-2 border-slate-800 pb-4">
@@ -32,7 +36,8 @@ export const PrintableReportHeader: React.FC<PrintableReportHeaderProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xl font-medium tracking-tight text-slate-900 uppercase">
-              {companyName || 'Enterprise CRM'}            </span>
+              {brandTitle}
+            </span>
             <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">
               Executive Report
             </span>
@@ -43,7 +48,7 @@ export const PrintableReportHeader: React.FC<PrintableReportHeaderProps> = ({
         </div>
 
         <div className="text-right text-xs text-slate-600 space-y-0.5">
-          <p className="font-bold text-slate-800">{companyName || 'Enterprise'} Business Operations</p>
+          <p className="font-bold text-slate-800">{companyTitle} Business Operations</p>
           <p>Generated: {generatedAt}</p>
           {recordCount !== undefined && (
             <p className="font-semibold text-slate-700">Total Scoped Records: {recordCount}</p>

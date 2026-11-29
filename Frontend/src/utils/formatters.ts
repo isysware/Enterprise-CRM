@@ -381,3 +381,29 @@ export function getPriorityBadge(priority: Priority): { label: string; badge: st
       };
   }
 }
+
+/**
+ * Resolves application brand name without duplicating redundant suffixes (e.g., avoids "Isysware CRM CRM").
+ * - If companyName is "Isysware CRM" and applicationName is "CRM" => returns "Isysware CRM"
+ * - If companyName is "Isysware" and applicationName is "CRM" => returns "Isysware CRM"
+ * - If companyName is empty => returns "Enterprise CRM"
+ */
+export function formatBrandTitle(companyName?: string, applicationName?: string): string {
+  const company = (companyName || '').trim();
+  const app = (applicationName || 'CRM').trim();
+  if (!company) return app ? `Enterprise ${app}` : 'Enterprise CRM';
+  if (new RegExp(`\\b${app}$`, 'i').test(company)) return company;
+  return `${company} ${app}`;
+}
+
+/**
+ * Strips application suffix to yield pure organization/company name for business descriptions.
+ * - If companyName is "Isysware CRM" => returns "Isysware"
+ * - If companyName is empty => returns "Enterprise"
+ */
+export function formatCompanyOnly(companyName?: string): string {
+  const company = (companyName || '').trim();
+  const cleaned = company.replace(/\s+CRM$/i, '').trim();
+  return cleaned || 'Enterprise';
+}
+

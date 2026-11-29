@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCRM } from '../context/CRMContext';
 import { UserRole } from '../types';
+import { formatBrandTitle, formatCompanyOnly } from '../utils/formatters';
 import {
   User as UserIcon,
   Lock,
@@ -82,7 +83,7 @@ export const LoginPage: React.FC = () => {
 
         {/* Brand System Title */}
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-          {settings.companyName ? `${settings.companyName} CRM` : (settings.applicationName || 'Enterprise CRM')}
+          {formatBrandTitle(settings.companyName, settings.applicationName)}
         </h1>
 
         {/* Subtitle */}
@@ -243,7 +244,7 @@ export const LoginPage: React.FC = () => {
       {/* FOOTER NOTICE BELOW CARD (MATCHING REFERENCE DESIGN)                     */}
       {/* ========================================================================= */}
       <div className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500 space-y-1">
-        <p>{settings.companyName || 'Enterprise'} Software Solutions CRM • Strict 5–Portals Role Boundary Enforced.</p>
+        <p>{formatCompanyOnly(settings.companyName)} Software Solutions • Strict 5–Portals Role Boundary Enforced.</p>
         <p>All reports remain table-based with zero charts per PRD &amp; TRD requirements.</p>
       </div>
 
